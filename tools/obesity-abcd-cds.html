@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Obesity / ABCD CDS — Intake · Staging · Algorithm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAF8F4;
+    --surface: #FFFFFF;
+    --ink: #1A1916;
+    --ink-muted: #5C5852;
+    --ink-faint: #8E8A82;
+    --rule: #E8E2D5;
+    --rule-soft: #F1ECE0;
+    /* This tool's spine colour — deliberately distinct from the claret of the
+       energy-balance CDS so the two are separable at a glance in a tab strip. */
+    --spine: #1F5459;
+    --spine-soft: #E4EEEE;
+    --accent: #8B2635;
+    --accent-soft: #F7EAEB;
+    --warn: #B8862F;
+    --warn-soft: #FBF3DD;
+    --good: #4A7A56;
+    --good-soft: #E8F0E8;
+    --s1: #6B9A8B;
+    --s2: #B8862F;
+    --s3: #8B2635;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, h4 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; letter-spacing: -0.01em; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .masthead { border-bottom: 1px solid var(--rule); padding: 26px 40px 22px; background: var(--surface); }
+  .masthead-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; max-width: 1680px; margin: 0 auto; }
+  .masthead h1 { font-size: 32px; font-weight: 500; font-variation-settings: 'opsz' 144; line-height: 1; }
+  .masthead h1 .accent { color: var(--spine); font-style: italic; font-weight: 400; }
+  .masthead .subtitle { font-size: 11.5px; color: var(--ink-muted); margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .masthead .meta { font-size: 11px; color: var(--ink-faint); text-align: right; line-height: 1.65; }
+  .masthead .meta b { color: var(--ink); font-weight: 500; }
+
+  .layout { max-width: 1680px; margin: 0 auto; padding: 22px 40px 90px; display: grid; grid-template-columns: minmax(420px, 0.95fr) minmax(600px, 1.25fr); gap: 30px; align-items: start; }
+  @media (max-width: 1150px) { .layout { grid-template-columns: 1fr; padding: 18px 18px 60px; } }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .col-outputs { position: sticky; top: 0; }
+  @media (max-width: 1150px) { .col-outputs { position: static; } }
+
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; }
+  .card-head { padding: 13px 17px; border-bottom: 1px solid var(--rule-soft); display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .card-head h2 { font-size: 14.5px; font-weight: 500; }
+  .card-head .tag { font-size: 9.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; text-align: right; }
+  .card-body { padding: 15px 17px; }
+
+  details.card > summary { list-style: none; cursor: pointer; }
+  details.card > summary::-webkit-details-marker { display: none; }
+  .arrow { display: inline-block; width: 7px; height: 7px; border-right: 1px solid var(--ink-muted); border-bottom: 1px solid var(--ink-muted); transform: rotate(-45deg); transition: transform 0.18s; margin-right: 8px; vertical-align: 2px; }
+  details[open] > summary .arrow { transform: rotate(45deg); vertical-align: 0; }
+  summary .count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: var(--ink); color: var(--paper); border-radius: 100px; padding: 1px 7px; margin-left: 6px; }
+  summary .count.zero { background: var(--rule); color: var(--ink-faint); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 11px; }
+  .field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field-row.quad { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .field-row.full { grid-template-columns: 1fr; }
+  .field-row:last-child { margin-bottom: 0; }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field label { font-size: 9.5px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+  .field label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink-faint); margin-left: 4px; }
+  .field input, .field select { background: var(--paper); border: 1px solid var(--rule); border-radius: 2px; padding: 6px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink); width: 100%; }
+  .field input:focus, .field select:focus { outline: 2px solid var(--spine); outline-offset: -1px; border-color: var(--spine); }
+
+  .sub-h { font-size: 9.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin: 15px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--rule-soft); font-weight: 500; }
+  .sub-h:first-child { margin-top: 0; }
+  .sub-h .rt { float: right; text-transform: none; letter-spacing: 0; color: var(--ink-muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .check { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: var(--ink-muted); cursor: pointer; padding: 3px 0; line-height: 1.4; }
+  .check input { accent-color: var(--spine); cursor: pointer; margin-top: 2px; flex-shrink: 0; }
+  .check:hover { color: var(--ink); }
+  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
+  .check-grid.one { grid-template-columns: 1fr; }
+  .check input:focus-visible { outline: 2px solid var(--spine); outline-offset: 2px; }
+
+  /* ORCD severity rows */
+  .orcd-row { display: grid; grid-template-columns: 1fr 168px; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px dashed var(--rule-soft); }
+  .orcd-row:last-child { border-bottom: none; }
+  .orcd-row .nm { font-size: 12px; color: var(--ink); line-height: 1.3; }
+  .orcd-row .nm .cue { display: block; font-size: 9.5px; color: var(--ink-faint); margin-top: 1px; }
+  .sev { display: flex; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+  .sev button { flex: 1; background: var(--paper); border: none; border-right: 1px solid var(--rule); padding: 4px 2px; font-family: 'IBM Plex Sans', sans-serif; font-size: 10px; color: var(--ink-faint); cursor: pointer; letter-spacing: 0.02em; }
+  .sev button:last-child { border-right: none; }
+  .sev button:hover { color: var(--ink); }
+  .sev button.on[data-v="0"] { background: var(--ink-faint); color: var(--paper); }
+  .sev button.on[data-v="1"] { background: var(--s2); color: #fff; }
+  .sev button.on[data-v="2"] { background: var(--s3); color: #fff; }
+  .sev button:focus-visible { outline: 2px solid var(--spine); outline-offset: -2px; }
+
+  /* ============ SIGNATURE: the algorithm spine ============ */
+  .spine-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+  .spine-wrap { padding: 6px 10px 12px; max-height: 640px; overflow-y: auto; background: linear-gradient(180deg, var(--surface) 0%, var(--paper) 100%); }
+  .spine-wrap svg { width: 100%; height: auto; display: block; }
+  .nd-box { transition: fill 0.25s, stroke 0.25s; }
+  .nd-txt { font-family: 'IBM Plex Sans', sans-serif; font-size: 8.6px; fill: var(--ink); }
+  .nd-txt.hd { font-family: 'Fraunces', serif; font-size: 10px; font-weight: 500; }
+  .nd-txt.dim { fill: var(--ink-faint); }
+  .edge { fill: none; stroke: var(--rule); stroke-width: 1.3; transition: stroke 0.25s, stroke-width 0.25s; }
+  .edge.on { stroke: var(--spine); stroke-width: 2.2; }
+  .edge-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 7.5px; fill: var(--ink-faint); }
+  .edge-lbl.on { fill: var(--spine); font-weight: 500; }
+  .spine-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 9px 17px; border-top: 1px solid var(--rule-soft); font-size: 10px; color: var(--ink-muted); background: var(--surface); }
+  .spine-legend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -2px; margin-right: 5px; border: 1px solid var(--rule); }
+
+  /* Banner */
+  .banner { background: var(--ink); color: var(--paper); border-radius: 4px; padding: 16px 20px; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+  .banner .dx { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 400; line-height: 1.15; }
+  .banner .dx .stage-pill { display: inline-block; font-family: 'IBM Plex Sans', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; border-radius: 100px; margin-right: 9px; vertical-align: 3px; }
+  .banner .sub { font-size: 11px; color: rgba(250,248,244,0.6); margin-top: 6px; line-height: 1.6; font-family: 'IBM Plex Mono', monospace; }
+  .banner .goal { text-align: right; font-size: 10px; color: rgba(250,248,244,0.65); text-transform: uppercase; letter-spacing: 0.07em; line-height: 1.8; white-space: nowrap; }
+  .banner .goal b { color: var(--paper); font-weight: 500; font-size: 15px; font-family: 'Fraunces', serif; letter-spacing: 0; text-transform: none; }
+
+  /* Gate strip */
+  .gate { padding: 11px 14px; border-radius: 3px; border-left: 3px solid; margin-bottom: 8px; font-size: 12px; line-height: 1.5; }
+  .gate:last-child { margin-bottom: 0; }
+  .gate.stop { background: var(--accent-soft); border-color: var(--accent); }
+  .gate.hold { background: var(--warn-soft); border-color: var(--warn); }
+  .gate.ok { background: var(--good-soft); border-color: var(--good); }
+  .gate .gh { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; display: flex; justify-content: space-between; }
+  .gate.stop .gh { color: var(--accent); }
+  .gate.hold .gh { color: var(--warn); }
+  .gate.ok .gh { color: var(--good); }
+  .gate .gb { color: var(--ink-muted); }
+  .gate .gb b { color: var(--ink); font-weight: 500; }
+
+  /* Non-response differential rows */
+  .diff-row { padding: 9px 12px; border: 1px solid var(--rule); border-radius: 3px; margin-bottom: 6px; background: var(--surface); }
+  .diff-row.sug { border-color: var(--warn); background: var(--warn-soft); }
+  .diff-row.on { border-color: var(--accent); background: var(--accent-soft); }
+  .diff-row .dh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .diff-row .dm { font-weight: 600; font-size: 12px; color: var(--ink); }
+  .diff-row .de { font-size: 9px; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; text-align: right; flex-shrink: 0; }
+  .diff-row .dt, .diff-row .da { font-size: 11px; color: var(--ink-muted); line-height: 1.45; margin-top: 2px; }
+  .diff-row .dt b, .diff-row .da b { color: var(--ink); font-weight: 500; }
+
+  /* AOM ranking */
+  .aom { display: grid; grid-template-columns: 26px 1fr 88px; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); align-items: start; }
+  .aom:last-child { border-bottom: none; }
+  .aom .rk { font-family: 'Fraunces', serif; font-size: 17px; color: var(--ink-faint); line-height: 1.2; text-align: center; }
+  .aom.top .rk { color: var(--spine); }
+  .aom .nm { font-size: 13px; font-weight: 500; }
+  .aom .nm .cls { font-weight: 400; color: var(--ink-faint); font-size: 10.5px; margin-left: 6px; font-family: 'IBM Plex Mono', monospace; }
+  .aom .why { font-size: 11px; color: var(--ink-muted); margin-top: 3px; line-height: 1.45; }
+  .aom .why b { color: var(--ink); font-weight: 500; }
+  .aom .why .cau { color: var(--warn); }
+  .aom .eff { text-align: right; font-family: 'IBM Plex Mono', monospace; }
+  .aom .eff .n { font-family: 'Fraunces', serif; font-size: 17px; }
+  .aom .eff .l { font-size: 8.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-top: 1px; }
+  .aom .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .aom .tg { font-size: 9px; padding: 1px 6px; border-radius: 100px; background: var(--spine-soft); color: var(--spine); letter-spacing: 0.03em; }
+  .aom .tg.rx { background: var(--good-soft); color: var(--good); }
+  .blocked { padding: 8px 0; border-bottom: 1px dashed var(--rule-soft); font-size: 11.5px; color: var(--ink-faint); display: flex; gap: 10px; }
+  .blocked:last-child { border-bottom: none; }
+  .blocked .bn { min-width: 150px; text-decoration: line-through; text-decoration-color: var(--rule); color: var(--ink-muted); }
+  .blocked .br { color: var(--accent); }
+
+  .plain { font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+  .plain b { color: var(--ink); font-weight: 500; }
+  .item { display: flex; gap: 9px; padding: 4px 0; font-size: 12px; align-items: baseline; }
+  .item .bx { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-faint); flex-shrink: 0; }
+  .item.hi .bx { color: var(--accent); }
+  .item.hi .nm { color: var(--accent); font-weight: 500; }
+  .item .nm { color: var(--ink); }
+  .item .rs { color: var(--ink-faint); font-size: 10px; font-style: italic; margin-left: auto; text-align: right; padding-left: 10px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 620px) { .two-col, .check-grid, .field-row.triple, .field-row.quad { grid-template-columns: 1fr; } }
+  .col-h { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); font-weight: 500; padding-bottom: 4px; border-bottom: 1px solid var(--rule); margin-bottom: 6px; }
+
+  /* Macros */
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule); margin-bottom: 11px; flex-wrap: wrap; }
+  .tabs button { background: transparent; border: none; padding: 7px 11px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button.on { color: var(--ink); border-bottom-color: var(--spine); }
+  .mbox { position: relative; background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 13px 15px; }
+  .mtext { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.7; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+  .cpy { position: absolute; top: 7px; right: 7px; background: var(--ink); color: var(--paper); border: none; padding: 4px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; border-radius: 2px; cursor: pointer; }
+  .cpy.done { background: var(--good); }
+
+  .foot { font-size: 10px; color: var(--ink-faint); line-height: 1.55; margin-top: 10px; }
+  .foot b { color: var(--ink-muted); }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <h1>Obesity <span class="accent">/</span> ABCD <span class="accent">·</span> Intake &amp; Algorithm CDS</h1>
+      <div class="subtitle">Complication-centric staging · driver review · pharmacotherapy selection — v0.1 prototype</div>
+    </div>
+    <div class="meta">
+      <b>Framework:</b> AACE ABCD Algorithm 2025 (Nadolsky/Garvey) · ADA Obesity Assn SOC 2026 · TOS/OMA/OAC 2026 (GRADE)<br>
+      <b>Companion to:</b> Energy Balance CDS (defended adiposity / phenotype engine)<br>
+      <span style="color:var(--accent);">Prototype — clinician-facing draft support only, not a medical device</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ══════════════════════ INTAKE COLUMN ══════════════════════ -->
+<div class="col col-inputs">
+
+  <div class="card">
+    <div class="card-head"><h2>Anthropometric component</h2><span class="tag">AACE Alg. 3 — ethnic-specific cutoffs</span></div>
+    <div class="card-body">
+      <div class="field-row triple">
+        <div class="field"><label>Age</label><input type="number" id="age" value="54" /></div>
+        <div class="field"><label>Sex at birth</label><select id="sex"><option value="F">Female</option><option value="M">Male</option></select></div>
+        <div class="field"><label>Ancestry <span class="hint">cutoffs</span></label>
+          <select id="ethnicity">
+            <option value="gen">General / European</option>
+            <option value="asian">South / East Asian</option>
+            <option value="afr">African / Afro-Caribbean</option>
+            <option value="his">Hispanic / Latino</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row triple">
+        <div class="field"><label>Weight <span class="hint">kg</span></label><input type="number" step="0.1" id="wt" value="97" /></div>
+        <div class="field"><label>Height <span class="hint">cm</span></label><input type="number" id="ht" value="168" /></div>
+        <div class="field"><label>Waist <span class="hint">cm</span></label><input type="number" step="0.1" id="wc" value="104" /></div>
+      </div>
+      <div class="field-row triple">
+        <div class="field"><label>DXA fat <span class="hint">% opt.</span></label><input type="number" step="0.1" id="fatPct" placeholder="—" /></div>
+        <div class="field"><label>SBP <span class="hint">mmHg</span></label><input type="number" id="sbp" value="138" /></div>
+        <div class="field"><label>DBP</label><input type="number" id="dbp" value="86" /></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Weight history</h2><span class="tag">OMA Alg. 2026 §1.1 — onset &amp; pattern</span></div>
+    <div class="card-body">
+      <div class="field-row triple">
+        <div class="field"><label>Max lifetime <span class="hint">kg</span></label><input type="number" step="0.1" id="maxWt" value="103" /></div>
+        <div class="field"><label>Age at onset</label><input type="number" id="onsetAge" value="34" /></div>
+        <div class="field"><label>Δ 12 mo <span class="hint">kg</span></label><input type="number" step="0.1" id="d12" value="4.5" /></div>
+      </div>
+      <div class="check-grid one" style="margin-top:8px;">
+        <label class="check"><input type="checkbox" id="h_cycle" checked /> ≥3 cycles of intentional loss then regain</label>
+        <label class="check"><input type="checkbox" id="h_priorAOM" /> Prior AOM trial — inadequate response at max tolerated dose</label>
+        <label class="check"><input type="checkbox" id="h_incretinIntol" /> Incretin-class intolerance (GI, prior discontinuation)</label>
+        <label class="check"><input type="checkbox" id="h_bariatric" /> Prior metabolic/bariatric surgery</label>
+        <label class="check"><input type="checkbox" id="h_declineSurg" checked /> Declines / not a candidate for surgery</label>
+      </div>
+    </div>
+  </div>
+
+  <details class="card" open id="tx_card">
+    <summary class="card-head"><h2><span class="arrow"></span>On-treatment course<span class="count zero" id="tx_count">0</span></h2><span class="tag">Response · plateau · rebound engine</span></summary>
+    <div class="card-body">
+      <div class="footnote" style="margin-top:0;margin-bottom:12px;">
+        Complete only if the patient is on, or has been on, an anti-obesity medication. Drives the response-pattern classifier — leave the agent as "none" to suppress it.
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Current / most recent agent</label>
+          <select id="tx_agent">
+            <option value="none">None / not started</option>
+            <option value="sema">Semaglutide (Wegovy)</option>
+            <option value="osema">Oral semaglutide 25 mg</option>
+            <option value="tirz">Tirzepatide (Zepbound)</option>
+            <option value="orfo">Orforglipron</option>
+            <option value="lira">Liraglutide</option>
+            <option value="phentop">Phentermine/topiramate</option>
+            <option value="nbup">Naltrexone/bupropion</option>
+            <option value="other">Other AOM</option>
+          </select>
+        </div>
+        <div class="field"><label>Dose status</label>
+          <select id="tx_dose">
+            <option value="titrating">Still titrating</option>
+            <option value="submax">Sub-maximal, tolerated</option>
+            <option value="max">Max / max-tolerated dose</option>
+            <option value="maxAE">Max-tolerated, capped by AE</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row triple">
+        <div class="field"><label>Months on drug <span class="hint">at dose</span></label><input type="number" step="0.5" id="tx_months" value="6" /></div>
+        <div class="field"><label>%TBWL nadir <span class="hint">best</span></label><input type="number" step="0.1" id="tx_nadir" value="7.5" /></div>
+        <div class="field"><label>%TBWL now <span class="hint">from baseline</span></label><input type="number" step="0.1" id="tx_now" value="7.2" /></div>
+      </div>
+      <div class="sub-h">Adequacy checks <span class="rt">before labelling non-response</span></div>
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="tx_adhere" checked /> Adherence confirmed — pharmacy fills / dosing diary reviewed</label>
+        <label class="check"><input type="checkbox" id="tx_technique" checked /> Injection technique / storage verified (or oral timing rules if applicable)</label>
+        <label class="check"><input type="checkbox" id="tx_titrateOK" checked /> Titration completed to label without skipped steps</label>
+      </div>
+      <div class="sub-h">Rebound context</div>
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="tx_discontinued" /> Currently off the drug (stopped, lapsed, or supply gap)</label>
+        <label class="check"><input type="checkbox" id="tx_taper" /> Was tapered rather than stopped abruptly</label>
+        <label class="check"><input type="checkbox" id="tx_rtProtein" /> Resistance training + protein floor in place during loss phase</label>
+      </div>
+      <div class="sub-h">Non-response differential <span class="rt">check each domain before escalating</span></div>
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="tx_dIntake" /> <b style="font-weight:500;">Intake:</b> liquid-calorie / UPF / grazing creep undermining the deficit (food record or recall)</label>
+        <label class="check"><input type="checkbox" id="tx_dActivity" /> <b style="font-weight:500;">Expenditure:</b> low activity / NEAT collapse / sedentary drift</label>
+        <label class="check"><input type="checkbox" id="tx_dAdapt" /> <b style="font-weight:500;">Adaptive thermogenesis:</b> measured RMR below predicted, disproportionate to loss</label>
+        <label class="check"><input type="checkbox" id="tx_dSarco" /> <b style="font-weight:500;">Body-composition confound:</b> fat lost but scale flat — lean/fluid masking (DXA/BIA)</label>
+        <label class="check"><input type="checkbox" id="tx_dCortisol" /> <b style="font-weight:500;">Cortisol autonomy:</b> hypercortisolism / MACS signal (see cortisol screen)</label>
+        <label class="check"><input type="checkbox" id="tx_dOSA" /> <b style="font-weight:500;">Sleep apnea:</b> untreated or non-adherent OSA / short sleep</label>
+        <label class="check"><input type="checkbox" id="tx_dMeds" /> <b style="font-weight:500;">Iatrogenic:</b> weight-promoting medication started or up-titrated</label>
+        <label class="check"><input type="checkbox" id="tx_dThyroid" /> <b style="font-weight:500;">Endocrine:</b> hypothyroidism / sex-hormone shift / new endocrinopathy</label>
+        <label class="check"><input type="checkbox" id="tx_dFluid" /> <b style="font-weight:500;">Fluid:</b> edema / heart failure / CKD retention obscuring fat loss</label>
+        <label class="check"><input type="checkbox" id="tx_dPKPD" /> <b style="font-weight:500;">Pharmacologic:</b> receptor-level resistance (GLP1R/GIPR variant), impaired CNS delivery — diagnosis of exclusion</label>
+        <label class="check"><input type="checkbox" id="tx_dMicrobiome" /> <b style="font-weight:500;">Substrate:</b> very-low-fiber diet / recent antibiotics (microbiome context)</label>
+        <label class="check"><input type="checkbox" id="tx_dED" /> <b style="font-weight:500;">Eating pathology:</b> emerging binge / night-eating driving intake</label>
+      </div>
+    </div>
+  </details>
+
+  <details class="card" open id="dv_card">
+    <summary class="card-head"><h2><span class="arrow"></span>Drivers of weight gain<span class="count zero" id="dv_count">0</span></h2><span class="tag">Reversible-cause review</span></summary>
+    <div class="card-body" id="dv_body"></div>
+  </details>
+
+  <details class="card" open>
+    <summary class="card-head"><h2><span class="arrow"></span>Hypercortisolism screen<span class="count zero" id="cx_count">0</span></h2><span class="tag">Discriminatory features first</span></summary>
+    <div class="card-body">
+      <div class="sub-h">Discriminatory features <span class="rt">high LR+</span></div>
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="cx_striae" /> Wide (&gt;1 cm) violaceous striae</label>
+        <label class="check"><input type="checkbox" id="cx_myopathy" /> Proximal myopathy (cannot rise from chair unaided)</label>
+        <label class="check"><input type="checkbox" id="cx_bruise" /> Easy bruising without trauma</label>
+        <label class="check"><input type="checkbox" id="cx_plethora" /> Facial plethora</label>
+      </div>
+      <div class="sub-h">Non-discriminatory features <span class="rt">common in obesity alone</span></div>
+      <div class="check-grid">
+        <label class="check"><input type="checkbox" id="cx_fatpad" /> Dorsocervical / supraclavicular pad</label>
+        <label class="check"><input type="checkbox" id="cx_central" /> Central redistribution</label>
+        <label class="check"><input type="checkbox" id="cx_htn" /> Hypertension</label>
+        <label class="check"><input type="checkbox" id="cx_dysgly" /> Dysglycemia</label>
+        <label class="check"><input type="checkbox" id="cx_osteo" /> Osteoporosis at young age</label>
+        <label class="check"><input type="checkbox" id="cx_mood" /> Mood lability / psychosis</label>
+      </div>
+      <div class="sub-h">Context</div>
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="cx_incidentaloma" /> Adrenal incidentaloma known (MACS question)</label>
+        <label class="check"><input type="checkbox" id="cx_exogenous" /> Exogenous steroid — any route (inhaled, topical, joint, herbal)</label>
+        <label class="check"><input type="checkbox" id="cx_pseudo" checked /> Pseudo-Cushing driver present (alcohol, depression, OSA, poorly controlled DM)</label>
+      </div>
+      <div class="sub-h">Biochemical screen — if already done</div>
+      <div class="field-row triple">
+        <div class="field"><label>1-mg DST <span class="hint">µg/dL</span></label><input type="number" step="0.1" id="cx_dst" placeholder="—" /></div>
+        <div class="field"><label>LNSC <span class="hint">× ULN</span></label><input type="number" step="0.1" id="cx_lnsc" placeholder="—" /></div>
+        <div class="field"><label>24-h UFC <span class="hint">× ULN</span></label><input type="number" step="0.1" id="cx_ufc" placeholder="—" /></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card" open>
+    <summary class="card-head"><h2><span class="arrow"></span>Eating &amp; psychiatric screen<span class="count zero" id="ed_count">0</span></h2><span class="tag">Gate before appetite-suppressant Rx</span></summary>
+    <div class="card-body">
+      <div class="field-row quad">
+        <div class="field"><label>BEDS-7 <span class="hint">0–7</span></label><input type="number" id="beds7" value="3" min="0" max="7" /></div>
+        <div class="field"><label>SCOFF <span class="hint">0–5</span></label><input type="number" id="scoff" value="1" min="0" max="5" /></div>
+        <div class="field"><label>PHQ-9</label><input type="number" id="phq9" value="8" min="0" max="27" /></div>
+        <div class="field"><label>GAD-7</label><input type="number" id="gad7" value="6" min="0" max="21" /></div>
+      </div>
+      <div class="check-grid one" style="margin-top:9px;">
+        <label class="check"><input type="checkbox" id="ed_binge" checked /> Recurrent objective binge episodes with loss of control</label>
+        <label class="check"><input type="checkbox" id="ed_purge" /> Compensatory behaviours (vomiting, laxatives, diuretics, driven exercise)</label>
+        <label class="check"><input type="checkbox" id="ed_restrict" /> Restriction / fear of weight gain / body-image overvaluation</label>
+        <label class="check"><input type="checkbox" id="ed_night" /> Night-eating syndrome pattern (evening hyperphagia, nocturnal ingestions)</label>
+        <label class="check"><input type="checkbox" id="ed_grazing" checked /> Grazing / hedonic food-reward pattern (mYFAS-type)</label>
+        <label class="check"><input type="checkbox" id="ed_si" /> Active suicidal ideation or recent attempt</label>
+        <label class="check"><input type="checkbox" id="ed_hxAN" /> History of anorexia or bulimia nervosa</label>
+      </div>
+    </div>
+  </details>
+
+  <details class="card" open>
+    <summary class="card-head"><h2><span class="arrow"></span>Clinical component — ORCD inventory<span class="count zero" id="orcd_count">0</span></h2><span class="tag">AACE Alg. 4 — presence × severity</span></summary>
+    <div class="card-body" id="orcd_body"></div>
+  </details>
+
+  <details class="card" open>
+    <summary class="card-head"><h2><span class="arrow"></span>Safety screen<span class="count zero" id="sf_count">0</span></h2><span class="tag">Hard blocks &amp; cautions</span></summary>
+    <div class="card-body">
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="s_preg" /> Pregnant, lactating, or planning pregnancy within 2 months</label>
+        <label class="check"><input type="checkbox" id="s_mtc" /> Personal or family history of MTC or MEN2</label>
+        <label class="check"><input type="checkbox" id="s_gastroparesis" /> Known gastroparesis / severe GI dysmotility</label>
+        <label class="check"><input type="checkbox" id="s_pancreatitis" /> History of pancreatitis</label>
+        <label class="check"><input type="checkbox" id="s_gallstone" /> Symptomatic gallbladder disease</label>
+        <label class="check"><input type="checkbox" id="s_seizure" /> Seizure disorder or lowered seizure threshold</label>
+        <label class="check"><input type="checkbox" id="s_opioid" /> Chronic opioid therapy or opioid dependence</label>
+        <label class="check"><input type="checkbox" id="s_maoi" /> MAOI within 14 days</label>
+        <label class="check"><input type="checkbox" id="s_uncHTN" /> Uncontrolled hypertension</label>
+        <label class="check"><input type="checkbox" id="s_cvd" /> Unstable CAD / arrhythmia / recent MI or CVA</label>
+        <label class="check"><input type="checkbox" id="s_glaucoma" /> Glaucoma</label>
+        <label class="check"><input type="checkbox" id="s_hyperthyroid" /> Untreated hyperthyroidism</label>
+        <label class="check"><input type="checkbox" id="s_stones" /> Nephrolithiasis</label>
+        <label class="check"><input type="checkbox" id="s_cholestasis" /> Cholestasis or chronic malabsorption</label>
+        <label class="check"><input type="checkbox" id="s_dr" /> Diabetic retinopathy (rapid-lowering risk)</label>
+      </div>
+      <div class="field-row" style="margin-top:11px;">
+        <div class="field"><label>eGFR <span class="hint">mL/min/1.73</span></label><input type="number" id="egfr" value="84" /></div>
+        <div class="field"><label>Child-Pugh <span class="hint">if cirrhotic</span></label><select id="cp"><option value="na">N/A</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="card" open>
+    <summary class="card-head"><h2><span class="arrow"></span>Coverage &amp; pathway routing</h2><span class="tag">Medicare GLP-1 Bridge · Part D · commercial</span></summary>
+    <div class="card-body">
+      <div class="field-row">
+        <div class="field"><label>Payer</label>
+          <select id="payer">
+            <option value="medicare" selected>Medicare</option>
+            <option value="commercial">Commercial / ACA</option>
+            <option value="cash">Self-pay</option>
+          </select>
+        </div>
+        <div class="field"><label>Part D plan type <span class="hint">Bridge gate</span></label>
+          <select id="planType">
+            <option value="pdp" selected>Standalone PDP</option>
+            <option value="mapd">MA-PD (HMO / HMO-POS / PPO)</option>
+            <option value="snp">SNP / EGWP / LI NET</option>
+            <option value="noD">No Part D enrollment</option>
+            <option value="excl">PFFS · §1876 cost · §1833 HCPP · PACE · fraternal</option>
+          </select>
+        </div>
+      </div>
+      <div class="sub-h">Bridge clinical criteria — the specific facts CMS makes you attest</div>
+      <div class="check-grid one">
+        <label class="check"><input type="checkbox" id="on2htn" /> BP above 140 systolic or 90 diastolic <b style="font-weight:500;">despite two antihypertensives</b> (CMS definition of uncontrolled)</label>
+        <label class="check"><input type="checkbox" id="priorMI" /> Previous myocardial infarction</label>
+        <label class="check"><input type="checkbox" id="priorCVA" /> Previous stroke</label>
+        <label class="check"><input type="checkbox" id="pad" /> Symptomatic peripheral artery disease</label>
+        <label class="check"><input type="checkbox" id="osaModSev" /> OSA is moderate-to-severe (AHI ≥15) and confirmed</label>
+        <label class="check"><input type="checkbox" id="maceIntent" /> Prescribing intent <b style="font-weight:500;">includes</b> MACE risk reduction</label>
+      </div>
+      <div class="sub-h">Attestation anchors <span class="rt">criteria are judged at initiation, not today</span></div>
+      <div class="field-row triple">
+        <div class="field"><label>BMI at initiation <span class="hint">if continuing</span></label><input type="number" step="0.1" id="bmiInit" placeholder="current" /></div>
+        <div class="field"><label>Initiation date</label><input type="text" id="initDate" placeholder="MM/YYYY" /></div>
+        <div class="field"><label>%TBWL to date <span class="hint">reauth</span></label><input type="number" step="0.1" id="tbwlToDate" placeholder="—" /></div>
+      </div>
+      <div class="field-row triple">
+        <div class="field"><label>Lifestyle program <span class="hint">months</span></label><input type="number" id="lsMonths" value="6" /></div>
+        <div class="field"><label>Documented contacts</label><input type="number" id="lsContacts" value="14" /></div>
+        <div class="field"><label>% change on lifestyle alone</label><input type="number" step="0.1" id="lsResult" value="-2.1" /></div>
+      </div>
+      <div class="sub-h">Commercial only</div>
+      <div class="field-row">
+        <div class="field"><label>AOM benefit</label>
+          <select id="cov">
+            <option value="none">Excluded — cash / step therapy</option>
+            <option value="pa" selected>Covered with prior authorization</option>
+            <option value="open">Covered, open formulary</option>
+          </select>
+        </div>
+        <div class="field"><label>Route preference</label>
+          <select id="route"><option value="any">No preference</option><option value="oral">Oral strongly preferred</option><option value="inj">Injectable acceptable</option></select>
+        </div>
+      </div>
+      <label class="check" style="margin-top:8px;"><input type="checkbox" id="pref_cost" /> Cost is the dominant constraint (weight lower-cost step therapy — AACE Alg. 9)</label>
+    </div>
+  </details>
+
+</div>
+
+<!-- ══════════════════════ OUTPUT COLUMN ══════════════════════ -->
+<div class="col col-outputs">
+
+  <div class="banner" id="banner">
+    <div>
+      <div class="dx" id="dxLine">computing…</div>
+      <div class="sub" id="dxSub"></div>
+    </div>
+    <div class="goal" id="goalBox"></div>
+  </div>
+
+  <div class="spine-card">
+    <div class="card-head"><h2>Care algorithm — live path</h2><span class="tag">Illuminated nodes = this patient</span></div>
+    <div class="spine-wrap"><svg id="spineSvg" viewBox="0 0 634 1380" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Obesity care algorithm with the active path highlighted"></svg></div>
+    <div class="spine-legend">
+      <span><span class="sw" style="background:var(--spine-soft); border-color:var(--spine);"></span>On path</span>
+      <span><span class="sw" style="background:var(--accent-soft); border-color:var(--accent);"></span>Gate / stop</span>
+      <span><span class="sw" style="background:var(--warn-soft); border-color:var(--warn);"></span>Parallel workstream</span>
+      <span><span class="sw" style="background:var(--paper);"></span>Not applicable</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Gates</h2><span class="tag">Resolve before or alongside AOM</span></div>
+    <div class="card-body" id="gates"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Staging arithmetic</h2><span class="tag">Anthropometric × clinical</span></div>
+    <div class="card-body" id="staging"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Pharmacotherapy — ranked</h2><span class="tag">Efficacy × ORCD hierarchy × safety × access</span></div>
+    <div class="card-body" id="aomBody"></div>
+  </div>
+
+  <div class="card" id="txCard" style="display:none;">
+    <div class="card-head"><h2>Response-pattern engine</h2><span class="tag">Non-response · plateau · rebound · partial — structured pathway</span></div>
+    <div class="card-body" id="txBody"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Coverage pathway</h2><span class="tag">CMS Medicare GLP-1 Bridge · live 1 Jul 2026 – 31 Dec 2027</span></div>
+    <div class="card-body" id="covBody"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Procedural &amp; surgical eligibility</h2><span class="tag">ASMBS/IFSO 2022 criteria</span></div>
+    <div class="card-body" id="surg"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Workup this visit</h2><span class="tag">Keyed to fired flags</span></div>
+    <div class="card-body"><div class="two-col" id="labs"></div><div class="foot" id="labFoot"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Response rules &amp; follow-up</h2><span class="tag">ADA SOC 2026 §pharmacologic</span></div>
+    <div class="card-body" id="response"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Documentation</h2><span class="tag">Athena-ready · click to copy</span></div>
+    <div class="card-body">
+      <div class="tabs" id="mtabs">
+        <button class="on" data-m="intake">.OBXINTAKE</button>
+        <button data-m="stage">.ABCDSTAGE</button>
+        <button data-m="plan">.AOMPLAN</button>
+        <button data-m="bridgepa">.BRIDGEPA</button>
+        <button data-m="paletter">.PALETTER</button>
+        <button data-m="pareauth">.PAREAUTH</button>
+        <button data-m="response">.TXRESPONSE</button>
+        <button data-m="codes">.CODES</button>
+        <button data-m="mermaid">mermaid</button>
+        <button data-m="all">All</button>
+      </div>
+      <div class="mbox">
+        <button class="cpy" id="cpyBtn">Copy</button>
+        <div class="mtext" id="mtext"></div>
+      </div>
+      <div class="foot"><b>mermaid</b> tab exports this patient's path as graph source with <code>classDef</code> highlighting — paste into any mermaid renderer, your EHR wiki, or a slide.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const num = (id) => { const v = parseFloat($(id).value); return isNaN(v) ? 0 : v; };
+const opt = (id) => { const v = parseFloat($(id).value); return isNaN(v) ? null : v; };
+const chk = (id) => $(id).checked;
+const vsel = (id) => $(id).value;
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ════════════════════════════════════════════════════════════════
+// DECLARATIVE CONTENT — edit these arrays to re-tune the tool.
+// ════════════════════════════════════════════════════════════════
+
+const DRIVERS = [
+  { group: 'Iatrogenic — weight-promoting medications', items: [
+    { id: 'd_gc',     name: 'Systemic glucocorticoids',                                    act: 'Taper to lowest effective dose; steroid-sparing agent with prescriber' },
+    { id: 'd_atyp',   name: 'Olanzapine / clozapine / quetiapine / risperidone',           act: 'Switch → aripiprazole, ziprasidone, lurasidone. Metformin co-Rx has RCT support if switch not possible' },
+    { id: 'd_ad',     name: 'Paroxetine / mirtazapine / amitriptyline',                    act: 'Switch → bupropion, fluoxetine, sertraline' },
+    { id: 'd_li',     name: 'Lithium',                                                     act: 'Level-guided; rarely switchable — treat as fixed headwind' },
+    { id: 'd_vpa',    name: 'Valproate / gabapentinoid / carbamazepine',                   act: 'Switch → topiramate, zonisamide, lamotrigine' },
+    { id: 'd_ins',    name: 'Insulin / sulfonylurea / TZD',                                act: 'Restructure regimen → GIP/GLP-1 or GLP-1, SGLT2i, metformin; de-escalate SU first' },
+    { id: 'd_bb',     name: 'Atenolol / metoprolol / propranolol',                         act: 'Switch → carvedilol or nebivolol; or ARB/CCB if no compelling indication' },
+    { id: 'd_ah',     name: 'Chronic first-generation antihistamine',                      act: 'Switch → second-generation' },
+    { id: 'd_prog',   name: 'DMPA / high-dose progestin',                                  act: 'Alternative contraception' },
+  ]},
+  { group: 'Endocrine & secondary', items: [
+    { id: 'd_hypo',   name: 'Untreated hypothyroidism',                                    act: 'TSH + free T4 → replace; expect modest (2–4 kg) effect only' },
+    { id: 'd_cush',   name: 'Clinical suspicion of hypercortisolism',                      act: 'See cortisol gate — do not screen on obesity phenotype alone' },
+    { id: 'd_gh',     name: 'Hypopituitarism / adult GH deficiency',                       act: 'IGF-1, full anterior pituitary axis' },
+    { id: 'd_hypothal', name: 'Hypothalamic injury — surgery, XRT, craniopharyngioma',     act: 'Hypothalamic obesity pathway; setmelanotide label now includes acquired hypothalamic obesity' },
+    { id: 'd_hypogon', name: 'Untreated male hypogonadism',                                act: 'Confirm on 2 AM totals + SHBG; treat cause before TRT' },
+  ]},
+  { group: 'Behavioural & environmental', items: [
+    { id: 'd_sleep',  name: 'Short (<7 h) or fragmented sleep',                            act: 'CBT-I; sleep extension. Treat before attributing failure to adherence' },
+    { id: 'd_shift',  name: 'Shift work / circadian misalignment',                         act: 'Anchor meal timing; light exposure protocol' },
+    { id: 'd_stress', name: 'Chronic stress, caregiving, grief',                           act: 'CBT / MBSR; this also drives the pseudo-Cushing screen' },
+    { id: 'd_alc',    name: 'Alcohol ≥7 (F) / ≥14 (M) units per week, or evening pattern', act: 'AUDIT-C + brief intervention; 2-week abstinence trial' },
+    { id: 'd_food',   name: 'Food insecurity',                                             act: 'Social work, SNAP, produce prescription — precedes any diet plan' },
+    { id: 'd_smoke',  name: 'Smoking cessation within 12 months',                          act: 'Expect 4–5 kg; do not resume. Naltrexone-bupropion aligns with both targets' },
+    { id: 'd_immob',  name: 'New immobility, injury, or disability',                       act: 'PT referral; adaptive exercise prescription' },
+  ]},
+  { group: 'Life-stage & structural', items: [
+    { id: 'd_meno',   name: 'Menopause transition',                                        act: 'Drives redistribution more than mass; MHT decision is separate from weight' },
+    { id: 'd_pp',     name: 'Postpartum weight retention',                                 act: 'All AOM contraindicated in pregnancy/lactation' },
+    { id: 'd_regain', name: 'Post-bariatric weight recurrence',                            act: 'Anatomic evaluation + AOM; revision only after both' },
+  ]},
+  { group: 'Monogenic / syndromic red flags', items: [
+    { id: 'd_early',  name: 'Severe obesity onset before age 5',                           act: 'Genetic panel — MC4R, POMC, LEPR, PCSK1' },
+    { id: 'd_hyper',  name: 'Extreme hyperphagia / relentless food-seeking',               act: 'Genetic panel; setmelanotide if POMC/LEPR/PCSK1 deficiency or BBS' },
+    { id: 'd_dysm',   name: 'Developmental delay, retinal dystrophy, or polydactyly',      act: 'Bardet-Biedl / Prader-Willi evaluation' },
+  ]},
+];
+
+const ORCD = [
+  { group: 'Cardiometabolic', items: [
+    { id: 'predm', name: 'Prediabetes',                cue: 'IFG / IGT / A1c 5.7–6.4%', sevOff: true },
+    { id: 't2dm',  name: 'Type 2 diabetes',            cue: 'mild-mod: A1c <8%, no complications · severe: A1c ≥8%, insulin, or micro/macrovascular disease' },
+    { id: 'mets',  name: 'Metabolic syndrome',         cue: '≥3 criteria', sevOff: true },
+    { id: 'dlp',   name: 'Dyslipidemia',               cue: 'mild-mod: above LDL/non-HDL goal · severe: TG ≥500 or ASCVD-driving' },
+    { id: 'htn',   name: 'Hypertension',               cue: 'mild-mod: stage 1, controlled · severe: stage 2 or uncontrolled on ≥3 agents' },
+    { id: 'ascvd', name: 'ASCVD',                      cue: 'mild-mod: subclinical / high risk · severe: established MI, CVA, PAD, revascularization' },
+    { id: 'hfpef', name: 'Heart failure (HFpEF)',      cue: 'mild-mod: NYHA I–II · severe: NYHA III–IV or hospitalization' },
+    { id: 'af',    name: 'Atrial fibrillation',        cue: 'mild-mod: paroxysmal · severe: persistent / ablation candidate' },
+    { id: 'ckd',   name: 'Chronic kidney disease',     cue: 'mild-mod: G1–G3a, A1–A2 · severe: G3b–G5 or A3' },
+    { id: 'masld', name: 'MASLD / MASH',               cue: 'mild-mod: steatosis, F0–F1 · severe: MASH with F2–F3 or cirrhosis' },
+  ]},
+  { group: 'Biomechanical', items: [
+    { id: 'osa',   name: 'Obstructive sleep apnea',    cue: 'mild-mod: AHI 5–30 · severe: AHI >30 or hypoventilation' },
+    { id: 'oa',    name: 'Knee / hip osteoarthritis',  cue: 'mild-mod: symptomatic, function preserved · severe: arthroplasty candidate' },
+    { id: 'gerd',  name: 'GERD',                       cue: 'mild-mod: PPI-responsive · severe: erosive or Barrett' },
+    { id: 'sui',   name: 'Stress urinary incontinence',cue: 'mild-mod: occasional · severe: daily / surgical candidate' },
+    { id: 'iih',   name: 'Idiopathic intracranial HTN',cue: 'mild-mod: headache, no papilledema · severe: vision threat' },
+  ]},
+  { group: 'Reproductive, psychological & other', items: [
+    { id: 'pcos',  name: 'PCOS',                       cue: 'mild-mod: oligomenorrhea / hyperandrogenism · severe: infertility or endometrial risk' },
+    { id: 'infert',name: 'Infertility',                cue: 'mild-mod: trying <12 mo · severe: ART candidate' },
+    { id: 'hypogonad', name: 'Functional hypogonadism (male)', cue: 'mild-mod: biochemical · severe: symptomatic with infertility' },
+    { id: 'dep',   name: 'Depression / anxiety',       cue: 'mild-mod: PHQ-9 5–14 · severe: PHQ-9 ≥15 or suicidality' },
+    { id: 'asthma',name: 'Asthma',                     cue: 'mild-mod: intermittent · severe: frequent exacerbations / oral steroids' },
+    { id: 'lymph', name: 'Lymphedema / venous insufficiency', cue: 'mild-mod: stage 1 · severe: ulceration or recurrent cellulitis' },
+    { id: 'cancer',name: 'Obesity-related cancer history', cue: 'mild-mod: remote, in remission · severe: active or recent' },
+  ]},
+];
+
+// Effect sizes are trial-realized mean % total body weight loss at the trial's
+// primary endpoint. `orcd` values are evidence weights for complication-centric
+// preference (3 = FDA indication or dedicated positive outcome trial;
+// 2 = strong secondary-endpoint evidence; 1 = mechanistic / class-consistent).
+const AOMS = [
+  { id:'tirz', name:'Tirzepatide', brand:'Zepbound', cls:'GIP/GLP-1 RA · SC weekly', tbwl:20.9,
+    evid:'SURMOUNT-1 (72 wk, 15 mg). SURMOUNT-5 head-to-head: 20.2% vs semaglutide 13.7%.',
+    orcd:{ osa:3, t2dm:3, hfpef:3, masld:2, predm:2, htn:1, dlp:1, mets:1, pcos:1, oa:1, gerd:-1 },
+    blocks:{ s_mtc:'MTC/MEN2 history — boxed warning', s_preg:'Pregnancy / lactation', s_gastroparesis:'Gastroparesis' },
+    cautions:{ s_pancreatitis:'pancreatitis history', s_gallstone:'gallbladder disease', s_dr:'retinopathy — pace titration', h_incretinIntol:'prior incretin intolerance' },
+    note:'Only AOM with an FDA indication for moderate-to-severe OSA (SURMOUNT-OSA). SUMMIT supports HFpEF benefit. Bridge supplies the KwikPen only — single-dose vials and pens are excluded.',
+    bridgeDrug:true, oral:false, cost:3 },
+
+  { id:'sema', name:'Semaglutide 2.4 mg', brand:'Wegovy', cls:'GLP-1 RA · SC weekly', tbwl:14.9,
+    evid:'STEP-1 (68 wk). SELECT: 20% MACE reduction. STEP-HFpEF, STEP 9 (knee OA), ESSENCE (MASH), FLOW (CKD in T2D).',
+    orcd:{ ascvd:3, masld:3, hfpef:3, oa:3, ckd:2, t2dm:2, osa:1, predm:2, htn:1, dlp:1, mets:1, pcos:1, af:1, cancer:1 },
+    blocks:{ s_mtc:'MTC/MEN2 history — boxed warning', s_preg:'Pregnancy / lactation', s_gastroparesis:'Gastroparesis' },
+    cautions:{ s_pancreatitis:'pancreatitis history', s_gallstone:'gallbladder disease', s_dr:'retinopathy — pace titration', h_incretinIntol:'prior incretin intolerance' },
+    note:'The broadest outcome evidence of any AOM. The only agent carrying an MACE-reduction indication alongside weight.',
+    bridgeDrug:true, oral:false, cost:3 },
+
+  { id:'osema', name:'Oral semaglutide 25 mg', brand:'Wegovy pill', cls:'GLP-1 RA · oral daily', tbwl:13.6,
+    evid:'OASIS 4 (64 wk): −13.6% treatment-policy, −16.6% with full adherence. FDA approved Dec 2025; carries the MACE indication.',
+    orcd:{ ascvd:3, t2dm:2, predm:2, htn:1, dlp:1, mets:1, masld:1, pcos:1 },
+    blocks:{ s_mtc:'MTC/MEN2 history — boxed warning', s_preg:'Pregnancy / lactation', s_gastroparesis:'Gastroparesis' },
+    cautions:{ s_pancreatitis:'pancreatitis history', s_gallstone:'gallbladder disease', h_incretinIntol:'prior incretin intolerance' },
+    note:'Efficacy approaches injectable Wegovy. Dosing conditions still apply (fasting, water volume, 30-min wait) — a real adherence tax.',
+    bridgeDrug:true, oral:true, cost:3 },
+
+  { id:'orfo', name:'Orforglipron', brand:'Foundayo', cls:'oral small-molecule GLP-1 RA · daily', tbwl:11.2,
+    evid:'ATTAIN-1 (72 wk): −7.5% / −8.4% / −11.2% at 6 / 12 / 36 mg. FDA approved 1 Apr 2026.',
+    orcd:{ t2dm:2, predm:2, htn:1, dlp:1, mets:1, osa:1, pcos:1 },
+    blocks:{ s_mtc:'MTC/MEN2 history — boxed warning', s_preg:'Pregnancy / lactation', s_gastroparesis:'Gastroparesis' },
+    cautions:{ s_pancreatitis:'pancreatitis history', h_incretinIntol:'prior incretin intolerance — different PK, but same receptor' },
+    note:'No food, water, or timing restriction — the cleanest oral adherence profile. Small molecule, so supply is less constrained. Non-peptide PK is a genuine reason to re-trial after peptide GI intolerance, but counsel that the receptor is the same.',
+    bridgeDrug:true, oral:true, cost:2 },
+
+  { id:'lira', name:'Liraglutide 3.0 mg', brand:'Saxenda', cls:'GLP-1 RA · SC daily', tbwl:8.0,
+    evid:'SCALE (56 wk). Generic entry has reshaped its cost position.',
+    orcd:{ t2dm:2, predm:2, osa:1, htn:1, mets:1 },
+    blocks:{ s_mtc:'MTC/MEN2 history — boxed warning', s_preg:'Pregnancy / lactation', s_gastroparesis:'Gastroparesis' },
+    cautions:{ s_pancreatitis:'pancreatitis history', s_gallstone:'gallbladder disease', h_incretinIntol:'prior incretin intolerance' },
+    note:'Daily injection with weaker efficacy — its case is now almost entirely cost and coverage, not clinical.',
+    oral:false, cost:2 },
+
+  { id:'phentop', name:'Phentermine / topiramate ER', brand:'Qsymia', cls:'sympathomimetic + neurostabilizer · oral', tbwl:10.9,
+    evid:'CONQUER / EQUIP (56 wk, top dose). The largest non-incretin oral effect.',
+    orcd:{ iih:3, predm:2, osa:2, mets:1, dep:-1 },
+    blocks:{ s_preg:'Pregnancy — topiramate cleft palate risk; REMS requires monthly pregnancy testing', s_glaucoma:'Glaucoma', s_hyperthyroid:'Untreated hyperthyroidism', s_maoi:'MAOI within 14 days', s_cvd:'Unstable cardiovascular disease' },
+    cautions:{ s_uncHTN:'uncontrolled hypertension — control first', s_stones:'nephrolithiasis history', ed_si:'monitor mood', s_cvd:'CV risk' },
+    note:'Watch cognitive adverse effects, paresthesia, stones, metabolic acidosis, and heart rate. Topiramate component is useful when migraine or IIH coexists.',
+    oral:true, cost:1, ageCaution:65 },
+
+  { id:'nbup', name:'Naltrexone / bupropion ER', brand:'Contrave', cls:'opioid antagonist + DNRI · oral', tbwl:5.5,
+    evid:'COR-I / COR-II (56 wk). CONVENE established CV safety.',
+    orcd:{ dep:2, mets:1, predm:1 },
+    blocks:{ s_seizure:'Seizure disorder — contraindicated', s_opioid:'Chronic opioid use — contraindicated', s_maoi:'MAOI within 14 days', s_uncHTN:'Uncontrolled hypertension', ed_hxAN:'History of anorexia or bulimia nervosa — contraindicated', s_preg:'Pregnancy' },
+    cautions:{ ed_si:'monitor for suicidality', ed_purge:'purging behaviours' },
+    note:'The reward-pathway agent. Distinctive value when tobacco or alcohol use disorder coexists — both components have independent evidence there.',
+    oral:true, cost:1 },
+
+  { id:'phen', name:'Phentermine (monotherapy)', brand:'Adipex-P / Lomaira', cls:'sympathomimetic · oral', tbwl:6.0,
+    evid:'FDA label is short-term; long-term use is off-label but supported by extended cohort safety data.',
+    orcd:{ predm:1 },
+    blocks:{ s_preg:'Pregnancy', s_glaucoma:'Glaucoma', s_hyperthyroid:'Untreated hyperthyroidism', s_maoi:'MAOI within 14 days', s_cvd:'Unstable cardiovascular disease' },
+    cautions:{ s_uncHTN:'uncontrolled hypertension', ed_binge:'may mask rather than treat binge pathology' },
+    note:'Cheap and fast-acting. Schedule IV; some state rules still constrain duration. No outcome data.',
+    oral:true, cost:0, ageCaution:65 },
+
+  { id:'orli', name:'Orlistat', brand:'Xenical / Alli', cls:'lipase inhibitor · oral', tbwl:3.0,
+    evid:'XENDOS (4 yr). Purely luminal — no CNS or incretin exposure.',
+    orcd:{ predm:1, dlp:1 },
+    blocks:{ s_cholestasis:'Cholestasis / chronic malabsorption', s_preg:'Pregnancy' },
+    cautions:{ s_stones:'oxalate nephropathy risk' },
+    note:'Its niche is the patient in whom every centrally-acting and incretin agent is blocked. Tolerability is the ceiling; supplement fat-soluble vitamins.',
+    oral:true, cost:0 },
+
+  { id:'setm', name:'Setmelanotide', brand:'Imcivree', cls:'MC4R agonist · SC daily', tbwl:12.0,
+    evid:'Restricted to genetically confirmed POMC / PCSK1 / LEPR deficiency, Bardet-Biedl, and acquired hypothalamic obesity.',
+    orcd:{},
+    blocks:{ s_preg:'Pregnancy' },
+    cautions:{},
+    note:'Only after a positive genetic or hypothalamic-injury pathway. Do not empirically trial.',
+    oral:false, cost:4, needsGene:true },
+];
+
+// ════════════════════════════════════════════════════════════════
+// ALGORITHM GRAPH — nodes carry layout + mermaid identity together.
+// ════════════════════════════════════════════════════════════════
+const SPINE_X = 232, LEFT_X = 12, RIGHT_X = 452, NW = 170, NH = 44;
+const NODES = [
+  { id:'start',   x:SPINE_X, y:14,   h:34, t:'Adult with excess adiposity', shape:'stadium' },
+  { id:'anthro',  x:SPINE_X, y:78,   t:'Anthropometric component', s:'BMI · waist · waist-to-height, ethnicity-specific' },
+  { id:'dAnthro', x:SPINE_X, y:152,  h:38, t:'Criteria met?', shape:'dec' },
+  { id:'prevent', x:LEFT_X,  y:152,  h:38, t:'Prevention & surveillance', s:'no ABCD diagnosis', shape:'alt' },
+  { id:'drivers', x:SPINE_X, y:220,  t:'Driver review', s:'medications · endocrine · sleep · genetic' },
+  { id:'dDriver', x:SPINE_X, y:294,  h:38, t:'Reversible driver present?', shape:'dec' },
+  { id:'fixDrv',  x:RIGHT_X, y:294,  h:44, t:'Address in parallel', s:'switch the drug; treat the cause', shape:'par' },
+  { id:'psych',   x:SPINE_X, y:362,  t:'Eating & psychiatric screen', s:'BEDS-7 · SCOFF · PHQ-9 · night eating' },
+  { id:'dEd',     x:SPINE_X, y:436,  h:38, t:'Eating disorder positive?', shape:'dec' },
+  { id:'edPath',  x:LEFT_X,  y:436,  h:52, t:'Eating-disorder pathway', s:'CBT-E · psychology · agent choice constrained', shape:'gate' },
+  { id:'dCort',   x:SPINE_X, y:510,  h:38, t:'Hypercortisolism suspected?', shape:'dec' },
+  { id:'cortPath',x:RIGHT_X, y:510,  h:52, t:'Cortisol workup gate', s:'2 of 3 abnormal · exclude pseudo-Cushing', shape:'gate' },
+  { id:'orcd',    x:SPINE_X, y:584,  t:'Clinical component', s:'ORCD inventory with severity' },
+  { id:'dStage',  x:SPINE_X, y:658,  h:38, t:'Stage', shape:'dec' },
+  { id:'st1',     x:LEFT_X,  y:726,  h:52, t:'Stage 1', s:'preclinical — no ORCD', shape:'stage' },
+  { id:'st2',     x:SPINE_X, y:726,  h:52, t:'Stage 2', s:'mild-moderate ORCD', shape:'stage' },
+  { id:'st3',     x:RIGHT_X, y:726,  h:52, t:'Stage 3', s:'severe or multiple ORCD', shape:'stage' },
+  { id:'goal',    x:SPINE_X, y:806,  t:'Set complication-specific goal', s:'health target first, weight target second' },
+  { id:'found',   x:SPINE_X, y:880,  t:'Foundation for every stage', s:'nutrition · activity · sleep · behaviour · body composition' },
+  { id:'aom',     x:SPINE_X, y:954,  h:48, t:'Select pharmacotherapy', s:'ORCD hierarchy × contraindications × access' },
+  { id:'dCov',    x:SPINE_X, y:1026, h:38, t:'Coverage route?', shape:'dec' },
+  { id:'bridgeN', x:LEFT_X,  y:1020, h:52, t:'Medicare GLP-1 Bridge', s:'weight-only · $50 flat · attest at initiation', shape:'gate' },
+  { id:'partdN',  x:RIGHT_X, y:1020, h:52, t:'Part D benefit', s:'T2DM · mod-sev OSA · MASH · MACE intent', shape:'gate' },
+  { id:'pa',      x:SPINE_X, y:1098, h:44, t:'Prior authorization', s:'attest · document · submit' },
+  { id:'dResp',   x:SPINE_X, y:1172, h:38, t:'≥5% at 12–16 weeks?', shape:'dec' },
+  { id:'txEng',   x:LEFT_X,  y:1166, h:52, t:'Response-pattern engine', s:'non-response · plateau · rebound', shape:'gate' },
+  { id:'intens',  x:RIGHT_X, y:1166, h:52, t:'Intensify', s:'max dose → switch → add ILI → refer', shape:'par' },
+  { id:'dSurg',   x:RIGHT_X, y:1246, h:38, t:'Surgical / endoscopic candidate?', shape:'dec' },
+  { id:'surgP',   x:RIGHT_X, y:1314, h:44, t:'Metabolic-bariatric referral', s:'MBS · ESG · balloon', shape:'alt' },
+  { id:'maint',   x:SPINE_X, y:1246, h:52, t:'Long-term maintenance', s:'continue AOM · re-loop on regain trigger', shape:'stadium' },
+];
+const EDGES = [
+  { f:'start',   t:'anthro' },
+  { f:'anthro',  t:'dAnthro' },
+  { f:'dAnthro', t:'prevent', l:'no',  side:'L' },
+  { f:'dAnthro', t:'drivers', l:'yes' },
+  { f:'drivers', t:'dDriver' },
+  { f:'dDriver', t:'fixDrv',  l:'yes', side:'R' },
+  { f:'dDriver', t:'psych',   l:'no / done' },
+  { f:'psych',   t:'dEd' },
+  { f:'dEd',     t:'edPath',  l:'yes', side:'L' },
+  { f:'dEd',     t:'dCort',   l:'no' },
+  { f:'dCort',   t:'cortPath',l:'yes', side:'R' },
+  { f:'dCort',   t:'orcd',    l:'no' },
+  { f:'orcd',    t:'dStage' },
+  { f:'dStage',  t:'st1',     l:'0 ORCD', side:'L' },
+  { f:'dStage',  t:'st2',     l:'mild-mod' },
+  { f:'dStage',  t:'st3',     l:'severe', side:'R' },
+  { f:'st1',     t:'goal',    side:'LU' },
+  { f:'st2',     t:'goal' },
+  { f:'st3',     t:'goal',    side:'RU' },
+  { f:'goal',    t:'found' },
+  { f:'found',   t:'aom' },
+  { f:'aom',     t:'dCov' },
+  { f:'dCov',    t:'bridgeN', l:'weight-only', side:'L' },
+  { f:'dCov',    t:'partdN',  l:'Part D indication', side:'R' },
+  { f:'dCov',    t:'pa',      l:'commercial / cash' },
+  { f:'bridgeN', t:'pa',      side:'LU', dashed:true },
+  { f:'partdN',  t:'pa',      side:'RU', dashed:true },
+  { f:'pa',      t:'dResp' },
+  { f:'dResp',   t:'intens',  l:'no', side:'R' },
+  { f:'dResp',   t:'txEng',   l:'classify', side:'L' },
+  { f:'txEng',   t:'intens',  side:'LU', dashed:true },
+  { f:'dResp',   t:'maint',   l:'yes' },
+  { f:'intens',  t:'dSurg',   side:'V' },
+  { f:'dSurg',   t:'surgP',   l:'yes', side:'V' },
+  { f:'edPath',  t:'dCort',   side:'LU', dashed:true },
+  { f:'fixDrv',  t:'psych',   side:'RU', dashed:true },
+  { f:'cortPath',t:'orcd',    side:'RU', dashed:true },
+];
+
+// ════════════════════════════════════════════════════════════════
+// BUILD INPUT UI FROM DATA
+// ════════════════════════════════════════════════════════════════
+$('dv_body').innerHTML = DRIVERS.map(g => `
+  <div class="sub-h">${esc(g.group)}</div>
+  <div class="check-grid one">
+    ${g.items.map(i => `<label class="check"><input type="checkbox" id="${i.id}" /> ${esc(i.name)}</label>`).join('')}
+  </div>`).join('');
+
+$('orcd_body').innerHTML = ORCD.map(g => `
+  <div class="sub-h">${esc(g.group)}</div>
+  ${g.items.map(i => `
+    <div class="orcd-row">
+      <div class="nm">${esc(i.name)}<span class="cue">${esc(i.cue)}</span></div>
+      <div class="sev" data-orcd="${i.id}" role="group" aria-label="${esc(i.name)} severity">
+        <button type="button" class="on" data-v="0">none</button>
+        <button type="button" data-v="1">mild-mod</button>
+        ${i.sevOff ? '' : '<button type="button" data-v="2">severe</button>'}
+      </div>
+    </div>`).join('')}
+`).join('');
+
+const orcdState = {};
+ORCD.forEach(g => g.items.forEach(i => { orcdState[i.id] = 0; }));
+const orcdMeta = {};
+ORCD.forEach(g => g.items.forEach(i => { orcdMeta[i.id] = { name: i.name, group: g.group }; }));
+
+document.querySelectorAll('.sev').forEach(sev => {
+  sev.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    sev.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    orcdState[sev.dataset.orcd] = parseInt(b.dataset.v, 10);
+    compute();
+  }));
+});
+
+// Seed a representative default case so the tool opens with something live.
+['t2dm','osa'].forEach(k => { const b = document.querySelector(`[data-orcd="${k}"] button[data-v="1"]`); if (b) b.click(); });
+['d_sleep','d_alc'].forEach(k => { const el = $(k); if (el) el.checked = true; });
+
+document.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('input', compute);
+  el.addEventListener('change', compute);
+});
+document.querySelectorAll('#mtabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#mtabs button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  if (window._macros) $('mtext').textContent = window._macros[b.dataset.m] || '';
+}));
+$('cpyBtn').addEventListener('click', () => {
+  const t = $('mtext').textContent, btn = $('cpyBtn');
+  const done = () => { btn.textContent = 'Copied'; btn.classList.add('done'); setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1400); };
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t).then(done).catch(fallback); } else { fallback(); }
+  function fallback() { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done(); }
+});
+
+// ════════════════════════════════════════════════════════════════
+// ENGINE
+// ════════════════════════════════════════════════════════════════
+function compute() {
+  const age = num('age'), sex = vsel('sex'), eth = vsel('ethnicity');
+  const wt = num('wt'), ht = num('ht'), wc = num('wc');
+  const bmi = ht > 0 ? wt / Math.pow(ht / 100, 2) : 0;
+  const whtr = ht > 0 ? wc / ht : 0;
+  const fatPct = opt('fatPct');
+  const sbp = num('sbp'), dbp = num('dbp');
+
+  // ─── Anthropometric component (AACE Alg. 3) ───
+  const cut = eth === 'asian'
+    ? { ow: 23, ob: 25, wcF: 80, wcM: 90, label: 'South/East Asian' }
+    : { ow: 25, ob: 30, wcF: 88, wcM: 102, label: eth === 'gen' ? 'general' : (eth === 'afr' ? 'African ancestry' : 'Hispanic/Latino') };
+  const wcCut = sex === 'F' ? cut.wcF : cut.wcM;
+  const bmiClass = bmi >= cut.ob + 10 ? 'class 3' : bmi >= cut.ob + 5 ? 'class 2' : bmi >= cut.ob ? 'class 1' : bmi >= cut.ow ? 'overweight' : 'normal';
+  const anthroPos = bmi >= cut.ow || wc >= wcCut || whtr >= 0.5;
+  const adiposityConfirmed = bmi >= cut.ob || wc >= wcCut || whtr >= 0.5 || (fatPct !== null && fatPct >= (sex === 'F' ? 35 : 25));
+
+  // ─── Drivers ───
+  const driversHit = [];
+  DRIVERS.forEach(g => g.items.forEach(i => { if (chk(i.id)) driversHit.push({ ...i, group: g.group }); }));
+  const geneFlag = ['d_early','d_hyper','d_dysm'].some(chk) || chk('d_hypothal');
+  const iatroHit = driversHit.filter(d => d.group.startsWith('Iatrogenic'));
+
+  // ─── Cortisol gate (Endocrine Society logic: discriminatory features drive testing) ───
+  const cxDiscrim = ['cx_striae','cx_myopathy','cx_bruise','cx_plethora'].filter(chk).length;
+  const cxNonDiscrim = ['cx_fatpad','cx_central','cx_htn','cx_dysgly','cx_osteo','cx_mood'].filter(chk).length;
+  const dst = opt('cx_dst'), lnsc = opt('cx_lnsc'), ufc = opt('cx_ufc');
+  const bioPos = [dst !== null && dst > 1.8, lnsc !== null && lnsc > 1.0, ufc !== null && ufc > 1.0].filter(Boolean).length;
+  const bioDone = [dst, lnsc, ufc].filter(v => v !== null).length;
+  const cortSuspect = cxDiscrim >= 1 || chk('cx_incidentaloma') || chk('cx_exogenous') || bioPos >= 1;
+  const cortConfirmPending = cortSuspect && bioDone < 2;
+  const cortPositive = bioPos >= 2;
+
+  // ─── Eating / psych ───
+  const beds7 = num('beds7'), scoff = num('scoff'), phq9 = num('phq9'), gad7 = num('gad7');
+  const bedPos = beds7 >= 4 || chk('ed_binge');
+  const edPos = bedPos || scoff >= 2 || chk('ed_purge') || chk('ed_restrict') || chk('ed_hxAN');
+  const edUrgent = chk('ed_purge') || chk('ed_restrict') || chk('ed_hxAN') || chk('ed_si');
+  const nightEat = chk('ed_night');
+
+  // ─── ORCD & stage (AACE Alg. 4) ───
+  const mild = [], severe = [];
+  Object.keys(orcdState).forEach(k => {
+    if (orcdState[k] === 1) mild.push(k);
+    if (orcdState[k] === 2) severe.push(k);
+  });
+  if (phq9 >= 15 && orcdState.dep === 0) severe.push('dep');
+  const nORCD = mild.length + severe.length;
+  let stage;
+  if (!anthroPos) stage = 0;
+  else if (nORCD === 0) stage = 1;
+  else if (severe.length >= 1 || mild.length >= 3) stage = 3;
+  else stage = 2;
+
+  const goalPct = stage === 3 ? 15 : stage === 2 ? 10 : 5;
+  const goalKg = wt * goalPct / 100;
+  const targetWt = wt - goalKg;
+
+  const activeORCD = [...severe, ...mild];
+
+  // ─── COVERAGE ROUTE (CMS Medicare GLP-1 Bridge, live 1 Jul 2026 – 31 Dec 2027) ───
+  const payer = vsel('payer'), planType = vsel('planType');
+  const bmiInit = opt('bmiInit');
+  const bmiForCriteria = bmiInit !== null ? bmiInit : bmi;
+  const ckd3aPlus = num('egfr') < 60 || orcdState.ckd === 2;
+  const uncontrolledHTN = chk('on2htn');
+  const osaModSev = chk('osaModSev') || orcdState.osa === 2;
+  const mashFib = orcdState.masld === 2;
+  const t2dm = orcdState.t2dm > 0;
+  const maceIntent = chk('maceIntent');
+
+  // Part D-coverable indications block the Bridge entirely.
+  const partDIndications = [
+    t2dm && 'type 2 diabetes',
+    osaModSev && 'moderate-to-severe OSA',
+    mashFib && 'noncirrhotic MASH with fibrosis',
+  ].filter(Boolean);
+  const eligiblePlan = ['pdp','mapd','snp'].includes(planType);
+
+  // Which BMI tier is met — evaluated at initiation.
+  let bridgeTier = null, bridgeTierText = '';
+  if (bmiForCriteria >= 35) { bridgeTier = 'A'; bridgeTierText = `BMI ${bmiForCriteria.toFixed(1)} ≥ 35, no additional diagnosis required`; }
+  else if (bmiForCriteria >= 30 && (orcdState.hfpef > 0 || uncontrolledHTN || ckd3aPlus)) {
+    bridgeTier = 'B';
+    bridgeTierText = `BMI ${bmiForCriteria.toFixed(1)} ≥ 30 with ${[orcdState.hfpef > 0 && 'HFpEF', uncontrolledHTN && 'uncontrolled hypertension', ckd3aPlus && 'CKD stage 3a or above'].filter(Boolean).join(' · ')}`;
+  }
+  else if (bmiForCriteria >= 27 && (orcdState.predm > 0 || chk('priorMI') || chk('priorCVA') || chk('pad'))) {
+    bridgeTier = 'C';
+    bridgeTierText = `BMI ${bmiForCriteria.toFixed(1)} ≥ 27 with ${[orcdState.predm > 0 && 'prediabetes', chk('priorMI') && 'previous MI', chk('priorCVA') && 'previous stroke', chk('pad') && 'symptomatic PAD'].filter(Boolean).join(' · ')}`;
+  }
+
+  let route = 'commercial', routeBlock = null;
+  if (payer === 'cash') route = 'cash';
+  else if (payer === 'commercial') route = 'commercial';
+  else {
+    if (partDIndications.length) { route = 'partd'; routeBlock = `Part D-coverable indication present (${partDIndications.join(', ')}) — CMS makes these beneficiaries ineligible for the Bridge even when the clinical criteria are otherwise met.`; }
+    else if (maceIntent) { route = 'partd'; routeBlock = 'Prescribing intent includes MACE risk reduction — CMS routes that prescription to Part D regardless of concurrent weight intent.'; }
+    else if (!eligiblePlan) { route = 'cash'; routeBlock = planType === 'noD' ? 'Not enrolled in Part D — Bridge requires Part D enrollment.' : 'Plan type is excluded from the Bridge (PFFS, §1876 cost, §1833 HCPP, PACE, fraternal) unless also enrolled in a standalone PDP.'; }
+    else if (!bridgeTier) { route = 'cash'; routeBlock = `No Bridge BMI tier met at BMI ${bmiForCriteria.toFixed(1)}${bmiInit !== null ? ' (at initiation)' : ''}. Part D still statutorily excludes drugs used for weight loss.`; }
+    else if (age < 18) { route = 'cash'; routeBlock = 'Bridge requires age ≥18.'; }
+    else route = 'bridge';
+  }
+  const lsAttestOK = num('lsMonths') > 0 && num('lsContacts') > 0;
+
+  // ═══════════════════════════════════════════════════════════════
+  // RESPONSE-PATTERN ENGINE — non-response / plateau / rebound / partial
+  // Evidence anchors:
+  //  · <5% TBWL at ~3 mo on max tolerated dose = inadequate response (ADA SOC 2026)
+  //  · real-world primary non-response ~15-18% (Lipman 2025; Delphi 2025)
+  //  · STEP-1 ext: two-thirds regained in 1 yr off-drug (-14.9% -> -5.6%)
+  //  · STEP-4: continuation -7.9% further vs +6.9% regain; SURMOUNT-4: -5.5% vs +14%,
+  //    82% regained >25% of loss (Wilding 2022; Rubino 2021; Aronne 2024)
+  //  · switch sema->tirz reasonable; response attenuated in true non-responders (2026 review)
+  //  · reduced-frequency maintenance feasible for plateauers (Wong, Obesity 2026)
+  // ═══════════════════════════════════════════════════════════════
+  function ft3Flag(){ return chk('d_hypo'); }
+  const txAgent = vsel('tx_agent');
+  const txOn = txAgent !== 'none';
+  const txClass = { incretin: ['sema','osema','tirz','orfo','lira'], dual: ['tirz'] };
+  const isIncretin = txClass.incretin.includes(txAgent);
+  const isDual = txClass.dual.includes(txAgent);
+  const txDose = vsel('tx_dose');
+  const txMonths = num('tx_months');
+  const txNadir = num('tx_nadir');
+  const txNow = num('tx_now');
+  const regainAbs = Math.max(0, txNadir - txNow);              // percentage points regained from nadir
+  const regainFrac = txNadir > 0 ? regainAbs / txNadir : 0;    // fraction of loss regained
+  const discontinued = chk('tx_discontinued');
+  const adequacyOK = chk('tx_adhere') && chk('tx_technique') && chk('tx_titrateOK');
+  const atMaxDose = txDose === 'max' || txDose === 'maxAE';
+  const adequateDuration = txMonths >= 3;
+  // Structured non-response differential. Each domain carries the discriminating
+  // test and the corrective action. `pre` marks whether an intake elsewhere in the
+  // tool already raises the flag, so the differential auto-surfaces plausible causes
+  // even when the clinician hasn't ticked the on-treatment box.
+  const NR_DIFF = [
+    { id:'tx_dIntake',   pre:chk('ed_grazing'), dom:'Energy intake',
+      test:'24-h recall or 3-day food record; screen liquid calories, UPF %, grazing, portion drift',
+      act:'RD-led structured deficit; UPF restriction; protein-forward pattern. The commonest true cause of apparent non-response.',
+      evid:'Delphi nutrition consensus 2025' },
+    { id:'tx_dActivity', pre:false, dom:'Energy expenditure / NEAT',
+      test:'Activity history, step count; look for sedentary drift as appetite falls',
+      act:'Structured activity prescription; protect NEAT; add post-meal walks.',
+      evid:'Levine NEAT; Delphi 2025' },
+    { id:'tx_dAdapt',    pre:false, dom:'Adaptive thermogenesis',
+      test:'Indirect calorimetry — measured RMR disproportionately below predicted for current mass',
+      act:'Resistance training + protein floor to blunt suppression; diet breaks; avoid over-aggressive deficit.',
+      evid:'Rosenbaum/Leibel; STEP-1 ext mechanism' },
+    { id:'tx_dSarco',    pre:(age>=65)||chk('h_cycle'), dom:'Body-composition confound (lean/fluid masking)',
+      test:'DXA (preferred) or BIA — fat mass falling while scale is flat; phase angle if BIA',
+      act:'Reframe success as fat loss, not scale; preserve muscle — the anabolic response is itself blunted in obesity.',
+      evid:'Conte 2025 SO review; Nilsson 2024' },
+    { id:'tx_dCortisol', pre:cortSuspect, dom:'Cortisol autonomy',
+      test:'1-mg DST, late-night salivary cortisol ×2, 24-h UFC — need 2 abnormal; MACS if adrenal incidentaloma',
+      act:'Work up before escalating drug; treat pseudo-Cushing driver first. Hypercortisolism defends adiposity against any AOM.',
+      evid:'Endocrine Society; cortisol gate' },
+    { id:'tx_dOSA',      pre:(orcdState.osa>0)||chk('d_sleep'), dom:'Sleep apnea / short sleep',
+      test:'HSAT if unstaged; CPAP-adherence download if known OSA; sleep duration',
+      act:'Treat OSA and extend sleep — untreated OSA and sleep restriction raise ghrelin and evening cortisol and blunt loss.',
+      evid:'St-Onge; SURMOUNT-OSA context' },
+    { id:'tx_dMeds',     pre:false, dom:'Iatrogenic (weight-promoting med)',
+      test:'Full medication reconciliation — glucocorticoid, atypical antipsychotic, insulin/SU, some antidepressants, gabapentinoids, beta-blocker',
+      act:'Switch to weight-neutral alternative with the prescriber. Often worth more than the marginal AOM.',
+      evid:'driver review; AACE Alg. 2025' },
+    { id:'tx_dThyroid',  pre:(ft3Flag()), dom:'Endocrine (thyroid / sex hormones)',
+      test:'TSH + free T4; testosterone (2 AM + SHBG) in men; menopausal transition in women',
+      act:'Treat hypothyroidism (modest 2–4 kg effect only); do not over-attribute. Address hypogonadism if confirmed.',
+      evid:'AACE 2025' },
+    { id:'tx_dFluid',    pre:(orcdState.hfpef>0)||(orcdState.ckd>0)||(num('egfr')<60), dom:'Fluid retention',
+      test:'Exam for edema; weight trend vs. HF/CKD status; consider recent fluid shift',
+      act:'Distinguish fluid from fat — do not escalate the AOM for a fluid-driven flat scale; manage the underlying HF/CKD.',
+      evid:'clinical' },
+    { id:'tx_dPKPD',     pre:false, dom:'Pharmacologic resistance (receptor / delivery)',
+      test:'Diagnosis of exclusion after all above are clean; GLP1R/GIPR pharmacogenomic variants documented but not yet actionable in routine care',
+      act:'Switch mechanism — dual agonist if on mono; non-incretin add-on; emerging triple-agonist (glucagon axis) bypasses a blunted GLP-1 receptor.',
+      evid:'23andMe/Nature Apr 2026; GLP1R/GIPR variants' },
+    { id:'tx_dMicrobiome', pre:false, dom:'Substrate / microbiome context',
+      test:'Fiber intake; recent antibiotic exposure',
+      act:'Fiber to 30 g/d gradually; avoid unnecessary antibiotics. Mechanistic, not yet a targeted intervention.',
+      evid:'pharmacomicrobiomics reviews 2025-26 — hypothesis-level' },
+    { id:'tx_dED',       pre:(beds7>=4)||chk('ed_binge')||chk('ed_night'), dom:'Eating pathology',
+      test:'BEDS-7, night-eating pattern, loss-of-control episodes',
+      act:'CBT-E referral; appetite suppression alone worsens active restrictive/binge pathology.',
+      evid:'eating-disorder gate' },
+  ];
+  const nrActive = NR_DIFF.filter(d => chk(d.id));
+  const nrSuggested = NR_DIFF.filter(d => !chk(d.id) && d.pre);
+  const confounders = nrActive.map(d => d.dom.toLowerCase());
+
+  // ── Classify ──
+  // Precedence: rebound (off-drug regain) > primary non-response > partial response > plateau > on-track > early
+  let txPattern = null;
+  if (txOn) {
+    if (discontinued && regainAbs >= 1) {
+      txPattern = 'rebound';
+    } else if (txDose === 'titrating' || !adequateDuration) {
+      txPattern = 'early';                                   // decision window not yet open
+    } else if (txNadir < 5) {
+      // sub-threshold best response — but only "primary non-response" once dose and
+      // adequacy are genuinely established; otherwise route to the fixable cause first.
+      if (!adequacyOK) txPattern = 'pseudo';
+      else if (!atMaxDose) txPattern = 'undertitrated';
+      else txPattern = 'nonresponse';
+    } else if (!discontinued && regainAbs >= 2 && txNow >= 5) {
+      txPattern = 'plateauRegain';                            // on-drug creep from nadir
+    } else if (txNadir >= 5 && txNadir < 10 && atMaxDose) {
+      txPattern = 'partial';                                  // meaningful but short of target
+    } else if (txNow >= 10) {
+      txPattern = 'ontrack';
+    } else {
+      txPattern = 'plateau';                                  // adequate response, flattened
+    }
+  }
+
+  // ─── Gates ───
+  const gates = [];
+  if (chk('s_preg')) gates.push({ k:'stop', h:'Pregnancy / lactation / conception within 2 months', b:'<b>All obesity pharmacotherapy is contraindicated.</b> Incretins should be stopped ≥2 months before a planned conception. Shift to structured nutrition, activity, and gestational weight-gain targets; resume the AOM conversation after weaning.' });
+  if (edUrgent) gates.push({ k:'stop', h:'Eating disorder — treat before appetite suppression', b:`${chk('ed_purge')?'Compensatory behaviours. ':''}${chk('ed_restrict')?'Restriction with body-image overvaluation. ':''}${chk('ed_hxAN')?'History of anorexia or bulimia nervosa — naltrexone-bupropion is contraindicated. ':''}${chk('ed_si')?'<b>Active suicidal ideation — same-day psychiatric assessment.</b> ':''}Refer for CBT-E. An appetite suppressant layered onto active restrictive or purging pathology worsens both.` });
+  else if (bedPos) gates.push({ k:'hold', h:'Binge eating disorder — parallel, not blocking', b:`BEDS-7 ${beds7}${chk('ed_binge')?' with objective binge episodes':''}. CBT-E or equivalent is first-line. Lisdexamfetamine is the only FDA-approved BED agent; GLP-1 and GIP/GLP-1 agents reduce binge frequency and remain reasonable here. Avoid phentermine monotherapy — it suppresses intake without touching the loss-of-control mechanism.` });
+  if (nightEat && !edUrgent) gates.push({ k:'hold', h:'Night-eating pattern', b:'Circadian intervention plus SSRI evidence base (sertraline). This confounds evening-dosed agents and inflates adherence failure — address explicitly.' });
+  if (cortPositive) gates.push({ k:'stop', h:'Biochemical hypercortisolism confirmed', b:`${bioPos} of ${bioDone} screening tests abnormal. <b>Establish the cause before starting an AOM</b> — ACTH, then imaging. If a pseudo-Cushing driver is present (${chk('cx_pseudo')?'flagged':'not flagged'}), treat it and repeat testing rather than proceeding to imaging.` });
+  else if (cortConfirmPending) gates.push({ k:'hold', h:'Hypercortisolism screening indicated', b:`${cxDiscrim} discriminatory feature${cxDiscrim===1?'':'s'} present${chk('cx_exogenous')?' · exogenous steroid exposure — screen for iatrogenic cause first':''}${chk('cx_incidentaloma')?' · adrenal incidentaloma — this is a MACS question, use 1-mg DST':''}. Order two of: 1-mg DST, late-night salivary cortisol ×2, 24-h UFC. <b>Requires two abnormal tests.</b> This does not have to block AOM initiation unless features are florid.` });
+  else if (cxNonDiscrim >= 3 && cxDiscrim === 0) gates.push({ k:'ok', h:'Cortisol screening not indicated', b:`${cxNonDiscrim} non-discriminatory features but no discriminatory ones. Central adiposity, hypertension, and dysglycemia are the obesity phenotype — screening on these alone generates false positives at a rate that harms patients.` });
+  if (iatroHit.length) gates.push({ k:'hold', h:`${iatroHit.length} weight-promoting medication${iatroHit.length===1?'':'s'} on the list`, b:`${iatroHit.map(d => `<b>${esc(d.name.split('/')[0].trim())}</b>`).join(' · ')}. Restructuring these is often worth more than the marginal AOM and costs nothing. See the driver panel for switches.` });
+  if (geneFlag) gates.push({ k:'hold', h:'Monogenic / syndromic pathway', b:'Order a genetic panel (MC4R, POMC, LEPR, PCSK1) or evaluate for Bardet-Biedl / Prader-Willi before empiric escalation. A positive result changes the drug, not just the dose — setmelanotide is only justified here.' });
+  if (chk('h_bariatric') && chk('d_regain')) gates.push({ k:'hold', h:'Post-bariatric weight recurrence', b:'Anatomic evaluation (EGD, UGI) before pharmacotherapy — do not treat a pouch dilation or gastro-gastric fistula with a GLP-1. Once anatomy is clear, AOM response in this group is comparable to primary obesity.' });
+  if (!gates.length) gates.push({ k:'ok', h:'No blocking gates', b:'No contraindication, eating-disorder, cortisol, or reversible-driver gate is firing. Proceed with the staged plan below.' });
+
+  // ─── AOM ranking ───
+  const ranked = [], blocked = [];
+  AOMS.forEach(a => {
+    const hits = Object.keys(a.blocks || {}).filter(k => { const el = $(k); return el && el.checked; });
+    if (a.needsGene && !geneFlag) { blocked.push({ a, why: 'No monogenic / hypothalamic pathway flagged' }); return; }
+    if (hits.length) { blocked.push({ a, why: hits.map(k => a.blocks[k]).join(' · ') }); return; }
+
+    let score = a.tbwl;
+    const reasons = [], tags = [];
+    activeORCD.forEach(c => {
+      const w = a.orcd[c];
+      if (!w) return;
+      const isSev = severe.includes(c);
+      if (w > 0) {
+        score += w * (isSev ? 4.5 : 3);
+        if (w >= 2) { tags.push(orcdMeta[c] ? orcdMeta[c].name : c); }
+      } else { score += w * 3; reasons.push(`may aggravate ${orcdMeta[c] ? orcdMeta[c].name.toLowerCase() : c}`); }
+    });
+    const cauHits = Object.keys(a.cautions || {}).filter(k => { const el = $(k); return el && el.checked; });
+    score -= cauHits.length * 2.5;
+    if (a.ageCaution && age >= a.ageCaution) { score -= 4; cauHits.push(`age ≥${a.ageCaution} — sympathomimetic load`); }
+    if (vsel('route') === 'oral' && !a.oral) score -= 6;
+    if (vsel('route') === 'inj' && a.oral) score -= 1;
+    const cov = vsel('cov');
+    if (route === 'bridge') {
+      // $50 flat copay for Bridge products; everything else is cash for a Medicare patient.
+      if (a.bridgeDrug) score += 6; else score -= a.cost * 3.5;
+    } else if (route === 'partd') {
+      if (a.bridgeDrug) score += 2; else score -= a.cost * 2.5;
+    } else if (route === 'cash') { score -= a.cost * 3.5; }
+    else if (cov === 'none') score -= a.cost * 3.5;
+    else if (cov === 'pa') score -= a.cost * 1.2;
+    if (chk('pref_cost')) score -= a.cost * 2.5;
+    if (num('egfr') < 30 && a.id === 'phentop') { score -= 8; cauHits.push('eGFR <30 — dose cap'); }
+
+    ranked.push({ a, score, tags: [...new Set(tags)], cautions: cauHits, negs: reasons });
+  });
+  ranked.sort((x, y) => y.score - x.score);
+
+  // ─── Surgery ───
+  const surgBMI = eth === 'asian' ? 27.5 : 30;
+  const surgAuto = eth === 'asian' ? 32.5 : 35;
+  const surgEligible = bmi >= surgAuto || (bmi >= surgBMI && (orcdState.t2dm > 0 || activeORCD.length > 0));
+
+  // ════════════ RENDER ════════════
+  const stageColor = ['var(--ink-faint)','var(--s1)','var(--s2)','var(--s3)'][stage];
+  const stageName = ['No ABCD diagnosis','Stage 1 — preclinical','Stage 2 — clinical, mild-moderate','Stage 3 — clinical, severe'][stage];
+  $('dxLine').innerHTML = stage === 0
+    ? `<span class="stage-pill" style="background:var(--ink-faint); color:var(--ink);">no dx</span>Anthropometric criteria not met`
+    : `<span class="stage-pill" style="background:${stageColor}; color:#fff;">stage ${stage}</span>${esc(stageName.split('—')[1] ? stageName.split('—')[1].trim() : stageName)} ABCD`;
+  $('dxSub').textContent = `BMI ${bmi.toFixed(1)} (${bmiClass}, ${cut.label} cutoffs) · waist ${wc} cm ${wc >= wcCut ? '↑' : 'wnl'} · WHtR ${whtr.toFixed(2)}${whtr >= 0.5 ? ' ↑' : ''} · ${severe.length} severe / ${mild.length} mild-mod ORCD`;
+  $('goalBox').innerHTML = stage === 0 ? 'Surveillance' :
+    `Target <b>≥${goalPct}%</b><br>−${goalKg.toFixed(1)} kg → ${targetWt.toFixed(1)} kg`;
+
+  $('gates').innerHTML = gates.map(g => `<div class="gate ${g.k}"><div class="gh"><span>${esc(g.h)}</span><span>${g.k === 'stop' ? 'stop' : g.k === 'hold' ? 'parallel' : 'clear'}</span></div><div class="gb">${g.b}</div></div>`).join('');
+
+  // Staging arithmetic
+  let stg = `<div class="plain" style="margin-bottom:10px;">
+    <b>Anthropometric:</b> ${anthroPos ? 'met' : 'not met'} — BMI ${bmi.toFixed(1)} vs ${cut.ow}/${cut.ob} · waist ${wc} vs ${wcCut} cm · WHtR ${whtr.toFixed(2)} vs 0.50${fatPct !== null ? ` · DXA fat ${fatPct}%` : ''}.
+    ${adiposityConfirmed ? '' : ' <span style="color:var(--warn);">BMI-only elevation without central or DXA confirmation — consider that this may be lean mass.</span>'}
+  </div>`;
+  if (nORCD === 0) {
+    stg += `<div class="plain">No ORCD recorded. ${anthroPos ? 'This is <b>Stage 1 / preclinical obesity</b> in the Lancet Commission sense — a real diagnosis with a prevention mandate, not a null result.' : ''}</div>`;
+  } else {
+    stg += `<div class="two-col">
+      <div><div class="col-h">Severe (${severe.length})</div>${severe.length ? severe.map(c => `<div class="item hi"><span class="bx">▣</span><span class="nm">${esc(orcdMeta[c] ? orcdMeta[c].name : c)}</span></div>`).join('') : '<div class="plain" style="color:var(--ink-faint);">none</div>'}</div>
+      <div><div class="col-h">Mild-moderate (${mild.length})</div>${mild.length ? mild.map(c => `<div class="item"><span class="bx">▢</span><span class="nm">${esc(orcdMeta[c] ? orcdMeta[c].name : c)}</span></div>`).join('') : '<div class="plain" style="color:var(--ink-faint);">none</div>'}</div>
+    </div>
+    <div class="plain" style="margin-top:10px; padding-top:9px; border-top:1px solid var(--rule-soft);">
+      <b>Rule:</b> ≥1 severe <i>or</i> ≥3 mild-moderate → Stage 3. Any ORCD → Stage 2. None → Stage 1.
+      <b>→ ${esc(stageName)}.</b> Staging is largely BMI-independent: the complications tell you the adiposity is sufficient to impair health.
+    </div>`;
+  }
+  $('staging').innerHTML = stg;
+
+  // AOM list
+  let ah = '';
+  if (chk('s_preg')) {
+    ah = `<div class="plain" style="color:var(--accent);"><b>Pharmacotherapy withheld.</b> Every listed agent is contraindicated in pregnancy, lactation, or planned conception within two months.</div>`;
+  } else {
+    ah = ranked.slice(0, 6).map((r, i) => `
+      <div class="aom ${i === 0 ? 'top' : ''}">
+        <div class="rk">${i + 1}</div>
+        <div>
+          <div class="nm">${esc(r.a.name)} <span class="cls">${esc(r.a.brand)} · ${esc(r.a.cls)}</span></div>
+          <div class="why">${esc(r.a.note)}</div>
+          <div class="why" style="color:var(--ink-faint); font-size:10.5px;">${esc(r.a.evid)}</div>
+          ${r.cautions.length ? `<div class="why"><span class="cau">Caution: ${esc(r.cautions.join(' · '))}</span></div>` : ''}
+          ${r.negs.length ? `<div class="why"><span class="cau">${esc(r.negs.join(' · '))}</span></div>` : ''}
+          <div class="tags">${r.tags.map(t => `<span class="tg rx">${esc(t)}</span>`).join('')}${r.a.oral ? '<span class="tg">oral</span>' : ''}</div>
+        </div>
+        <div class="eff"><span class="n">${r.a.tbwl.toFixed(1)}%</span><span class="l">mean TBWL</span></div>
+      </div>`).join('');
+    if (blocked.length) {
+      ah += `<div class="col-h" style="margin-top:14px;">Excluded (${blocked.length})</div>` +
+        blocked.map(b => `<div class="blocked"><span class="bn">${esc(b.a.name)}</span><span class="br">${esc(b.why)}</span></div>`).join('');
+    }
+    ah += `<div class="foot"><b>Ranking logic:</b> mean trial TBWL, plus weighted credit where an agent has a dedicated outcome trial or FDA indication for one of this patient's ORCD, minus caution and access penalties. Green tags mark the complication driving each agent's position. Efficacy alone never decides — the complication does.
+    ${age >= 65 ? '<br><b style="color:var(--warn);">Age ≥65:</b> pair any agent above with resistance training and 1.4–1.6 g/kg protein. Lean-mass loss is the main iatrogenic risk of high-efficacy AOM in this group, and it is largely preventable.' : ''}
+    ${chk('h_incretinIntol') ? '<br><b style="color:var(--accent);">Incretin intolerance flagged:</b> before abandoning the class, consider whether the failure was titration pace rather than the molecule. Orforglipron\'s non-peptide PK and no-restriction dosing is the most defensible re-trial; the receptor is unchanged, so counsel honestly.' : ''}
+    </div>`;
+  }
+  $('aomBody').innerHTML = ah;
+
+  // ── Response-pattern render ──
+  const txPatterns = {
+    early: { tone:'ok', h:'Too early to judge — stay the course', tag:'continue',
+      lead:`Only ${txMonths} month(s)${txDose==='titrating'?' and still titrating':''}. The response decision belongs at ~3 months on the maximum tolerated dose (ADA SOC 2026), not before.`,
+      steps:['Complete titration to the label target or the maximum tolerated dose.','Confirm adherence, injection technique/storage, and (for oral agents) fasting-and-water dosing rules at each visit.','Lock in the metabolic floor now: resistance training 3×/wk and protein 1.4–1.6 g/kg, so early loss is fat, not lean mass.','Re-evaluate %TBWL at the 3-month mark against the ≥5% threshold.'] },
+    ontrack: { tone:'ok', h:'Responding as expected', tag:'continue',
+      lead:`${txNow}% TBWL is a clinically meaningful response. This is a chronic-disease maintenance situation, not a decision point.`,
+      steps:['Continue at the effective dose; obesity is chronic and the medication is the treatment.','Protect lean mass — serial DXA, resistance training, protein floor.','Set the re-loop trigger explicitly: ≥3% regain from nadir, waist +3 cm, or ≥5% fat-mass regain on DXA.','Do not discontinue at goal — see the rebound data if stopping is being considered.'] },
+    undertitrated: { tone:'hold', h:'Not yet non-response — dose is the variable', tag:'optimize first',
+      lead:`Nadir ${txNadir}% at ${txMonths} mo, but the patient is not at the maximum tolerated dose. The ADA threshold is defined <b>at max tolerated dose</b> — this does not yet meet the definition of inadequate response.`,
+      steps:['Continue structured up-titration to the maximum tolerated dose before any switch or add-on.','Re-assess ≥5% response 12–16 weeks after reaching that dose.','If GI tolerability is the ceiling, slow the titration interval rather than abandoning the agent.','Only if <5% persists at true max dose does this become primary non-response.'] },
+    pseudo: { tone:'hold', h:'Apparent non-response with an adequacy gap', tag:'verify first',
+      lead:`Nadir ${txNadir}% but one or more adequacy checks are unconfirmed (${[!chk('tx_adhere')&&'adherence',!chk('tx_technique')&&'technique/storage',!chk('tx_titrateOK')&&'complete titration'].filter(Boolean).join(', ')}). Most "non-response" resolves here.`,
+      steps:['Reconcile pharmacy fill history against the prescribed cadence — the single highest-yield step.','Watch a demonstrated injection, or confirm oral fasting/water/30-min rules; verify pen storage.','Confirm titration reached the intended dose without skipped or repeated-low steps.','Re-classify only after adequacy is genuinely established.'] },
+    nonresponse: { tone:'stop', h:'Primary non-response', tag:'work the differential',
+      lead:`Nadir ${txNadir}% (<5%) after ${txMonths} months at the maximum tolerated dose, adherence and technique confirmed. This meets the ADA 2026 definition of inadequate response — roughly 15–18% of real-world patients. Before escalating, work the differential below: true receptor-level resistance is a diagnosis of exclusion.`,
+      differential: true,
+      steps:[
+        isDual ? 'If the differential is clean: already on the dual GIP/GLP-1 agent, so a within-class switch offers little. Move to mechanism change — add a non-incretin agent by phenotype, or escalate to procedural options.' : 'If the differential is clean: switch to the dual GIP/GLP-1 agent (tirzepatide), a different receptor mechanism. Counsel honestly — response may be attenuated in true non-responders versus those who merely plateaued.',
+        'If two mechanistically distinct agents fail at adequate dose and duration, this is a metabolic-bariatric / endoscopic conversation, not a third drug trial. An emerging triple agonist (glucagon axis) can bypass a blunted GLP-1 receptor.',
+        'Re-anchor the phenotype — the Energy Balance CDS partitions reward vs. insulin-resistant vs. adaptive-thermogenesis drivers that predict which mechanism to add.'] },
+    undertitrated_pad:{},
+    partial: { tone:'hold', h:'Partial response (5–10%)', tag:'augment', differential:true,
+      lead:`Nadir ${txNadir}% — clinically meaningful but short of the stage ${stage} target of ≥${goalPct}%. The agent is working; the question is augmentation, not replacement.`,
+      steps:[
+        isDual ? 'Confirm the patient is at the true maximum tolerated dose of the dual agent before augmenting.' : 'Consider switching to the dual GIP/GLP-1 agent (tirzepatide) for higher ceiling efficacy, or add a mechanistically distinct non-incretin agent.',
+        'Intensify the lifestyle substrate — a structured RD-led deficit and resistance program adds several points of TBWL on top of the drug.',
+        'Re-audit confounders' + (confounders.length ? `: ${confounders.join(', ')}.` : ' — sleep, alcohol, weight-promoting meds, emerging grazing.'),
+        'Reassess against the stage target at 12–16 weeks post-augmentation; if still short with two mechanisms, discuss procedural options.'] },
+    plateau: { tone:'hold', h:'Physiologic plateau', tag:'hold or de-intensify',
+      lead:`Nadir ${txNadir}%, currently ${txNow}%, minimal regain. A plateau at an adequate response is the expected set-point defence, not a failure — energy expenditure has fallen to match the lower intake.`,
+      steps:[
+        'If at or above the stage target: hold the effective dose. A plateau at goal is success, not a trigger to escalate.',
+        'Reduced-frequency maintenance (every-other-week at the effective dose) is feasible in stable plateauers and preserves weight, body composition, and metabolic gains (Wong, Obesity 2026) — a cost and adherence lever, not a taper to zero.',
+        'If still short of target: verify max tolerated dose, then augment as in the partial-response pathway.',
+        'Protect lean mass through the plateau — resistance training blunts the adaptive-thermogenesis component that defends the plateau.'] },
+    plateauRegain: { tone:'hold', h:'On-drug creep from nadir', tag:'re-fire drivers', differential:true,
+      lead:`Regain of ${regainAbs.toFixed(1)} points from a ${txNadir}% nadir <b>while still on the drug</b>. This is not rebound — it points to a re-emergent driver or a dose that no longer matches the defended set-point.`,
+      steps:[
+        confounders.length ? `Re-fire the driver review — flagged: ${confounders.join(', ')}.` : 'Re-fire the full driver review: new weight-promoting med, sleep/OSA, alcohol, thyroid, emerging eating pathology, stressor.',
+        'Confirm the patient has not drifted below the maximum tolerated dose (supply gaps, dose reductions for AE).',
+        'If drivers are clean and dose is maximal, escalate mechanism — switch to or add a distinct agent.',
+        'Treat this as a chronic-disease relapse signal: intervene now rather than waiting for the 5% threshold.'] },
+    rebound: { tone:'stop', h:'Post-discontinuation rebound', tag:'re-treat',
+      lead:`Off-drug regain of ${regainAbs.toFixed(1)} points (${Math.round(regainFrac*100)}% of the ${txNadir}% lost).${chk('tx_taper')?' Tapered rather than stopped abruptly.':' Abrupt discontinuation.'} This is the expected pharmacology: STEP-1 extension patients regained two-thirds of lost weight within a year, with cardiometabolic gains reversing in step.`,
+      steps:[
+        'Name it as biology, not relapse of willpower — obesity is chronic and the drug was treating it, exactly as an antihypertensive treats blood pressure.',
+        'Re-initiate pharmacotherapy: agents remain effective on a subsequent course. Re-titrate from the starting dose.',
+        chk('tx_rtProtein') ? 'Resistance training and protein were in place — continue them; supervised exercise blunts post-discontinuation regain (Jensen).' : 'Add resistance training and a protein floor now — supervised exercise reduces the magnitude of regain after discontinuation.',
+        'If the discontinuation was driven by cost or access, route through the coverage pathway above (Bridge $50, manufacturer self-pay) before defaulting to a weaker agent.',
+        'Continuation beats stop-start: STEP-4 and SURMOUNT-4 show continued treatment holds and extends loss (further −7.9% / −5.5%) while placebo regains.'] },
+  };
+
+  const txCard = $('txCard');
+  if (!txOn || !txPattern) {
+    txCard.style.display = 'none';
+    $('txBody').innerHTML = '';
+  } else {
+    txCard.style.display = '';
+    const P = txPatterns[txPattern];
+    const agentName = { sema:'semaglutide', osema:'oral semaglutide', tirz:'tirzepatide', orfo:'orforglipron', lira:'liraglutide', phentop:'phentermine/topiramate', nbup:'naltrexone/bupropion', other:'current agent' }[txAgent] || 'current agent';
+    let th = `<div class="gate ${P.tone}"><div class="gh"><span>${esc(P.h)} — ${esc(agentName)}</span><span>${esc(P.tag)}</span></div><div class="gb">${P.lead}</div></div>`;
+    // trajectory ribbon
+    const barPct = Math.max(2, Math.min(100, (txNow / 25) * 100));
+    const nadPct = Math.max(2, Math.min(100, (txNadir / 25) * 100));
+    th += `<div style="margin:14px 0 6px;">
+      <div style="position:relative;height:8px;background:var(--rule-soft);border-radius:2px;">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:${barPct}%;background:var(--spine);border-radius:2px;"></div>
+        <div style="position:absolute;left:${Math.min(nadPct,99.4)}%;top:-3px;width:2px;height:14px;background:var(--accent);" title="nadir"></div>
+        <div style="position:absolute;left:${(5/25)*100}%;top:-4px;bottom:-4px;width:1px;background:var(--ink-faint);"></div>
+        <div style="position:absolute;left:${(goalPct/25)*100}%;top:-4px;bottom:-4px;width:1px;background:var(--ink);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-faint);margin-top:6px;font-family:'IBM Plex Mono',monospace;">
+        <span>0%</span><span>now ${txNow}% · nadir ${txNadir}%</span><span style="color:var(--ink);">target ${goalPct}%</span><span>25%</span>
+      </div>
+    </div>`;
+    // Structured differential block (non-response / partial / on-drug creep)
+    if (P.differential) {
+      const rows = nrActive.length ? nrActive : NR_DIFF;
+      const showingAll = nrActive.length === 0;
+      th += `<div class="col-h" style="margin-top:14px;">Non-response differential ${showingAll ? '— full checklist (none ticked yet)' : `— ${nrActive.length} flagged`}</div>`;
+      if (nrSuggested.length) {
+        th += `<div class="foot" style="margin:2px 0 8px;"><b>Auto-suggested from intake:</b> ${nrSuggested.map(d=>esc(d.dom)).join(' · ')} — confirm or clear these first.</div>`;
+      }
+      th += '<div>' + rows.map(d => {
+        const isFlagged = chk(d.id);
+        const isSug = !isFlagged && d.pre;
+        return `<div class="diff-row ${isFlagged?'on':''} ${isSug?'sug':''}">
+          <div class="dh"><span class="dm">${esc(d.dom)}</span><span class="de">${esc(d.evid)}</span></div>
+          <div class="dt"><b>Test:</b> ${esc(d.test)}</div>
+          <div class="da"><b>Action:</b> ${esc(d.act)}</div>
+        </div>`;
+      }).join('') + '</div>';
+      th += `<div class="col-h" style="margin-top:14px;">Then, mechanism escalation</div>`;
+    }
+
+    th += '<div style="margin-top:6px;">' + P.steps.map((t,i) => `<div class="rx-step" style="padding:6px 0;"><span class="n">${i+1}</span><span class="t">${t}</span></div>`).join('') + '</div>';
+    if (txPattern === 'nonresponse' || txPattern === 'partial' || txPattern === 'plateauRegain') {
+      th += `<div class="foot" style="margin-top:10px;"><b>Cross-tool:</b> this is where the <b>Energy Balance CDS</b> earns its place — phenotyping the residual driver (reward, insulin-resistant, lipolysis-resistant, adaptive-thermogenesis) tells you which mechanism to stack next rather than guessing the second agent.</div>`;
+    }
+    $('txBody').innerHTML = th;
+  }
+
+  // Coverage pathway
+  const routeLabel = { bridge: 'Medicare GLP-1 Bridge', partd: 'Medicare Part D benefit', commercial: 'Commercial / ACA prior authorization', cash: 'Self-pay / no covered pathway' }[route];
+  const routeTone = route === 'bridge' ? 'ok' : route === 'cash' ? 'stop' : 'hold';
+  let ch = `<div class="gate ${routeTone}"><div class="gh"><span>${routeLabel}</span><span>${route === 'bridge' ? 'eligible' : route === 'cash' ? 'no pathway' : 'route'}</span></div><div class="gb">`;
+  if (route === 'bridge') {
+    ch += `Criterion met: <b>${esc(bridgeTierText)}</b>. Flat <b>$50 copay</b>, no deductible, independent of Part D phase. Products: Foundayo (all), Wegovy injection and tablets (all), Zepbound <b>KwikPen only</b>.`;
+  } else if (route === 'partd') {
+    ch += `${esc(routeBlock)} Submit through the Part D plan's formulary and exception process — <b>not</b> the Bridge. ${bridgeTier ? `<br><br>Note the patient <i>does</i> meet Bridge criterion ${bridgeTier} (${esc(bridgeTierText)}); the Part D indication overrides it.` : ''}`;
+  } else if (route === 'cash') {
+    ch += `${esc(routeBlock || 'No covered pathway identified.')} Consider manufacturer self-pay (LillyDirect / NovoCare), a non-incretin agent, or the program's cash tier.`;
+  } else {
+    ch += `Standard medical-necessity prior authorization. Use <b>.PALETTER</b> — the limiting criterion is almost always documented supervised lifestyle duration, which your program already generates.`;
+  }
+  ch += '</div></div>';
+
+  if (payer === 'medicare') {
+    ch += `<div class="plain" style="margin-top:12px;"><b>Bridge mechanics that bite:</b></div>
+    <div class="item"><span class="bx">▣</span><span class="nm">Criteria are judged <b>at initiation</b>, not at PA</span><span class="rs">a continuing patient now at BMI 34 who started at 37 still attests the ≥35 tier</span></div>
+    <div class="item"><span class="bx">▣</span><span class="nm"><b>No appeals process</b> — only resubmission</span><span class="rs">a sloppy first submission is expensive</span></div>
+    <div class="item"><span class="bx">▢</span><span class="nm">Humana is the central processor (LI NET infrastructure)</span><span class="rs">not the Part D plan</span></div>
+    <div class="item"><span class="bx">▢</span><span class="nm">Part D denial is <b>not</b> required first</span><span class="rs">direct the pharmacy to bill the Bridge</span></div>
+    <div class="item"><span class="bx">▢</span><span class="nm">Pharmacy pushes the PA request to you within 24–72 h</span><span class="rs">after 72 h, submit the fax form yourself</span></div>
+    <div class="item"><span class="bx">▢</span><span class="nm">Coupons and discount cards cannot be applied; no TrOOP credit; LIS does not reduce the $50</span><span class="rs">outside the Part D payment flow</span></div>
+    <div class="item"><span class="bx">▢</span><span class="nm">Pen needles are not covered — patient buys separately</span><span class="rs">Zepbound KwikPen</span></div>
+    <div class="item"><span class="bx">▢</span><span class="nm">Prescriber need not be Medicare-enrolled, but must not be on the Preclusion List</span><span class="rs">specialty code 46 is not a barrier here</span></div>
+    <div class="foot" style="margin-top:10px;">Call centre <b>855-273-0102</b>, Mon–Fri 8am–7pm ET · PA fax form and prescriber fact sheet at cms.gov/medicare/coverage/prescription-drug-coverage/medicare-glp-1-bridge · Demonstration runs to <b>31 Dec 2027</b>; the Part D portion of the BALANCE Model is delayed indefinitely, so this is the pathway for the foreseeable planning horizon.</div>`;
+    if (!lsAttestOK) ch += `<div class="gate stop" style="margin-top:10px;"><div class="gh"><span>Lifestyle attestation not documented</span><span>blocks</span></div><div class="gb">Every Bridge tier requires attesting to <b>current and ongoing lifestyle modification including structured nutrition and physical activity</b>. Record the months and contact count before submitting.</div></div>`;
+  }
+  $('covBody').innerHTML = ch;
+
+  // Surgery
+  $('surg').innerHTML = `
+    <div class="plain">
+      <b>Metabolic-bariatric surgery:</b> ${surgEligible
+        ? `<span style="color:var(--good);">criteria met</span> — BMI ${bmi.toFixed(1)} ${bmi >= surgAuto ? `≥ ${surgAuto} (independent of comorbidity)` : `≥ ${surgBMI} with ${orcdState.t2dm > 0 ? 'type 2 diabetes' : 'obesity-related disease'}`}. ${chk('h_declineSurg') ? '<b>Patient declines or is not a candidate</b> — document the offer, revisit at each response checkpoint. This is a disclosure obligation, not a one-time question.' : 'Refer for evaluation and present it as a parallel option, not a failure endpoint.'}`
+        : `criteria not met at BMI ${bmi.toFixed(1)} (threshold ${surgBMI} with disease / ${surgAuto} without${eth === 'asian' ? ', Asian-adjusted' : ''}).`}
+    </div>
+    <div class="plain" style="margin-top:9px;">
+      <b>Endoscopic:</b> ESG delivers roughly 13–16% TBWL at 12–24 months (MERIT), intragastric balloon 10–12% at 6 months with rebound after removal. Reasonable to raise when surgery is declined and the stacked medical plan has underperformed at 24 weeks.
+    </div>
+    ${chk('h_bariatric') ? '<div class="plain" style="margin-top:9px;"><b>Prior surgery:</b> weight recurrence after MBS responds to AOM at rates comparable to primary obesity — this is not a salvage scenario. Evaluate anatomy first.</div>' : ''}`;
+
+  // Labs
+  const L = { core: [], driver: [], comp: [], stage: [] };
+  L.core.push({ n: 'CMP, lipid panel, A1c, fasting insulin', r: 'baseline', hi: true });
+  L.core.push({ n: 'TSH + free T4', r: 'driver exclusion', hi: chk('d_hypo') });
+  L.core.push({ n: 'CBC, ferritin, B12, 25-OH vitamin D', r: 'nutritional floor', hi: chk('h_bariatric') });
+  if (orcdState.masld > 0 || orcdState.t2dm > 0 || bmi >= 30) L.core.push({ n: 'ALT/AST + FIB-4 (± elastography if FIB-4 ≥1.3)', r: 'MASLD staging', hi: orcdState.masld === 2 });
+  if (orcdState.ckd > 0 || orcdState.t2dm > 0 || orcdState.htn > 0) L.core.push({ n: 'eGFR + urine ACR', r: 'CKD staging', hi: orcdState.ckd === 2 });
+  if (cortSuspect) { L.driver.push({ n: '1-mg overnight DST', r: 'cortisol screen ×1', hi: true }); L.driver.push({ n: 'Late-night salivary cortisol ×2', r: 'screen ×2 — need 2 abnormal', hi: true }); L.driver.push({ n: '24-h UFC ×2', r: 'alternative second test', hi: false }); }
+  if (cortPositive) L.driver.push({ n: 'ACTH → then imaging', r: 'localization', hi: true });
+  if (geneFlag) L.driver.push({ n: 'Obesity gene panel (MC4R, POMC, LEPR, PCSK1)', r: 'monogenic pathway', hi: true });
+  if (chk('d_gh')) L.driver.push({ n: 'IGF-1 + anterior pituitary axis', r: 'hypopituitarism', hi: false });
+  if (chk('d_hypogon') || orcdState.hypogonad > 0) L.driver.push({ n: 'Total testosterone ×2 AM + SHBG + LH/FSH', r: 'functional hypogonadism', hi: false });
+  if (orcdState.pcos > 0) L.driver.push({ n: 'Total/free testosterone, DHEAS, 17-OHP, AMH', r: 'PCOS phenotype', hi: false });
+  if (chk('d_alc')) L.driver.push({ n: 'AUDIT-C + PEth or GGT', r: 'pseudo-Cushing driver', hi: false });
+  L.comp.push({ n: 'DXA with regional fat + VAT', r: 'baseline body composition', hi: age >= 60 || chk('h_cycle') });
+  L.comp.push({ n: 'Grip dynamometry + 5× sit-to-stand', r: 'functional sarcopenia', hi: age >= 65 });
+  if (chk('h_cycle') || chk('h_priorAOM')) L.comp.push({ n: 'Indirect calorimetry (measured RMR)', r: 'adaptive thermogenesis', hi: false });
+  if (orcdState.osa > 0 || chk('d_sleep')) L.stage.push({ n: 'Home sleep apnea test (if not already staged)', r: 'AHI drives agent choice', hi: orcdState.osa === 2 });
+  if (orcdState.hfpef > 0) L.stage.push({ n: 'NT-proBNP + echo', r: 'HFpEF confirmation', hi: true });
+  if (orcdState.iih > 0) L.stage.push({ n: 'Dilated fundoscopy + LP opening pressure', r: 'vision threat', hi: orcdState.iih === 2 });
+  if (chk('s_preg') === false && sex === 'F' && age < 55) L.stage.push({ n: 'Pregnancy test before AOM initiation', r: 'REMS / label requirement', hi: true });
+
+  const col = (title, arr) => arr.length ? `<div><div class="col-h">${title}</div>${arr.map(i => `<div class="item ${i.hi ? 'hi' : ''}"><span class="bx">${i.hi ? '▣' : '▢'}</span><span class="nm">${esc(i.n)}</span><span class="rs">${esc(i.r)}</span></div>`).join('')}</div>` : '';
+  $('labs').innerHTML = col('Core', L.core) + col('Driver workup', L.driver) + col('Composition', L.comp) + col('Complication staging', L.stage);
+  $('labFoot').innerHTML = `<b>▣</b> this visit · <b>▢</b> baseline or confirmatory.${cortSuspect ? ' <span style="color:var(--accent);">Cortisol screening requires two abnormal tests of different modality — a single abnormal DST in obesity is more often false positive than true.</span>' : ''}`;
+
+  // Response rules
+  $('response').innerHTML = `
+    <div class="plain">
+      <b>Week 12–16 checkpoint.</b> ≥5% TBWL on the maximum tolerated dose is the response threshold. If not met: escalate to maximum dose first; if already there, switch agent, add or intensify behavioural therapy, and re-examine drivers before concluding non-response. Titrate more slowly rather than abandoning in older patients and those with GI sensitivity.
+    </div>
+    <div class="plain" style="margin-top:9px;">
+      <b>Goal for this patient (stage ${stage}): ≥${goalPct}% sustained</b> — ${stage === 3 ? 'severe complications warrant the higher target; ≥15% is where MASH resolution, OSA remission, and diabetes remission cluster.' : stage === 2 ? '≥10% is the threshold at which most obesity-related diseases measurably improve.' : '≥5% delivers meaningful cardiometabolic benefit and prevents progression to complications.'} Track the complication, not only the scale.
+    </div>
+    <div class="plain" style="margin-top:9px;">
+      <b>Maintenance.</b> Continue the medication after the goal is reached — discontinuation reliably produces weight recurrence and re-emergence of cardiometabolic risk. The maintenance dose balances efficacy against tolerability and need not be the maximum approved dose.
+    </div>
+    <div class="plain" style="margin-top:9px;">
+      <b>Re-loop trigger.</b> ≥3% regain from nadir, waist +3 cm, or ≥5% fat-mass regain on DXA → re-fire the driver and stress review immediately. Do not wait for a 5% scale threshold.
+    </div>`;
+
+  // ─── Algorithm path ───
+  const on = new Set(['start','anthro','dAnthro']);
+  const edgeOn = new Set();
+  const nodeStyle = {};
+  const E = (f,t) => f + '>' + t;
+  if (!anthroPos) { on.add('prevent'); edgeOn.add(E('dAnthro','prevent')); }
+  else {
+    edgeOn.add(E('dAnthro','drivers'));
+    on.add('drivers'); on.add('dDriver');
+    if (driversHit.length) { on.add('fixDrv'); edgeOn.add(E('dDriver','fixDrv')); edgeOn.add(E('fixDrv','psych')); nodeStyle.fixDrv = 'par'; }
+    edgeOn.add(E('dDriver','psych'));
+    on.add('psych'); on.add('dEd');
+    if (edPos) { on.add('edPath'); edgeOn.add(E('dEd','edPath')); edgeOn.add(E('edPath','dCort')); nodeStyle.edPath = edUrgent ? 'stop' : 'par'; }
+    edgeOn.add(E('dEd','dCort'));
+    on.add('dCort');
+    if (cortSuspect) { on.add('cortPath'); edgeOn.add(E('dCort','cortPath')); edgeOn.add(E('cortPath','orcd')); nodeStyle.cortPath = cortPositive ? 'stop' : 'par'; }
+    edgeOn.add(E('dCort','orcd'));
+    on.add('orcd'); on.add('dStage');
+    const stNode = 'st' + stage;
+    on.add(stNode); edgeOn.add(E('dStage', stNode)); edgeOn.add(E(stNode, 'goal'));
+    on.add('goal'); on.add('found'); edgeOn.add(E('goal','found'));
+    if (!chk('s_preg') && !edUrgent && !cortPositive) {
+      on.add('aom'); edgeOn.add(E('found','aom'));
+      on.add('dCov'); edgeOn.add(E('aom','dCov'));
+      if (route === 'bridge') { on.add('bridgeN'); edgeOn.add(E('dCov','bridgeN')); edgeOn.add(E('bridgeN','pa')); }
+      else if (route === 'partd') { on.add('partdN'); edgeOn.add(E('dCov','partdN')); edgeOn.add(E('partdN','pa')); nodeStyle.partdN = 'par'; }
+      else { edgeOn.add(E('dCov','pa')); if (route === 'cash') nodeStyle.pa = 'stop'; }
+      on.add('pa');
+      on.add('dResp'); edgeOn.add(E('pa','dResp'));
+      const correctivePattern = txOn && ['nonresponse','partial','plateauRegain','rebound','undertitrated','pseudo'].includes(txPattern);
+      if (correctivePattern) {
+        on.add('txEng'); edgeOn.add(E('dResp','txEng'));
+        nodeStyle.txEng = (txPattern === 'nonresponse' || txPattern === 'rebound') ? 'stop' : 'par';
+        on.add('intens'); edgeOn.add(E('txEng','intens')); nodeStyle.intens = 'par';
+      }
+      on.add('maint'); edgeOn.add(E('dResp','maint'));
+      if (chk('h_priorAOM')) {
+        on.add('intens'); edgeOn.add(E('dResp','intens')); nodeStyle.intens = 'par';
+        on.add('dSurg'); edgeOn.add(E('intens','dSurg'));
+        if (surgEligible && !chk('h_declineSurg')) { on.add('surgP'); edgeOn.add(E('dSurg','surgP')); }
+      }
+    } else {
+      nodeStyle.aom = 'stop';
+    }
+  }
+  drawSpine(on, edgeOn, nodeStyle, stage);
+
+  // ─── Macros ───
+  const drvTxt = driversHit.length ? driversHit.map(d => `  - ${d.name} → ${d.act}`).join('\n') : '  - None identified on structured review.';
+  const orcdTxt = nORCD ? [...severe.map(c => `  - ${orcdMeta[c] ? orcdMeta[c].name : c} (severe)`), ...mild.map(c => `  - ${orcdMeta[c] ? orcdMeta[c].name : c} (mild-moderate)`)].join('\n') : '  - None identified.';
+  const top = ranked[0];
+
+  const macros = {
+    intake: `.OBXINTAKE
+Obesity / adiposity-based chronic disease intake.
+Anthropometrics: ${wt} kg, ${ht} cm, BMI ${bmi.toFixed(1)} kg/m2 (${bmiClass}, ${cut.label} cutoffs), waist ${wc} cm (threshold ${wcCut}), waist-to-height ${whtr.toFixed(2)}${fatPct !== null ? `, DXA fat ${fatPct}%` : ''}. BP ${sbp}/${dbp}.
+Weight history: max lifetime ${num('maxWt')} kg; onset age ${num('onsetAge')}; change over 12 months ${num('d12') >= 0 ? '+' : ''}${num('d12')} kg. Weight cycling ${chk('h_cycle') ? 'yes (>=3 cycles)' : 'no'}. Prior AOM trial ${chk('h_priorAOM') ? 'yes, inadequate response at max tolerated dose' : 'no'}. Incretin intolerance ${chk('h_incretinIntol') ? 'yes' : 'no'}. Prior bariatric surgery ${chk('h_bariatric') ? 'yes' : 'no'}.
+Drivers of weight gain reviewed (medications, endocrine, behavioural, life-stage, genetic):
+${drvTxt}
+Eating and psychiatric screen: BEDS-7 ${beds7}, SCOFF ${scoff}, PHQ-9 ${phq9}, GAD-7 ${gad7}. Binge episodes ${chk('ed_binge') ? 'present' : 'absent'}; compensatory behaviours ${chk('ed_purge') ? 'present' : 'absent'}; restriction/body-image overvaluation ${chk('ed_restrict') ? 'present' : 'absent'}; night eating ${chk('ed_night') ? 'present' : 'absent'}. ${edPos ? 'SCREEN POSITIVE — referred for CBT-E and agent selection constrained accordingly.' : 'Screen negative.'}
+Hypercortisolism: ${cxDiscrim} discriminatory feature(s), ${cxNonDiscrim} non-discriminatory. ${cortSuspect ? `Screening ${cortPositive ? 'positive (>=2 abnormal tests) — cause workup initiated' : 'indicated; two tests of differing modality ordered'}.` : 'Screening not indicated — non-discriminatory features alone do not justify testing in obesity.'} Pseudo-Cushing driver ${chk('cx_pseudo') ? 'present' : 'absent'}.`,
+
+    stage: `.ABCDSTAGE
+Diagnosis: ${anthroPos ? `Adiposity-based chronic disease, ${stageName}.` : 'Anthropometric criteria for ABCD not met.'}
+Anthropometric component: ${anthroPos ? 'met' : 'not met'} (BMI ${bmi.toFixed(1)} vs ${cut.ow}/${cut.ob}; waist ${wc} vs ${wcCut} cm; WHtR ${whtr.toFixed(2)} vs 0.50).
+Clinical component — obesity-related complications and diseases:
+${orcdTxt}
+Severity count: ${severe.length} severe, ${mild.length} mild-moderate. Staging rule applied: >=1 severe or >=3 mild-moderate = stage 3; any ORCD = stage 2; none = stage 1.
+Therapeutic goal: >=${goalPct}% sustained reduction in body weight (${goalKg.toFixed(1)} kg; target ${targetWt.toFixed(1)} kg), selected for complication modification rather than as a weight endpoint in itself.
+Staging framework: AACE consensus statement, algorithm for the evaluation and treatment of adults with obesity/ABCD, 2025 update.`,
+
+    plan: `.AOMPLAN
+Stage ${stage} ABCD. Goal >=${goalPct}% total body weight reduction.
+Foundation (all stages): individualized nutrition plan; resistance training with aerobic component; sleep >=7 h and OSA treatment; behavioural support; serial body composition rather than scale weight alone.
+Gates: ${gates.filter(g => g.k !== 'ok').map(g => g.h).join('; ') || 'none blocking'}.
+${chk('s_preg') ? 'Pharmacotherapy withheld — pregnancy, lactation, or planned conception.' : top ? `Recommended pharmacotherapy: ${top.a.name} (${top.a.brand}, ${top.a.cls}). Rationale: ${top.tags.length ? `complication-directed for ${top.tags.join(', ')}; ` : ''}mean trial TBWL ${top.a.tbwl}%. ${top.a.evid}${top.cautions.length ? ` Cautions: ${top.cautions.join('; ')}.` : ''}
+Alternatives considered: ${ranked.slice(1,3).map(r => r.a.name).join('; ')}.
+Excluded: ${blocked.map(b => `${b.a.name} (${b.why})`).join('; ') || 'none'}.` : 'No agent passes the safety screen — see excluded list.'}
+Metabolic-bariatric surgery: ${surgEligible ? `criteria met at BMI ${bmi.toFixed(1)}; ${chk('h_declineSurg') ? 'patient declines — offer documented and will be revisited at each response checkpoint' : 'referral offered'}` : 'criteria not met'}.
+Monitoring: response check at 12-16 weeks with a >=5% TBWL threshold on maximum tolerated dose. If unmet — escalate dose, then switch agent, then intensify behavioural therapy, re-examining drivers before declaring non-response. Continue medication through maintenance; discontinuation produces weight recurrence.
+Re-intensification trigger: >=3% regain from nadir, waist +3 cm, or >=5% fat-mass regain on DXA.
+${age >= 65 ? 'Age-specific: resistance training and protein 1.4-1.6 g/kg prescribed alongside pharmacotherapy to protect lean mass; serial DXA and grip strength.' : ''}`,
+
+    bridgepa: route === 'bridge' ? `.BRIDGEPA
+Medicare GLP-1 Bridge — prior authorization attestation (CMS Section 402 demonstration; 07/01/2026–12/31/2027).
+Central processor: Humana. Call center 855-273-0102 (M-F 8am-7pm ET). No Part D denial required. No appeals process — resubmit if information is incorrect or updated.
+
+Requested product: ${top ? top.a.brand : '[Foundayo / Wegovy injection or tablet / Zepbound KwikPen]'}${top && top.a.id === 'tirz' ? ' (KwikPen formulation only — single-dose vials and pens are not covered under the Bridge)' : ''}.
+
+ATTESTATION 1 — INDICATION AND CONCURRENT LIFESTYLE MODIFICATION
+The requested drug is prescribed to reduce excess body weight and maintain weight reduction, in combination with current and ongoing lifestyle modification including structured nutrition and physical activity, consistent with the FDA-approved label.
+Supporting documentation on file: ${num('lsMonths')} months of clinician-supervised structured nutrition and physical activity, comprising ${num('lsContacts')} documented contacts across registered dietitian, health coach, and physician encounters. This intervention is active and continues concurrently with pharmacotherapy.
+${maceIntent ? 'WARNING: MACE risk reduction was flagged as part of prescribing intent. If the drug is being prescribed IN ORDER TO reduce major adverse cardiovascular events — regardless of concurrent weight intent — CMS directs that prescription to the Part D plan, not the Bridge. Resolve intent before attesting.' : 'This prescription is not written in order to reduce the risk of major adverse cardiovascular events.'}
+
+ATTESTATION 2 — AGE AND CLINICAL CRITERION AT INITIATION
+Beneficiary is at least 18 years of age (age ${age}).
+Criteria are met AT THE TIME OF GLP-1 THERAPY INITIATION${bmiInit !== null ? ` (${$('initDate').value || 'date on file'})` : ''}, not at the time of this request.
+Criterion met — tier ${bridgeTier}:
+${bridgeTier === 'A' ? `  [X] BMI >= 35 at initiation. Documented BMI ${bmiForCriteria.toFixed(1)} kg/m2${bmiInit !== null ? ` at initiation; current BMI ${bmi.toFixed(1)}` : ''}. No additional diagnosis required.` : ''}${bridgeTier === 'B' ? `  [X] BMI >= 30 at initiation (${bmiForCriteria.toFixed(1)} kg/m2) WITH one or more of:
+${orcdState.hfpef > 0 ? '      [X] Heart failure with preserved ejection fraction\n' : ''}${uncontrolledHTN ? `      [X] Uncontrolled hypertension — systolic above 140 mm Hg or diastolic above 90 mm Hg despite concurrent treatment with two antihypertensive medications. Documented ${sbp}/${dbp} on two agents.\n` : ''}${ckd3aPlus ? `      [X] Chronic kidney disease stage 3a or above — eGFR ${num('egfr')} mL/min/1.73m2\n` : ''}`.trimEnd() : ''}${bridgeTier === 'C' ? `  [X] BMI >= 27 at initiation (${bmiForCriteria.toFixed(1)} kg/m2) WITH one or more of:
+${orcdState.predm > 0 ? '      [X] Prediabetes, as defined by American Diabetes Association criteria\n' : ''}${chk('priorMI') ? '      [X] Previous myocardial infarction\n' : ''}${chk('priorCVA') ? '      [X] Previous stroke\n' : ''}${chk('pad') ? '      [X] Symptomatic peripheral artery disease\n' : ''}`.trimEnd() : ''}
+
+ATTESTATION 3 — NO PART D-COVERABLE INDICATION
+Beneficiary does not carry type 2 diabetes, moderate-to-severe obstructive sleep apnea, or noncirrhotic MASH with moderate-to-advanced fibrosis. Beneficiaries with these diagnoses obtain GLP-1s through their Part D plan and are ineligible for the Bridge even when the clinical criteria above are met.
+
+PLAN TYPE
+${{pdp:'Standalone prescription drug plan (PDP) — eligible.', mapd:'MA-PD coordinated care plan (HMO / HMO-POS / Local or Regional PPO) — eligible.', snp:'SNP / EGWP / LI NET — eligible.'}[planType]}
+
+SUBMISSION
+Submit electronically (preferred) or by fax using the Medicare GLP-1 Bridge prior authorization form. Include the diagnosis code and a routing annotation on the prescription — not required, but it prevents misrouting to the Part D plan. Decision returns via ePA portal or fax within 72 hours and is mailed to the patient.
+Reminder: coupons and discount programs may not be applied; the $50 copay does not count toward TrOOP; low-income subsidy does not reduce it; pen needles are not covered.
+
+Prescriber: ______________________  NPI: __________  Date: __________` :
+`.BRIDGEPA
+Medicare GLP-1 Bridge — NOT the correct pathway for this patient.
+${routeBlock ? 'Reason: ' + routeBlock : ''}
+${route === 'partd' ? `Route instead: Part D plan formulary / exception process for the covered indication (${partDIndications.join(', ') || 'MACE risk reduction'}). Use .PALETTER, addressed to the Part D sponsor.` : ''}${route === 'cash' ? 'Route instead: manufacturer self-pay (LillyDirect / NovoCare), a non-incretin agent, or the program cash tier.' : ''}${route === 'commercial' ? 'Patient is not Medicare — use .PALETTER for the commercial prior authorization.' : ''}
+${bridgeTier ? `\nFor reference, the Bridge BMI criterion IS met (tier ${bridgeTier}: ${bridgeTierText}) — it is the routing rule, not the anthropometrics, that excludes this patient.` : ''}`,
+
+    paletter: `.PALETTER
+PRIOR AUTHORIZATION / STATEMENT OF MEDICAL NECESSITY
+${route === 'partd' ? 'Addressed to: Part D plan sponsor — formulary exception request' : 'Addressed to: [Plan] — pharmacy prior authorization'}
+Patient: ______________  DOB: __________  Member ID: __________  Date: __________
+Requested agent: ${top ? `${top.a.name} (${top.a.brand}), ${top.a.cls}` : '[agent]'} — initiate at label starting dose with scheduled titration.
+Primary diagnosis: ${bmi >= 40 || (bmi >= 35 && nORCD > 0) ? 'E66.01' : bmi >= 30 ? 'E66.09' : 'E66.3'} — adiposity-based chronic disease, ${stageName}.
+
+1. DIAGNOSIS AND DISEASE SEVERITY
+Measured in clinic: weight ${wt} kg, height ${ht} cm, BMI ${bmi.toFixed(1)} kg/m2, waist circumference ${wc} cm, waist-to-height ratio ${whtr.toFixed(2)}${fatPct !== null ? `, DXA body fat ${fatPct}%` : ''}.
+This meets the FDA-approved label indication for ${top ? top.a.brand : 'the requested agent'}: BMI >= 30, or BMI >= 27 with at least one weight-related comorbid condition.
+Documented weight-related comorbidities: ${nORCD ? [...severe.map(c => `${orcdMeta[c] ? orcdMeta[c].name : c} (severe)`), ...mild.map(c => `${orcdMeta[c] ? orcdMeta[c].name : c} (mild-moderate)`).slice(0,6)].join('; ') : 'none currently documented'}.
+Disease is staged as ${stageName} using the AACE 2025 consensus algorithm for obesity/adiposity-based chronic disease, which stages severity on the presence and severity of obesity-related complications rather than BMI alone. ${stage === 3 ? 'Stage 3 disease carries severe complications and warrants a >=15% weight-reduction target.' : stage === 2 ? 'Stage 2 disease warrants a >=10% weight-reduction target, the threshold at which most obesity-related diseases measurably improve.' : 'Treatment is directed at preventing progression to complications.'}
+
+2. COMPREHENSIVE EVALUATION HAS BEEN COMPLETED
+Secondary and iatrogenic contributors were systematically reviewed and addressed: ${driversHit.length ? driversHit.map(d => d.name).slice(0,5).join('; ') : 'no reversible contributor identified'}.
+${cortSuspect ? 'Hypercortisolism screening has been initiated per Endocrine Society criteria.' : 'Hypercortisolism screening is not indicated — no discriminatory features present.'}
+${edPos ? 'Eating pathology screened and identified; concurrent CBT-E referral is in place and has informed agent selection.' : 'Eating disorder screening (BEDS-7, SCOFF) is negative.'}
+Baseline laboratory and body-composition evaluation is complete and on file.
+
+3. LIFESTYLE INTERVENTION — DOCUMENTED, SUPERVISED, AND ONGOING
+The patient has completed ${num('lsMonths')} months of structured, clinician-supervised reduced-calorie nutrition and increased physical activity, comprising ${num('lsContacts')} documented contacts with a registered dietitian, health coach, and physician. Contact intensity exceeds the USPSTF benchmark for intensive behavioral intervention (>=12 contacts per year).
+Result of lifestyle intervention alone: ${num('lsResult')}% change in body weight over ${num('lsMonths')} months — ${Math.abs(num('lsResult')) < 5 ? 'below the >=5% threshold required for clinically meaningful complication modification' : 'insufficient to reach the stage-appropriate target'}.
+This program is active and will continue concurrently with pharmacotherapy, as the label requires.
+
+4. PRIOR PHARMACOTHERAPY / STEP HISTORY
+${chk('h_priorAOM') ? 'The patient has completed a prior trial of an obesity medication at the maximum tolerated dose with inadequate response. Agent, dates, maximum dose, and outcome are documented in the chart and available on request.' : 'No prior obesity medication trial. Step therapy through a lower-tier agent is not clinically appropriate here because the stage-appropriate target of >=' + goalPct + '% is not reliably achievable with agents of lesser efficacy.'}
+${chk('h_incretinIntol') ? 'Prior incretin-class intolerance is documented; the requested agent is selected on the basis of a distinct pharmacokinetic profile and slower titration plan.' : ''}
+${blocked.length ? 'Alternative agents are contraindicated: ' + blocked.map(b => `${b.a.name} — ${b.why}`).join('; ') + '.' : ''}
+
+5. CLINICAL RATIONALE FOR THIS SPECIFIC AGENT
+${top ? `${top.a.name} is requested rather than a lower-cost alternative because: ${top.tags.length ? `this patient carries ${top.tags.join(' and ')}, for which this agent holds a dedicated FDA indication or positive outcome trial. ` : ''}${top.a.evid} ${top.a.note}` : ''}
+Selection follows a complication-centric hierarchy: the agent is chosen to modify this patient's documented complications, not to maximize weight loss as an end in itself. This is the approach specified by the AACE 2025 algorithm and the 2026 joint TOS/OMA/OAC guidance.
+
+6. SAFETY SCREENING
+Contraindications screened and absent: personal or family history of medullary thyroid carcinoma or MEN2; pregnancy, lactation, or planned conception; gastroparesis; ${['s_seizure','s_opioid','s_maoi','s_glaucoma','s_cholestasis'].filter(k => !chk(k)).length} additional class-specific contraindications reviewed and negative.
+${ranked[0] && ranked[0].cautions.length ? 'Cautions identified and actively managed: ' + ranked[0].cautions.join('; ') + '.' : 'No cautions identified.'}
+
+7. TREATMENT PLAN, MONITORING, AND STOPPING RULES
+Therapeutic goal: >=${goalPct}% sustained reduction in body weight (${goalKg.toFixed(1)} kg; target ${targetWt.toFixed(1)} kg), selected to modify the documented complications above.
+Follow-up at 4 weeks and 12-16 weeks. Response threshold is >=5% total body weight reduction at 12-16 weeks on the maximum tolerated dose. If unmet, the plan escalates dose, then switches agent, per the ADA Standards of Care in Overweight and Obesity 2026.
+Body composition is tracked by serial DXA with resistance training and protein 1.4-1.6 g/kg prescribed to protect lean mass${age >= 65 ? ' — a specific priority at this patient\'s age' : ''}.
+Continuation through maintenance is part of the treatment plan. Discontinuation after goal attainment predictably produces weight recurrence and re-emergence of cardiometabolic risk; the 2026 TOS/OMA/OAC guidance gives a strong recommendation to continue obesity medications during the maintenance phase.
+
+8. ATTESTATION
+I attest that the above is accurate, that this medication is medically necessary for the treatment of adiposity-based chronic disease with the complications documented, and that it is prescribed together with an active reduced-calorie diet and increased physical activity program delivered within this practice.
+
+______________________, MD — Diplomate, American Board of Obesity Medicine
+NPI: __________  Practice: __________  Phone: __________`,
+
+    pareauth: `.PAREAUTH
+CONTINUATION / REAUTHORIZATION AND APPEAL LANGUAGE
+
+--- BLOCK A: CONTINUATION REQUEST ---
+Patient: ______________  Agent: ${top ? top.a.brand : '[agent]'}  Therapy start: ${$('initDate').value || '__________'}
+Response to date: ${$('tbwlToDate').value !== '' ? `${num('tbwlToDate')}% total body weight reduction` : '____% total body weight reduction'} from a baseline of ${bmiInit !== null ? `BMI ${bmiInit}` : `${wt} kg`}. Current BMI ${bmi.toFixed(1)}.
+${$('tbwlToDate').value !== '' && Math.abs(num('tbwlToDate')) >= 5 ? 'This exceeds the >=5% response threshold and the therapy is working as intended.' : 'Response is being addressed by dose escalation per plan; the agent has not yet been at maximum tolerated dose for a full 12-16 week interval.'}
+Complication response: ${nORCD ? 'measurable improvement in ' + [...severe, ...mild].slice(0,3).map(c => orcdMeta[c] ? orcdMeta[c].name.toLowerCase() : c).join(', ') + ' — objective values documented in the chart' : 'documented in the chart'}.
+Lifestyle program participation continues: ${num('lsContacts')} documented contacts, ongoing.
+Lean mass is preserved on serial DXA, confirming that the reduction is fat mass rather than muscle.
+Request: continuation at the individualized maintenance dose. Per the ADA Standards of Care 2026, the maintenance dose balances efficacy, health benefit, and tolerability and need not be the maximum approved dose. Discontinuation at goal is not clinically appropriate — weight recurrence and re-emergence of cardiometabolic risk are the predictable result, and would return this patient to stage ${stage} disease at additional cost to the plan.
+
+--- BLOCK B: APPEAL OF DENIAL (commercial / Part D) ---
+${route === 'bridge' ? 'NOTE: the Medicare GLP-1 Bridge has NO appeals process. A denial can only be answered by resubmitting the prior authorization form with corrected or additional information. Verify the attestation of criteria AT INITIATION and the lifestyle-modification attestation before resubmitting — those are the two fields most often the cause.' : ''}
+I am requesting reconsideration of the denial dated __________ for ${top ? top.a.brand : '[agent]'}.
+Grounds:
+  1. The denial cites [failure to document supervised lifestyle intervention / step therapy / BMI criteria]. The record contains ${num('lsMonths')} months and ${num('lsContacts')} contacts of clinician-supervised nutrition and physical activity intervention, which is enclosed and exceeds the plan's stated requirement.
+  2. The requested agent is not interchangeable with the formulary alternative. ${top && top.tags.length ? `This patient carries ${top.tags.join(' and ')}. ${top.a.name} holds a dedicated FDA indication or positive outcome trial for that complication; the formulary alternative does not. Substitution would treat weight while leaving the complication that actually confers this patient's morbidity untreated.` : 'The formulary alternative lacks outcome evidence for this patient\'s documented complications.'}
+  3. ${chk('h_priorAOM') ? 'Step therapy has been satisfied — a prior agent was trialed at maximum tolerated dose with inadequate response, documented and enclosed.' : 'Step therapy through a lower-efficacy agent would not reach the >=' + goalPct + '% target that this patient\'s stage ' + stage + ' disease requires, and would delay complication modification by a further 6 months.'}
+  4. Denying pharmacotherapy for adiposity-based chronic disease while covering treatment for its complications is not internally consistent. The complications listed above are the cost driver.
+Enclosed: chart notes, anthropometric series, laboratory results, DXA body composition, lifestyle program contact log.
+Requesting peer-to-peer review with a physician board-certified in obesity medicine or endocrinology.
+
+______________________, MD — Diplomate, American Board of Obesity Medicine`,
+
+    response: txOn ? `.TXRESPONSE
+Anti-obesity pharmacotherapy — response assessment.
+Agent: ${{sema:'semaglutide (Wegovy)',osema:'oral semaglutide 25 mg',tirz:'tirzepatide (Zepbound)',orfo:'orforglipron',lira:'liraglutide',phentop:'phentermine/topiramate ER',nbup:'naltrexone/bupropion',other:'anti-obesity medication'}[txAgent]}. Dose status: ${{titrating:'still titrating',submax:'sub-maximal, tolerated',max:'maximum / maximum tolerated dose',maxAE:'maximum tolerated, capped by adverse effect'}[txDose]}. Duration at current status: ${txMonths} months.
+Trajectory: nadir ${txNadir}% TBWL; current ${txNow}% TBWL from baseline${regainAbs>=1?`; regain of ${regainAbs.toFixed(1)} percentage points from nadir (${Math.round(regainFrac*100)}% of loss)`:''}. Stage ${stage} target >=${goalPct}%.
+Adequacy: adherence ${chk('tx_adhere')?'confirmed':'NOT confirmed'}; technique/storage ${chk('tx_technique')?'verified':'NOT verified'}; titration ${chk('tx_titrateOK')?'complete to label':'incomplete'}. ${discontinued?'Currently OFF drug'+(chk('tx_taper')?' (tapered)':' (abrupt/lapsed)')+'.':'On drug.'}
+Non-response differential${nrActive.length?' (flagged)':''}:
+${(nrActive.length?nrActive:[]).map(d=>`  - ${d.dom} :: test: ${d.test}; action: ${d.act}`).join('\n') || '  - none flagged'}${nrSuggested.length?`\nAuto-suggested from intake (confirm/clear): ${nrSuggested.map(d=>d.dom).join('; ')}.`:''}
+Pattern classification: ${{early:'PREMATURE — before the 3-month max-dose decision point',ontrack:'RESPONDING as expected',undertitrated:'NOT YET NON-RESPONSE — below maximum tolerated dose',pseudo:'APPARENT non-response with unverified adequacy',nonresponse:'PRIMARY NON-RESPONSE (<5% at max dose, adequate duration, adherence confirmed)',partial:'PARTIAL RESPONSE (5-10%), short of stage target',plateau:'PHYSIOLOGIC PLATEAU at adequate response',plateauRegain:'ON-DRUG CREEP from nadir',rebound:'POST-DISCONTINUATION REBOUND'}[txPattern]}.
+Plan:
+${txPatterns[txPattern].steps.map((t,i)=>`  ${i+1}. ${t.replace(/<[^>]*>/g,'')}`).join('\n')}
+Reference: ADA Standards of Care in Overweight and Obesity 2026 (3-month, max-tolerated-dose, >=5% threshold); STEP-1 extension and SURMOUNT-4 for discontinuation trajectory; continuation of therapy through maintenance per 2026 TOS/OMA/OAC guidance.` : '',
+
+    codes: `.CODES
+Primary:
+  ${bmi >= 40 || (bmi >= 35 && nORCD > 0) ? 'E66.01  Morbid (severe) obesity due to excess calories' : bmi >= 30 ? 'E66.09  Other obesity due to excess calories' : bmi >= cut.ow ? 'E66.3   Overweight' : 'R63.5   Abnormal weight gain'}
+  ${bmi >= 40 ? 'Z68.4x  BMI 40.0 and over, adult' : bmi >= 30 ? 'Z68.3x  BMI 30.0-39.9, adult' : 'Z68.2x  BMI 20.0-29.9, adult'} (select the exact 5th character for BMI ${bmi.toFixed(1)})
+Complications recorded this encounter:
+${[
+  orcdState.t2dm > 0 && '  E11.9   Type 2 diabetes mellitus without complications (adjust to complication-specific code)',
+  orcdState.predm > 0 && '  R73.03  Prediabetes',
+  orcdState.mets > 0 && '  E88.81  Metabolic syndrome',
+  orcdState.dlp > 0 && '  E78.5   Hyperlipidemia, unspecified',
+  orcdState.htn > 0 && '  I10     Essential hypertension',
+  orcdState.ascvd > 0 && '  I25.10  ASCVD of native coronary artery without angina',
+  orcdState.hfpef > 0 && '  I50.30  Diastolic (congestive) heart failure, unspecified',
+  orcdState.af > 0 && '  I48.91  Unspecified atrial fibrillation',
+  orcdState.ckd > 0 && '  N18.9   Chronic kidney disease, unspecified (stage-specific preferred)',
+  orcdState.masld === 2 && '  K75.81  Metabolic dysfunction-associated steatohepatitis',
+  orcdState.masld === 1 && '  K76.0   Fatty (change of) liver, not elsewhere classified',
+  orcdState.osa > 0 && '  G47.33  Obstructive sleep apnea',
+  orcdState.osa === 2 && '  E66.2   Obesity with alveolar hypoventilation (if OHS)',
+  orcdState.oa > 0 && '  M17.0   Bilateral primary osteoarthritis of knee',
+  orcdState.gerd > 0 && '  K21.9   GERD without esophagitis',
+  orcdState.sui > 0 && '  N39.3   Stress incontinence (female)',
+  orcdState.iih > 0 && '  G93.2   Benign intracranial hypertension',
+  orcdState.pcos > 0 && '  E28.2   Polycystic ovarian syndrome',
+  orcdState.infert > 0 && '  N97.9   Female infertility, unspecified',
+  orcdState.hypogonad > 0 && '  E29.1   Testicular hypofunction',
+  orcdState.dep > 0 && '  F32.9   Major depressive disorder, single episode, unspecified',
+  orcdState.asthma > 0 && '  J45.909 Unspecified asthma, uncomplicated',
+  orcdState.lymph > 0 && '  I89.0   Lymphedema, not elsewhere classified',
+  bedPos && '  F50.81  Binge eating disorder',
+  nightEat && '  F50.89  Other specified eating disorder (night eating)',
+  cortSuspect && '  E24.9   Cushing syndrome, unspecified (screening; revise on result)',
+  chk('h_bariatric') && '  Z98.84  Bariatric surgery status',
+].filter(Boolean).join('\n') || '  (none recorded)'}
+Counselling / status:
+  Z71.3   Dietary counselling and surveillance
+  Z71.82  Exercise counselling
+Note: severity qualifiers drive the ABCD stage but not the ICD-10 selection — code each complication to its own specificity.`,
+
+    mermaid: buildMermaid(on, edgeOn, nodeStyle, stage),
+  };
+  macros.all = [macros.intake, macros.stage, macros.plan, txOn ? macros.response : '', macros.bridgepa, macros.codes].filter(Boolean).join('\n\n');
+  window._macros = macros;
+  const act = document.querySelector('#mtabs button.on');
+  $('mtext').textContent = macros[act ? act.dataset.m : 'intake'];
+
+  // Counts
+  const setCount = (id, n) => { const e = $(id); e.textContent = n; e.classList.toggle('zero', n === 0); };
+  setCount('dv_count', driversHit.length);
+  setCount('cx_count', cxDiscrim + (chk('cx_exogenous') ? 1 : 0) + (chk('cx_incidentaloma') ? 1 : 0));
+  setCount('ed_count', ['ed_binge','ed_purge','ed_restrict','ed_night','ed_grazing','ed_si','ed_hxAN'].filter(chk).length);
+  setCount('orcd_count', nORCD);
+  setCount('tx_count', txOn ? (txPattern ? 1 : 0) : 0);
+  setCount('sf_count', ['s_preg','s_mtc','s_gastroparesis','s_pancreatitis','s_gallstone','s_seizure','s_opioid','s_maoi','s_uncHTN','s_cvd','s_glaucoma','s_hyperthyroid','s_stones','s_cholestasis','s_dr'].filter(chk).length);
+}
+
+// ════════════════════════════════════════════════════════════════
+// SPINE RENDERER
+// ════════════════════════════════════════════════════════════════
+function nodeById(id) { return NODES.find(n => n.id === id); }
+function nodeFill(n, isOn, style) {
+  if (!isOn) return { f: 'var(--paper)', s: 'var(--rule)', txt: 'dim' };
+  if (style === 'stop') return { f: 'var(--accent-soft)', s: 'var(--accent)', txt: '' };
+  if (style === 'par') return { f: 'var(--warn-soft)', s: 'var(--warn)', txt: '' };
+  if (n.shape === 'stage') return { f: 'var(--spine-soft)', s: 'var(--spine)', txt: '' };
+  return { f: 'var(--spine-soft)', s: 'var(--spine)', txt: '' };
+}
+function wrap(text, max) {
+  const words = String(text).split(' '); const lines = []; let cur = '';
+  words.forEach(w => { if ((cur + ' ' + w).trim().length > max) { lines.push(cur.trim()); cur = w; } else { cur += ' ' + w; } });
+  if (cur.trim()) lines.push(cur.trim());
+  return lines;
+}
+
+function drawSpine(on, edgeOn, nodeStyle, stage) {
+  const svg = $('spineSvg');
+  let out = '';
+  const anchors = {};
+  NODES.forEach(n => {
+    const h = n.h || NH;
+    anchors[n.id] = { top: { x: n.x + NW / 2, y: n.y }, bot: { x: n.x + NW / 2, y: n.y + h }, l: { x: n.x, y: n.y + h / 2 }, r: { x: n.x + NW, y: n.y + h / 2 }, cx: n.x + NW / 2, cy: n.y + h / 2, h };
+  });
+
+  // Edges first
+  EDGES.forEach(e => {
+    const a = anchors[e.f], b = anchors[e.t];
+    if (!a || !b) return;
+    const isOn = edgeOn.has(e.f + '>' + e.t);
+    let d, lx, ly;
+    if (e.side === 'L') { d = `M${a.l.x},${a.l.y} H${b.r.x + 6} L${b.r.x},${b.r.y}`; lx = (a.l.x + b.r.x) / 2; ly = a.l.y - 4; }
+    else if (e.side === 'R') { d = `M${a.r.x},${a.r.y} H${b.l.x - 6} L${b.l.x},${b.l.y}`; lx = (a.r.x + b.l.x) / 2; ly = a.r.y - 4; }
+    else if (e.side === 'LU') { d = `M${a.bot.x},${a.bot.y} V${b.cy + 18} H${b.l.x - 6} L${b.l.x},${b.cy}`; lx = a.bot.x + 6; ly = a.bot.y + 10; }
+    else if (e.side === 'RU') { d = `M${a.bot.x},${a.bot.y} V${b.cy + 18} H${b.r.x + 6} L${b.r.x},${b.cy}`; lx = a.bot.x + 6; ly = a.bot.y + 10; }
+    else { d = `M${a.bot.x},${a.bot.y} V${b.top.y}`; lx = a.bot.x + 5; ly = (a.bot.y + b.top.y) / 2 + 2; }
+    out += `<path class="edge ${isOn ? 'on' : ''}" d="${d}" ${e.dashed ? 'stroke-dasharray="3 3"' : ''} marker-end="url(#${isOn ? 'ah-on' : 'ah'})" />`;
+    if (e.l) out += `<text class="edge-lbl ${isOn ? 'on' : ''}" x="${lx}" y="${ly}" text-anchor="start">${e.l}</text>`;
+  });
+
+  // Nodes
+  NODES.forEach(n => {
+    const h = n.h || NH;
+    const isOn = on.has(n.id);
+    let style = nodeStyle[n.id];
+    if (n.id.startsWith('st') && n.id.length === 3 && isOn) style = null;
+    const c = nodeFill(n, isOn, style);
+    const rx = n.shape === 'stadium' ? h / 2 : 3;
+    if (n.shape === 'dec') {
+      out += `<path class="nd-box" d="M${n.x + 12},${n.y} H${n.x + NW - 12} L${n.x + NW},${n.y + h / 2} L${n.x + NW - 12},${n.y + h} H${n.x + 12} L${n.x},${n.y + h / 2} Z" fill="${c.f}" stroke="${c.s}" stroke-width="1.2" />`;
+    } else {
+      out += `<rect class="nd-box" x="${n.x}" y="${n.y}" width="${NW}" height="${h}" rx="${rx}" fill="${c.f}" stroke="${c.s}" stroke-width="${n.shape === 'gate' ? 1.8 : 1.2}" ${n.shape === 'gate' ? 'stroke-dasharray="4 2"' : ''} />`;
+    }
+    const tl = wrap(n.t, 27);
+    const sl = n.s ? wrap(n.s, 37) : [];
+    const total = tl.length * 11 + sl.length * 9.5;
+    let y = n.y + h / 2 - total / 2 + 8;
+    tl.forEach(line => { out += `<text class="nd-txt hd ${c.txt}" x="${n.x + NW / 2}" y="${y}" text-anchor="middle">${line}</text>`; y += 11; });
+    sl.forEach(line => { out += `<text class="nd-txt ${isOn ? '' : 'dim'}" x="${n.x + NW / 2}" y="${y}" text-anchor="middle" fill="var(--ink-muted)">${line}</text>`; y += 9.5; });
+  });
+
+  svg.innerHTML = `<defs>
+    <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--rule)" /></marker>
+    <marker id="ah-on" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--spine)" /></marker>
+  </defs>${out}`;
+}
+
+function buildMermaid(on, edgeOn, nodeStyle, stage) {
+  const shape = (n) => {
+    const label = n.t + (n.s ? '<br/><small>' + n.s + '</small>' : '');
+    if (n.shape === 'dec') return `${n.id}{"${n.t}"}`;
+    if (n.shape === 'stadium') return `${n.id}(["${label}"])`;
+    if (n.shape === 'gate') return `${n.id}[/"${label}"/]`;
+    return `${n.id}["${label}"]`;
+  };
+  let s = 'flowchart TD\n';
+  NODES.forEach(n => { s += `  ${shape(n)}\n`; });
+  s += '\n';
+  EDGES.forEach(e => {
+    const arrow = e.dashed ? '-.->' : '-->';
+    s += `  ${e.f} ${arrow}${e.l ? `|${e.l}|` : ''} ${e.t}\n`;
+  });
+  s += `
+  classDef onPath fill:#E4EEEE,stroke:#1F5459,stroke-width:2px,color:#1A1916;
+  classDef gateStop fill:#F7EAEB,stroke:#8B2635,stroke-width:2px,color:#1A1916;
+  classDef parallel fill:#FBF3DD,stroke:#B8862F,stroke-width:2px,color:#1A1916;
+  classDef off fill:#FAF8F4,stroke:#E8E2D5,color:#8E8A82;
+`;
+  const stops = [], pars = [], onp = [], offs = [];
+  NODES.forEach(n => {
+    if (!on.has(n.id)) { offs.push(n.id); return; }
+    const st = nodeStyle[n.id];
+    if (st === 'stop') stops.push(n.id); else if (st === 'par') pars.push(n.id); else onp.push(n.id);
+  });
+  if (onp.length) s += `  class ${onp.join(',')} onPath;\n`;
+  if (stops.length) s += `  class ${stops.join(',')} gateStop;\n`;
+  if (pars.length) s += `  class ${pars.join(',')} parallel;\n`;
+  if (offs.length) s += `  class ${offs.join(',')} off;\n`;
+  EDGES.forEach((e, i) => { if (edgeOn.has(e.f + '>' + e.t)) s += `  linkStyle ${i} stroke:#1F5459,stroke-width:2.5px;\n`; });
+  return s;
+}
+
+compute();
+</script>
+</body>
+</html>
