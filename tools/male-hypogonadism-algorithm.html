@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Male Hypogonadism — Individualized Diagnostic Pathway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2B55; --ink:#0A1B33; --teal:#007C8A; --mint:#00B5A3;
+  --amber:#B4700F; --amber-bg:#FDF4E4; --amber-line:#EBCF9E;
+  --rose:#A8324A; --rose-bg:#FBEEF1; --rose-line:#E7BCC6;
+  --violet:#5B47A0; --violet-bg:#F2EFFA; --violet-line:#CFC5EC;
+  --teal-bg:#E8F5F5; --teal-line:#A9D6D8;
+  --navy-bg:#EDF1F7; --navy-line:#C3D0E2;
+  --sport:#2E6B3E; --sport-bg:#EDF5EE; --sport-line:#B2D2B8;
+  --paper:#F6F8FA; --card:#FFFFFF; --line:#D9E2EA; --muted:#5A6B7D;
+  --shadow:0 1px 2px rgba(13,43,85,.06), 0 6px 18px rgba(13,43,85,.06);
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --cond:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+
+/* ---------- header ---------- */
+header{background:var(--navy);color:#fff;padding:34px 0 30px;margin-bottom:28px;
+  background-image:linear-gradient(105deg,#0B2447 0%,#0D2B55 45%,#10456B 100%);}
+header .wrap{padding-bottom:0}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mint);margin:0 0 10px}
+h1{font-family:var(--cond);font-weight:700;font-size:clamp(28px,5vw,46px);line-height:1.02;letter-spacing:-.01em;margin:0 0 12px;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--mint)}
+.dek{max-width:74ch;color:#C9D8E8;font-size:16px;margin:0 0 18px}
+.byline{font-family:var(--mono);font-size:11.5px;color:#8FAAC6;letter-spacing:.03em;border-top:1px solid rgba(255,255,255,.16);padding-top:14px}
+
+/* ---------- the two questions ---------- */
+.questions{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 30px}
+.q{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:3px;padding:16px 18px;box-shadow:var(--shadow)}
+.q.indiv{border-left-color:var(--violet)}
+.q h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.q p{margin:0;font-size:15.5px}
+.q strong{font-weight:600}
+
+/* ---------- legend / controls ---------- */
+.bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--line);border-radius:3px;padding:12px 16px;margin-bottom:34px;box-shadow:var(--shadow)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.key{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.swatch{width:12px;height:12px;border-radius:2px;flex:none}
+button.tool{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--navy);color:#fff;border:0;border-radius:3px;padding:8px 14px;cursor:pointer}
+button.tool:hover{background:#164277}
+button.tool:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+
+/* ---------- spine + stages ---------- */
+.stage{position:relative;margin:0 0 6px}
+.stagehead{display:flex;align-items:flex-start;gap:14px;margin:0 0 14px}
+.num{flex:none;width:44px;height:44px;border-radius:3px;background:var(--navy);color:#fff;
+  font-family:var(--mono);font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.stagehead h2{font-family:var(--cond);text-transform:uppercase;letter-spacing:.01em;font-weight:700;
+  font-size:clamp(19px,2.6vw,25px);margin:2px 0 2px;line-height:1.08}
+.stagehead .sub{font-size:14px;color:var(--muted);margin:0}
+.arrow{height:34px;display:flex;align-items:center;justify-content:flex-start;padding-left:21px;margin:0}
+.arrow::before{content:"";width:2px;height:100%;background:var(--navy-line);position:relative}
+.arrow::after{content:"";position:absolute;margin-left:-6px;margin-top:22px;
+  border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--navy)}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:16px 18px;box-shadow:var(--shadow)}
+.card h4{font-family:var(--cond);text-transform:uppercase;letter-spacing:.03em;font-size:14.5px;margin:0 0 9px;color:var(--navy)}
+.card ul{margin:0;padding-left:17px}
+.card li{margin:0 0 5px}
+.card li:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tint-teal{background:var(--teal-bg);border-color:var(--teal-line)}
+.tint-teal h4{color:#065E68}
+.tint-amber{background:var(--amber-bg);border-color:var(--amber-line)}
+.tint-amber h4{color:var(--amber)}
+.tint-rose{background:var(--rose-bg);border-color:var(--rose-line)}
+.tint-rose h4{color:var(--rose)}
+.tint-navy{background:var(--navy-bg);border-color:var(--navy-line)}
+.tint-sport{background:var(--sport-bg);border-color:var(--sport-line)}
+.tint-sport h4{color:var(--sport)}
+.v-sport{background:var(--sport);color:#fff}
+.checklist{list-style:none;margin:0;padding:0}
+.checklist li{position:relative;padding-left:26px;margin:0 0 7px}
+.checklist li::before{content:"";position:absolute;left:0;top:3px;width:13px;height:13px;border:1.5px solid var(--sport);border-radius:2px;background:#fff}
+.checklist li:last-child{margin-bottom:0}
+
+/* branch fan */
+.branch{position:relative;padding-top:26px}
+.branch::before{content:"";position:absolute;top:0;left:12.5%;right:12.5%;height:2px;background:var(--navy-line)}
+.branch.four::before{left:12.5%;right:12.5%}
+.branch.three::before{left:16.6%;right:16.6%}
+.branchcol{position:relative}
+.branchcol::before{content:"";position:absolute;top:-26px;left:50%;width:2px;height:20px;background:var(--navy-line)}
+.branchcol::after{content:"";position:absolute;top:-8px;left:50%;margin-left:-5px;
+  border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--navy-line)}
+.cond{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+  background:var(--navy);color:#fff;padding:6px 9px;border-radius:2px;display:block;text-align:center;margin-bottom:0;line-height:1.35}
+.cond.sub{background:#41556E}
+.branchcol .card{border-top-left-radius:0;border-top-right-radius:0;border-top:0}
+
+/* verdict pills */
+.verdict{font-family:var(--cond);text-transform:uppercase;font-weight:700;font-size:13px;letter-spacing:.04em;
+  display:inline-block;padding:5px 9px;border-radius:2px;margin:0 0 9px}
+.v-go{background:var(--teal);color:#fff}
+.v-stop{background:var(--rose);color:#fff}
+.v-hold{background:var(--amber);color:#fff}
+.v-think{background:var(--violet);color:#fff}
+
+/* thresholds strip */
+.thresh{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin:14px 0 0}
+.th{background:#fff;padding:11px 13px}
+.th .v{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--navy);display:block;letter-spacing:-.02em}
+.th .l{font-size:12px;color:var(--muted);display:block;margin-top:2px;line-height:1.35}
+.th.gray{background:#FFFBF2}
+.th.gray .v{color:var(--amber)}
+
+/* nuance */
+.nuance{border:1px solid var(--violet-line);background:var(--violet-bg);border-radius:3px;padding:14px 16px;margin:14px 0 0}
+.nuance h5{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--violet);margin:0 0 7px}
+.nuance p{margin:0 0 7px}
+.nuance p:last-child{margin-bottom:0}
+.nuance ul{margin:0;padding-left:17px}
+
+/* flags */
+.flag{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:2px;vertical-align:2px;margin-left:6px;white-space:nowrap}
+.flag.eo{background:#FFF0D6;color:#8A5407;border:1px solid #E9C98D}
+.flag.gl{background:#E8F5F5;color:#065E68;border:1px solid var(--teal-line)}
+
+/* driver cards */
+.drivers{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px}
+.driver{background:#fff;border:1px solid var(--amber-line);border-top:3px solid var(--amber);border-radius:3px;padding:14px 15px}
+.driver h4{font-family:var(--cond);text-transform:uppercase;font-size:14px;letter-spacing:.03em;color:var(--amber);margin:0 0 8px;display:flex;gap:8px;align-items:baseline}
+.driver h4 .ix{font-family:var(--mono);font-size:11px;color:#C69B57}
+.driver .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);display:block;margin:9px 0 3px}
+.driver ul{margin:0;padding-left:16px;font-size:14.2px}
+.driver.hot{border-color:#D9A7B3;border-top-color:var(--rose)}
+.driver.hot h4{color:var(--rose)}
+
+/* coherence widget */
+.coh{background:#fff;border:1px solid var(--line);border-radius:3px;box-shadow:var(--shadow);overflow:hidden}
+.coh .cohhead{background:var(--navy);color:#fff;padding:13px 18px}
+.coh .cohhead h4{font-family:var(--cond);text-transform:uppercase;font-size:15px;letter-spacing:.04em;margin:0;color:#fff}
+.coh .cohhead p{margin:4px 0 0;font-size:13px;color:#B8CBE0}
+.channels{padding:16px 18px}
+.chan{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)}
+.chan:last-of-type{border-bottom:0}
+.chan .name{font-weight:600;font-size:14.5px}
+.chan .hint{display:block;font-weight:400;font-size:12.8px;color:var(--muted);margin-top:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  background:#fff;border:0;border-right:1px solid var(--line);padding:8px 10px;cursor:pointer;color:var(--muted)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"].low{background:var(--rose);color:#fff}
+.seg button[aria-pressed="true"].neu{background:#5A6B7D;color:#fff}
+.seg button[aria-pressed="true"].ok{background:var(--teal);color:#fff}
+.seg button:focus-visible{outline:3px solid var(--mint);outline-offset:-3px}
+.readout{border-top:1px solid var(--line);padding:16px 18px;background:var(--navy-bg)}
+.readout .pat{font-family:var(--cond);text-transform:uppercase;font-weight:700;font-size:20px;letter-spacing:.02em;margin:0 0 6px}
+.readout p{margin:0;font-size:14.5px}
+.readout .note{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:10px;display:block}
+
+/* ordered list of commitments */
+.commit{counter-reset:c;list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.commit li{counter-increment:c;background:#fff;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:3px;padding:12px 14px;position:relative}
+.commit li::before{content:counter(c);font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600;display:block;margin-bottom:4px}
+.commit b{display:block;font-family:var(--cond);text-transform:uppercase;font-size:13.5px;letter-spacing:.03em;color:var(--navy);margin-bottom:3px}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:#F4F7FA}
+td.mono{font-family:var(--mono);font-size:13px;white-space:nowrap}
+
+/* footer */
+.refs{margin-top:44px;border-top:2px solid var(--navy);padding-top:20px}
+.refs h3{font-family:var(--cond);text-transform:uppercase;font-size:16px;letter-spacing:.04em;margin:0 0 10px}
+.refs ol{font-size:13.2px;color:#33445A;padding-left:20px;margin:0}
+.refs li{margin-bottom:5px}
+.disclaimer{margin-top:22px;font-size:12.5px;color:var(--muted);border:1px solid var(--line);background:#fff;border-radius:3px;padding:14px 16px}
+.sectionrule{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  border-top:1px solid var(--line);padding-top:9px;margin:34px 0 14px}
+
+@media (max-width:860px){
+  .questions,.grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .branch::before{display:none}
+  .branchcol::before,.branchcol::after{display:none}
+  .branchcol .card{border-top:1px solid var(--line)}
+  .cond{border-radius:2px}
+}
+@media print{
+  body{background:#fff}
+  header{background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{display:none}
+  .stage{break-inside:avoid}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Clinical decision support · Multisystem Medicine</p>
+    <h1>Male hypogonadism<br><em>the individualized pathway</em></h1>
+    <p class="dek">Guideline algorithms answer a population question: does this man fall below the threshold? The clinic asks a different one: is this man androgen-insufficient relative to his own physiology, and is anything about it reversible? This pathway keeps the population threshold as the entry gate, then adds the three things standard figures leave out — reversible drivers, the individual's own reference, and a pre-committed endpoint.</p>
+    <p class="byline">Anthony Pick, MD, CDCES, CCD · True Health — Deerfield &amp; Buffalo Grove, IL · v1.0 · August 2026 · Companion to “Beyond the Reference Range”</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="questions">
+    <div class="q">
+      <h3>The population question</h3>
+      <p><strong>Does he belong to the hypogonadal population?</strong> Answered by threshold, repeated on two mornings, with an accurate assay. Necessary, and the only part with outcome data behind it.</p>
+    </div>
+    <div class="q indiv">
+      <h3>The clinical question</h3>
+      <p><strong>Is he androgen-insufficient for himself — and why?</strong> Answered by his own historical values, his axis, his end-organ evidence, and what happens when a driver is corrected.</p>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background:var(--navy)"></span>Process / decision</span>
+      <span class="key"><span class="swatch" style="background:var(--amber)"></span>Reversible driver</span>
+      <span class="key"><span class="swatch" style="background:var(--teal)"></span>Proceed / confirmed</span>
+      <span class="key"><span class="swatch" style="background:var(--rose)"></span>Stop / do not treat</span>
+      <span class="key"><span class="swatch" style="background:var(--violet)"></span>Individualization</span>
+    </div>
+    <button class="tool" onclick="window.print()">Print / save PDF</button>
+  </div>
+
+  <!-- ============ STAGE 0 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">0</div>
+      <div>
+        <h2>Who gets tested</h2>
+        <p class="sub">Case detection, not population screening. Symptoms alone never make the diagnosis; a level alone never makes it either.</p>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="card tint-teal">
+        <h4>Specific — raise suspicion</h4>
+        <ul>
+          <li>Low libido; loss of morning and spontaneous erections</li>
+          <li>Small or shrinking testes (&le;12 mL), soft consistency</li>
+          <li>New gynecomastia or breast tenderness</li>
+          <li>Reduced facial/body hair, hot flushes, infertility, azoospermia</li>
+          <li>Low-trauma fracture or osteoporosis <em>in a man</em></li>
+          <li>Unexplained normocytic anemia</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Nonspecific — do not anchor on these</h4>
+        <ul>
+          <li>Fatigue, low mood, poor concentration, poor sleep</li>
+          <li>Reduced strength, lean mass, exercise tolerance</li>
+          <li>Increased visceral adiposity</li>
+          <li>Case-finding questionnaires (ADAM, AMS) lack specificity and should not be used to trigger testing in men presenting for unrelated care</li>
+        </ul>
+      </div>
+      <div class="card tint-navy">
+        <h4>High-prevalence conditions — test even without classic symptoms</h4>
+        <ul>
+          <li>Type 2 diabetes, obesity, metabolic syndrome, MASLD</li>
+          <li>Chronic opioid or glucocorticoid exposure</li>
+          <li>Current or prior AAS / SARM / “peptide-stack” use</li>
+          <li>Untreated obstructive sleep apnea</li>
+          <li><strong>Moderate–severe TBI, blast exposure, cranial irradiation, SAH</strong></li>
+          <li>Sellar mass, prior pituitary surgery, hyperprolactinemia</li>
+          <li>Hemochromatosis / transfusion iron overload</li>
+          <li>HIV, ESRD, cirrhosis, COPD, IBD, cancer survivorship post-chemo/RT</li>
+          <li>Male osteoporosis or male-factor infertility</li>
+          <li><strong>Competes under an anti-doping code</strong> — ask this at the first visit, not at the prescription (Stage 9)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 1 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">1</div>
+      <div>
+        <h2>Measure it in a way that can be trusted</h2>
+        <p class="sub">Most “low testosterone” in practice is a pre-analytical problem, not an endocrine one.</p>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h4>Pre-analytical requirements</h4>
+        <ul>
+          <li>Fasting <span class="flag gl">Guideline</span>, drawn 07:00–10:00, at baseline health</li>
+          <li><strong>Two separate mornings</strong>, ideally ≥1 week apart, before any diagnosis is recorded</li>
+          <li>Not during acute illness, hospitalization, post-operative recovery, or an acute pain crisis</li>
+          <li>Not after a stretch of sleep restriction, a night shift, or an alcohol binge</li>
+          <li>Same laboratory and same assay for serial values — never compare across labs</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Analytical requirements</h4>
+        <ul>
+          <li>LC-MS/MS, or a CDC-harmonized certified immunoassay, for total T</li>
+          <li>Know your lab's intra-assay CV; biologic + analytic variation in a single man is substantial</li>
+          <li>If two morning values differ by more than ~30%, obtain a third before anchoring on either <span class="flag eo">Expert opinion</span></li>
+          <li>Direct analog free-T immunoassays are unreliable — do not order or interpret them</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card tint-rose" style="margin-top:14px">
+      <span class="verdict v-stop">Hard stop</span>
+      <h4>Exogenous androgen exposure</h4>
+      <p style="margin:0">If he is taking, or recently stopped, testosterone, AAS, SARMs, prohormones, or hCG obtained anywhere — this is <strong>drug exposure, not a diagnosis</strong>. Suppressed LH with a low or variable T is the expected pharmacology. Recovery of the axis takes months and is incomplete in a meaningful minority. Do not assign a diagnosis of hypogonadism until <strong>≥3 months (preferably 6–12) after full withdrawal</strong>, and document the exposure history in the chart. Direct-to-consumer platforms are a common and underdisclosed source.</p>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 2 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">2</div>
+      <div>
+        <h2>Free testosterone and SHBG — decide what the number means</h2>
+        <p class="sub">Free T adds information only when SHBG is, or is likely to be, abnormal. When it is, it changes the diagnosis in both directions.</p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Add calculated free T when</h4>
+        <ul>
+          <li>BMI ≥27–30, type 2 diabetes, insulin resistance, MASLD <span style="color:var(--muted)">(SHBG low → total T underestimates)</span></li>
+          <li>Age &gt;60, hyperthyroidism, cirrhosis/hepatitis, HIV, anticonvulsants, estrogens <span style="color:var(--muted)">(SHBG high → total T overestimates)</span></li>
+          <li>Nephrotic syndrome, glucocorticoids, growth hormone excess <span style="color:var(--muted)">(SHBG low)</span></li>
+          <li><strong>Any total T inside the gray zone</strong>, regardless of body habitus</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>How to obtain it</h4>
+        <ul>
+          <li>Equilibrium dialysis (reference method), or</li>
+          <li>Calculation from LC-MS/MS total T + SHBG + albumin — Vermeulen or the Zakharov/“free &amp; total” multistep model</li>
+          <li>Different calculators give systematically different values; pick one and stay with it</li>
+          <li>Never a direct analog immunoassay</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="thresh">
+      <div class="th"><span class="v">&lt;230 ng/dL</span><span class="l">8 nmol/L — two values at this level with symptoms rules in (SfE/ACB 2024)</span></div>
+      <div class="th"><span class="v">&lt;264 ng/dL</span><span class="l">9.2 nmol/L — Endocrine Society lower limit, CDC-harmonized</span></div>
+      <div class="th"><span class="v">&lt;300 ng/dL</span><span class="l">AUA cut-off for testosterone deficiency, on two morning samples</span></div>
+      <div class="th gray"><span class="v">230–346 ng/dL</span><span class="l">8–12 nmol/L — the gray zone. Both eugonadal and hypogonadal men live here</span></div>
+      <div class="th"><span class="v">&gt;346 ng/dL</span><span class="l">12 nmol/L — a single fasting morning value usually rules out deficiency</span></div>
+      <div class="th"><span class="v">~50–90 pg/mL</span><span class="l">Free T lower limits in common use (5–9 ng/dL; 0.17–0.31 nmol/L); &lt;52 pg/mL appears in some algorithms</span></div>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 1 · the unit trap</h5>
+      <p>Free testosterone is the single most error-prone number in this workup because three units circulate simultaneously: <strong>pg/mL, ng/dL, and nmol/L</strong>. 1 ng/dL = 10 pg/mL. A “free T of 6” is profoundly low if it is pg/mL and entirely normal if it is ng/dL — and both appear on real reports. Published algorithms quoting “&lt;52” mean pg/mL. Before acting on a free T, confirm the unit and the method on the report itself, not on the number.</p>
+    </div>
+
+    <div class="branch four" style="margin-top:22px">
+      <div class="grid4">
+        <div class="branchcol">
+          <span class="cond">Low total T<br>Low free T</span>
+          <div class="card">
+            <span class="verdict v-go">Confirmed</span>
+            <p style="margin:0">Biochemical androgen deficiency established. Proceed to localize the axis.</p>
+          </div>
+        </div>
+        <div class="branchcol">
+          <span class="cond">Normal total T<br>Low free T</span>
+          <div class="card">
+            <span class="verdict v-go">Confirmed</span>
+            <p style="margin:0">High-SHBG state masking true deficiency — classically the older, lean, or hyperthyroid man. Treat as hypogonadal and localize.</p>
+          </div>
+        </div>
+        <div class="branchcol">
+          <span class="cond sub">Low total T<br>Normal free T</span>
+          <div class="card">
+            <span class="verdict v-stop">Do not treat</span>
+            <p style="margin:0"><strong>Pseudohypogonadism.</strong> Low SHBG from adiposity, insulin resistance, or nephrotic syndrome. The bioavailable fraction is intact. Testosterone is not the intervention — go to the metabolic drivers in Stage 4.</p>
+          </div>
+        </div>
+        <div class="branchcol">
+          <span class="cond sub">Normal total T<br>Normal free T</span>
+          <div class="card">
+            <span class="verdict v-think">Not over</span>
+            <p style="margin:0">Not androgen-deficient by population criteria. Standard figures stop here. Two things still deserve attention: the <strong>drivers of his actual symptoms</strong> (Stage 4), and — only if a documented prior baseline was far higher and symptoms are specific — the individualization sequence (Stage 5).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 3 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">3</div>
+      <div>
+        <h2>Localize the lesion</h2>
+        <p class="sub">LH and FSH, drawn with the confirmatory testosterone. Prolactin and free T4 whenever gonadotropins are not elevated.</p>
+      </div>
+    </div>
+
+    <div class="branch three">
+      <div class="grid3">
+        <div class="branchcol">
+          <span class="cond">LH and FSH elevated</span>
+          <div class="card tint-teal">
+            <h4>Primary — testicular</h4>
+            <ul>
+              <li>Examine: testicular volume by orchidometer, consistency, varicocele, prior surgical scars</li>
+              <li><strong>Karyotype</strong> if small firm testes, azoospermia, tall stature, gynecomastia, or learning history — Klinefelter is ~1:500–1000 and mostly undiagnosed in adults</li>
+              <li>History: cryptorchidism, torsion, mumps orchitis, chemotherapy, testicular irradiation, trauma</li>
+              <li>Semen analysis before starting therapy if fertility is anywhere on the horizon</li>
+              <li>Rarely reversible — this is the branch where lifelong replacement is genuinely indicated</li>
+            </ul>
+          </div>
+        </div>
+        <div class="branchcol">
+          <span class="cond">FSH ≫ LH, testosterone normal</span>
+          <div class="card">
+            <h4>Tubular failure, not androgen failure</h4>
+            <ul>
+              <li>Seminiferous epithelium damage with intact Leydig cell function</li>
+              <li>Fertility evaluation, not testosterone therapy</li>
+              <li>Testosterone here would suppress what spermatogenesis remains</li>
+            </ul>
+          </div>
+        </div>
+        <div class="branchcol">
+          <span class="cond">LH and FSH low or inappropriately normal</span>
+          <div class="card tint-amber">
+            <h4>Secondary — central</h4>
+            <ul>
+              <li>An unelevated LH alongside a low testosterone is <em>abnormal</em>; the axis should be shouting and is not</li>
+              <li>Measure prolactin (repeat if elevated; consider macroprolactin and hook effect), free T4, morning cortisol, IGF-1</li>
+              <li>Iron studies (transferrin saturation, ferritin) if age ≤50 or any transfusion history</li>
+              <li><strong>Most secondary hypogonadism in an ambulatory adult male practice is functional and potentially reversible</strong> — Stage 4 is mandatory before labeling it organic</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card tint-rose" style="margin-top:16px">
+      <span class="verdict v-stop">Image the sella now</span>
+      <ul style="margin:0;padding-left:17px">
+        <li>Total testosterone &lt;150 ng/dL</li>
+        <li>Prolactin above reference on a repeat sample</li>
+        <li>Free T4 below reference, or any second pituitary axis abnormality</li>
+        <li>Headache, visual field defect, diabetes insipidus/polyuria, or any cranial nerve sign</li>
+        <li>Known sellar/parasellar disease, prior cranial irradiation, or a history consistent with apoplexy</li>
+      </ul>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 2 · LH is the axis's own opinion</h5>
+      <p>An LH in the upper half of the reference range alongside a low-normal testosterone is the hypothalamic-pituitary unit reporting that it is working harder than usual to hold that level. It is not a diagnosis, and no guideline scores it — but it is real information about <em>this</em> man's set point, and it belongs in the assembled picture at Stage 5. The mirror image is equally informative: a mid-range LH with a testosterone of 250 in an obese man says the axis is not trying, which points to the drivers rather than the testis.</p>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 4 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">4</div>
+      <div>
+        <h2>Reversibility first — the seven driver families</h2>
+        <p class="sub">The safeguard of the whole pathway. Every one of these can produce a testosterone in the 200s with an unelevated LH, and every one of them responds to something other than testosterone. Work these <em>before</em> the diagnosis is written down, because once “hypogonadism” is in the problem list it rarely comes out.</p>
+      </div>
+    </div>
+
+    <div class="drivers">
+
+      <div class="driver">
+        <h4><span class="ix">01</span> Adiposity &amp; cardiometabolic</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li>BMI ≥30, waist &gt;102 cm, visceral pattern</li>
+          <li>T2DM, prediabetes, metabolic syndrome, MASLD</li>
+          <li>Low SHBG with a low total T and preserved free T</li>
+        </ul>
+        <span class="lbl">Mechanism</span>
+        <ul><li>Aromatase-rich adipose, hypothalamic inflammation and leptin resistance, SHBG suppression — a bidirectional loop, not a one-way effect</li></ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>Structured weight loss targeting ≥10–15%; incretin therapy where indicated; bariatric surgery in eligible men reliably raises total and free T</li>
+          <li>Resistance training and sleep before pharmacology</li>
+          <li>Testosterone is not a metabolic drug: T4DM showed T added to a lifestyle program reduced T2DM incidence, but the TRAVERSE substudy showed no benefit on glycemic progression in functional hypogonadism</li>
+        </ul>
+        <span class="lbl">Re-test</span>
+        <ul><li>After ≥3–6 months at a stable, lower weight</li></ul>
+      </div>
+
+      <div class="driver">
+        <h4><span class="ix">02</span> Sleep &amp; circadian</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li>Untreated or poorly adherent OSA; loud snoring, witnessed apnea, unrefreshing sleep</li>
+          <li>Habitual sleep &lt;6 h, rotating or night shift work</li>
+          <li>Morning draw that is not actually his biological morning</li>
+        </ul>
+        <span class="lbl">Mechanism</span>
+        <ul><li>Testosterone secretion is sleep-entrained; one week of restriction to 5 h lowers daytime testosterone appreciably in healthy young men</li></ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>Screen and treat OSA <em>first</em> — and note the reverse risk: testosterone can worsen untreated OSA</li>
+          <li>For shift workers, draw within 1–2 h of <em>his</em> habitual wake time and say so in the note</li>
+        </ul>
+        <span class="lbl">Re-test</span>
+        <ul><li>After 8–12 weeks of adherent therapy or restored sleep duration</li></ul>
+      </div>
+
+      <div class="driver hot">
+        <h4><span class="ix">03</span> Drugs &amp; exogenous androgens</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li><strong>Opioids</strong> — dose-dependent central suppression; intrathecal and long-acting agents are the worst offenders</li>
+          <li><strong>Glucocorticoids</strong>, including inhaled at high dose and intra-articular bursts</li>
+          <li><strong>AAS, SARMs, prohormones, DTC “optimization” protocols</strong></li>
+          <li>Antipsychotics and metoclopramide (prolactin); GnRH agonists/antagonists and abiraterone (ADT)</li>
+          <li>Cannabis, heavy alcohol; ketoconazole; high-dose spironolactone (receptor-level, not axis)</li>
+          <li>5-α-reductase inhibitors — DHT falls; testosterone does not</li>
+        </ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>Reduce, rotate, or taper the offending agent where clinically possible before diagnosing</li>
+          <li>Opioid-induced: opioid reduction is the intervention; testosterone is a fallback when the exposure cannot be changed</li>
+        </ul>
+        <span class="lbl">Re-test</span>
+        <ul><li>3 months after dose change; 6–12 months after androgen withdrawal</li></ul>
+      </div>
+
+      <div class="driver">
+        <h4><span class="ix">04</span> Neuroendocrine &amp; structural — TBI first</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li><strong>Moderate–severe TBI</strong>, blast exposure, repetitive head impact, SAH, prior cranial irradiation</li>
+          <li>Sellar mass, prolactinoma, empty sella, apoplexy, hypophysitis — including immune checkpoint inhibitor hypophysitis</li>
+          <li>Infiltrative disease: hemochromatosis, sarcoidosis, IgG4, histiocytosis</li>
+        </ul>
+        <span class="lbl">Why it matters</span>
+        <ul>
+          <li>Post-traumatic hypopituitarism is common and under-recognized; pooled estimates run roughly 30–45% in the acute and subacute phases and about a third beyond 12 months, with the gonadotropic axis the most frequently affected</li>
+          <li>Symptoms of post-traumatic hypopituitarism are indistinguishable from post-concussive syndrome — fatigue, low mood, cognitive slowing — so it is missed unless deliberately sought</li>
+        </ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>Screen the full anterior pituitary at <strong>3–6 months and again at 12 months</strong> after moderate–severe injury: 08:00 cortisol, free T4/TSH, IGF-1, LH/FSH, prolactin, morning total T, sodium/osmolality</li>
+          <li>Acute-phase abnormalities frequently normalize — and new deficits appear late, so a normal 3-month panel does not close the question</li>
+          <li>Correct cortisol, thyroid, and prolactin <em>before</em> interpreting the gonadal axis; each depresses testosterone independently</li>
+          <li>Refer for dynamic testing if screening is abnormal or suspicion is high</li>
+        </ul>
+      </div>
+
+      <div class="driver">
+        <h4><span class="ix">05</span> Systemic illness &amp; energy deficit</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li>Acute or critical illness, recent surgery, sepsis recovery</li>
+          <li>CKD/ESRD, cirrhosis, HIV, IBD, celiac, heart failure, COPD, active malignancy, cachexia</li>
+          <li><strong>Relative energy deficiency</strong> — endurance athletes, high training load with low intake, restrictive eating, rapid intentional weight loss</li>
+        </ul>
+        <span class="lbl">Mechanism</span>
+        <ul><li>Adaptive central downregulation. In energy deficit this is a physiologic response to be corrected nutritionally, not a deficiency to be replaced</li></ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>Never diagnose during acute illness; defer 6–12 weeks after recovery</li>
+          <li>Restore energy availability and training load balance; involve nutrition</li>
+        </ul>
+      </div>
+
+      <div class="driver">
+        <h4><span class="ix">06</span> Iron overload &amp; infiltration</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li>Transferrin saturation &gt;45–55%, ferritin persistently elevated (&gt;300 ng/mL; markedly so &gt;1000)</li>
+          <li>Any transfusion-dependent anemia; family history; arthropathy, hepatopathy, bronzing, cardiomyopathy</li>
+        </ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>HFE genotyping; hepatic and pituitary iron assessment where indicated</li>
+          <li>Therapeutic phlebotomy or chelation — gonadotropin recovery is possible when treated early, less so once fibrosis is established</li>
+          <li>Age ≤50 with secondary hypogonadism is itself an indication to check iron studies</li>
+        </ul>
+      </div>
+
+      <div class="driver">
+        <h4><span class="ix">07</span> Other endocrine drivers</h4>
+        <span class="lbl">Look for</span>
+        <ul>
+          <li><strong>Hyperprolactinemia</strong> — drug-induced, stalk effect, macroadenoma, macroprolactin, hypothyroidism</li>
+          <li><strong>Thyroid dysfunction in either direction</strong> — hypothyroidism raises prolactin; thyrotoxicosis raises SHBG and total T while free T may not follow</li>
+          <li><strong>Cushing syndrome</strong> — central obesity plus proximal weakness plus low T is a recognizable triad</li>
+          <li>Poorly controlled hyperglycemia; severe vitamin D deficiency (association, not established causation)</li>
+        </ul>
+        <span class="lbl">Do</span>
+        <ul>
+          <li>Treat the upstream endocrinopathy and re-measure before assigning a gonadal diagnosis</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="card tint-amber" style="margin-top:16px">
+      <span class="verdict v-hold">Gate</span>
+      <h4>Re-measure before you name it</h4>
+      <p style="margin:0">After <strong>≥3–6 months of driver-directed therapy delivered to target</strong> — not merely prescribed — repeat morning total T, free T where indicated, and LH. Functional hypogonadism that corrects is not hypogonadism; it was a symptom of something else. Only what persists after this gate earns the diagnosis. Document the drivers addressed, the degree of correction achieved, and the post-correction values.</p>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 3 · functional and organic are not mutually exclusive</h5>
+      <p>The most common man in a concierge practice has a partially reversible driver <em>and</em> a genuinely low set point — 40 lb of visceral fat, moderate OSA, and a testis that was never going to make 700. Correcting the driver moves him from 240 to 340 and he still feels the way he felt. That result is not a failure of the reversibility stage; it is the reversibility stage doing its job, because now the residual deficit is measured rather than assumed, and the therapeutic target is anchored to a corrected baseline rather than a confounded one.</p>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 5 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">5</div>
+      <div>
+        <h2>Assemble his own reference</h2>
+        <p class="sub">Four independent channels of evidence. None is diagnostic alone; the value is in whether they agree.</p>
+      </div>
+    </div>
+
+    <div class="grid4">
+      <div class="card">
+        <h4>1 · Historical value</h4>
+        <ul>
+          <li>Any documented prior total T — fertility workups, insurance panels, old wellness labs, military or occupational physicals</li>
+          <li>Note the assay and the draw time; an old immunoassay result is not directly comparable</li>
+          <li>A fall from 800 to 400 over eight years is real information about trajectory</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>2 · Axis position</h4>
+        <ul>
+          <li>LH relative to the reference range at the same draw</li>
+          <li>Upper-half LH with low-normal T = the axis compensating</li>
+          <li>Mid-range LH with a low T = look upstream, or at the drivers</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>3 · End-organ surrogates</h4>
+        <ul>
+          <li>Hemoglobin/hematocrit trend over years — androgen-dependent and usually already in the chart</li>
+          <li>DXA: low BMD for age in a man, or a fragility fracture</li>
+          <li>Lean mass and grip/functional strength trajectory</li>
+          <li>Testicular volume; SHBG direction</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>4 · Symptom–threshold coherence</h4>
+        <ul>
+          <li>Different tissues fail at different testosterone levels — libido and vigor decline at higher levels than erectile function or lean mass</li>
+          <li>A man at 400 reporting isolated low libido is physiologically coherent; a man at 400 reporting only fatigue is not</li>
+          <li>Use one validated instrument at baseline (IIEF-EF domain, AMS) so change is measurable later</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 4 · target versus basis</h5>
+      <p>A documented prior baseline is a legitimate <strong>target</strong> once a diagnosis has been established. It is not, by itself, a <strong>basis</strong> for making the diagnosis. Relative decline within the reference range remains unvalidated as a diagnostic criterion, and treating it as one is precisely how this framework would be misused. Everything in Stage 5 exists to keep that distinction visible.</p>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 5 · what is not actionable</h5>
+      <p>The androgen receptor <strong>CAG repeat length</strong> genuinely explains variance in individual set point — shorter repeats confer greater receptor sensitivity, and men with longer repeats sit at higher free testosterone for the same phenotype. It is mechanistically satisfying and, on current evidence, adds little predictive value over serum testosterone and does not change management. In-vitro androgen bioassays and tissue-level androgen action remain research tools. Do not order these, and be skeptical of platforms that do.</p>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 6 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">6</div>
+      <div>
+        <h2>The coherence read</h2>
+        <p class="sub">Set each channel, then name the pattern out loud in the note. “Discordant, with these four findings” is a defensible clinical position. “Low T” is not.</p>
+      </div>
+    </div>
+
+    <div class="coh">
+      <div class="cohhead">
+        <h4>Coherence strip</h4>
+        <p>Set each evidence channel to what you actually have. The pattern updates below.</p>
+      </div>
+      <div class="channels" id="channels">
+        <div class="chan" data-ch="biochem">
+          <div>
+            <span class="name">Biochemistry after Stage 4</span>
+            <span class="hint">Two morning values, accurate assay, drivers corrected to target</span>
+          </div>
+          <div class="seg" role="group" aria-label="Biochemistry">
+            <button class="low" aria-pressed="false" data-v="-1">Low</button>
+            <button class="neu" aria-pressed="true" data-v="0">Gray zone</button>
+            <button class="ok" aria-pressed="false" data-v="1">Normal</button>
+          </div>
+        </div>
+        <div class="chan" data-ch="symptoms">
+          <div>
+            <span class="name">Symptom specificity</span>
+            <span class="hint">Specific androgen-dependent symptoms vs nonspecific fatigue and mood</span>
+          </div>
+          <div class="seg" role="group" aria-label="Symptoms">
+            <button class="low" aria-pressed="false" data-v="-1">Specific</button>
+            <button class="neu" aria-pressed="true" data-v="0">Mixed</button>
+            <button class="ok" aria-pressed="false" data-v="1">Nonspecific</button>
+          </div>
+        </div>
+        <div class="chan" data-ch="axis">
+          <div>
+            <span class="name">Axis position (LH)</span>
+            <span class="hint">Is the pituitary compensating, silent, or unremarkable?</span>
+          </div>
+          <div class="seg" role="group" aria-label="Axis">
+            <button class="low" aria-pressed="false" data-v="-1">LH high / upper half</button>
+            <button class="neu" aria-pressed="true" data-v="0">Mid-range</button>
+            <button class="ok" aria-pressed="false" data-v="1">Low, driver present</button>
+          </div>
+        </div>
+        <div class="chan" data-ch="endorgan">
+          <div>
+            <span class="name">End-organ evidence</span>
+            <span class="hint">Hemoglobin trend, BMD, lean mass, testicular volume</span>
+          </div>
+          <div class="seg" role="group" aria-label="End organ">
+            <button class="low" aria-pressed="false" data-v="-1">Supportive</button>
+            <button class="neu" aria-pressed="true" data-v="0">Equivocal</button>
+            <button class="ok" aria-pressed="false" data-v="1">Against</button>
+          </div>
+        </div>
+      </div>
+      <div class="readout" id="readout" aria-live="polite">
+        <p class="pat" id="patName">Pattern C — discordant</p>
+        <p id="patText">The channels do not agree. This is the man at 400, and this is where judgment is actually required rather than a threshold. Proceed to a designed n-of-1 trial, or to a period of continued driver optimization with a scheduled re-read.</p>
+        <span class="note" id="patNote">Set the channels above to update.</span>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:16px">
+      <div class="card tint-teal">
+        <span class="verdict v-go">Pattern A</span>
+        <h4>Concordant deficient</h4>
+        <p style="margin:0">Persistently low levels after Stage 4, specific symptoms, corroborating end-organ evidence, an axis that fits. Treat, with the standard fertility, hematocrit, and prostate conversations first.</p>
+      </div>
+      <div class="card tint-rose">
+        <span class="verdict v-stop">Pattern B</span>
+        <h4>Concordant sufficient</h4>
+        <p style="margin:0"><strong>Say it plainly: he is not androgen-deficient.</strong> His symptoms are real and belong to something else — sleep, mood, iron, thyroid, anemia, deconditioning, alcohol, relationship or life context. Concluding <em>sufficient</em> is a successful visit, not a failed one, and it is the discipline that keeps this framework from becoming an optimization protocol.</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--violet)">
+        <span class="verdict v-think">Pattern C</span>
+        <h4>Discordant</h4>
+        <p style="margin:0">Gray-zone or low-normal level, real symptoms, some surrogates supportive and others not, or a documented prior baseline far above the current value. A therapeutic trial is legitimate here — provided it is designed rather than drifted into.</p>
+      </div>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 6 · write the sentence</h5>
+      <p>The single most useful discipline in this pathway is naming the pattern in the chart with its evidence attached: <em>“Discordant: TT 400 by LC-MS/MS ×2 after 6 months of OSA therapy and 12% weight loss, SHBG normal, cFT low-normal, LH 7.8, documented TT 800 at age 44, hemoglobin fallen 15.6 → 14.1 over six years, AMS 42, no androgen exposure.”</em> That sentence survives a chart review, a second opinion, and your own re-reading in two years. “Low T, started TRT” does none of those things.</p>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 7 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">7</div>
+      <div>
+        <h2>The n-of-1 trial, designed rather than drifted into</h2>
+        <p class="sub">Six things written down before the first dose. What separates individualized medicine from indefinite hormonal drift is that the endpoint was specified while you could still be wrong about it.</p>
+      </div>
+    </div>
+
+    <ol class="commit">
+      <li><b>Primary endpoint</b>Which symptom domain, which instrument, which score change. Not “feels better.”</li>
+      <li><b>Objective secondaries</b>Hemoglobin/hematocrit, body composition, BMD where relevant, glycemia if applicable.</li>
+      <li><b>The target</b>Mid-normal by default; the documented prior baseline where one exists. Labeled explicitly as replacement, not pharmacology.</li>
+      <li><b>The duration</b>Three to six months <em>at target</em> — not three to six months on therapy.</li>
+      <li><b>The stopping rule</b>If the level is at target and the primary endpoint has not moved, therapy stops. The symptoms were not androgen-dependent. Say this to the patient before starting; it is far harder to say at month nine.</li>
+      <li><b>The safety envelope</b>Baseline hematocrit — do not start above 50% without evaluation. PSA and prostate discussion where age-appropriate. Fertility conversation and semen analysis <em>before</em> the first injection.</li>
+    </ol>
+
+    <div class="card tint-rose" style="margin-top:16px">
+      <span class="verdict v-stop">Defer or do not start</span>
+      <div class="grid2">
+        <ul style="margin:0;padding-left:17px">
+          <li>Desire for fertility in the near term — use hCG ± SERM or aromatase inhibitor strategies instead, and involve reproductive urology</li>
+          <li>Untreated severe OSA</li>
+          <li>Hematocrit &gt;50–54% before evaluation</li>
+          <li>Active or untreated prostate or breast cancer; unevaluated prostate nodule or PSA elevation</li>
+        </ul>
+        <ul style="margin:0;padding-left:17px">
+          <li>Recent myocardial infarction or stroke (commonly 3–6 months); uncontrolled heart failure</li>
+          <li>Severe untreated lower urinary tract symptoms</li>
+          <li>Active thrombophilia or unprovoked VTE without evaluation</li>
+          <li>Acute illness or an uncorrected Stage 4 driver that has not yet been given its trial</li>
+          <li><strong>A tested athlete without an approved TUE</strong> — see Stage 9</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 8 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num">8</div>
+      <div>
+        <h2>Monitor, and actually enforce the stopping rule</h2>
+        <p class="sub">Most harm in this field lives in the execution, not the decision.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4>When to draw the level — formulation determines the answer</h4>
+      <table>
+        <thead><tr><th>Formulation</th><th>When to draw</th><th>What you are asking</th></tr></thead>
+        <tbody>
+          <tr><td>Cypionate / enanthate, weekly SC or IM</td><td class="mono">Mid-interval, or trough just before the next dose</td><td>Peak–trough excursion; a mid-interval mid-normal level with symptom relief is the goal</td></tr>
+          <tr><td>Cypionate / enanthate, every 2 weeks</td><td class="mono">Trough, and consider a peak at day 2–3</td><td>Whether the swing itself is the symptom generator — often the fix is more frequent, smaller dosing</td></tr>
+          <tr><td>Transdermal gel</td><td class="mono">2–8 h after application, steady state</td><td>Absorption adequacy; also ask about transference precautions</td></tr>
+          <tr><td>Testosterone undecanoate IM</td><td class="mono">Trough before the next injection</td><td>Adequacy at the end of the interval; observe for POME/anaphylaxis per REMS</td></tr>
+          <tr><td>Oral undecanoate</td><td class="mono">Per product labeling, after the morning dose</td><td>Levels are highly meal-dependent; check blood pressure — a labeled warning</td></tr>
+          <tr><td>Subcutaneous pellets</td><td class="mono">Trough near end of interval</td><td>Duration adequacy; note the inability to dose-adjust once implanted</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid3" style="margin-top:14px">
+      <div class="card">
+        <h4>Schedule</h4>
+        <ul>
+          <li>3 months, 6 months, then annually once stable</li>
+          <li>Each visit: symptoms against the <em>pre-specified</em> instrument, testosterone at the right draw time, hematocrit</li>
+          <li>PSA and prostate assessment at 3–12 months, then per age and risk</li>
+          <li>Re-assess adherence, injection technique, and site rotation before changing dose</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Erythrocytosis</h4>
+        <ul>
+          <li>The most common adverse effect; highest with IM esters and long intervals</li>
+          <li>Hct &gt;54%: reduce dose, shorten the interval, or switch formulation — change the exposure curve first</li>
+          <li>Therapeutic phlebotomy is second-line, and repleting iron in a man you are venesecting is self-defeating</li>
+          <li>Evaluate for concurrent OSA and smoking</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Re-evaluation, not renewal</h4>
+        <ul>
+          <li>Enforce the stopping rule at the pre-specified date</li>
+          <li>In functional cases whose drivers have since corrected, a supervised withdrawal with re-measurement at 3–6 months is a legitimate and under-used option</li>
+          <li>Every annual visit should re-ask whether the original indication still holds</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 7 · estradiol</h5>
+      <p>Estradiol is a male hormone. It is required for bone maintenance, libido, and normal fat distribution in men, and much of what is attributed to testosterone is estradiol-mediated. <strong>Aromatase inhibitors are not standard of care in testosterone replacement</strong> and should not be prescribed reflexively for an estradiol number in the absence of clinically significant, persistent gynecomastia. Suppressing estradiol to “optimize” a ratio trades a laboratory aesthetic for bone and sexual function. If estradiol is high, the usual answer is that the testosterone dose or the peak is too high.</p>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 8 · the regulatory ground is moving</h5>
+      <p>An FDA advisory panel in December 2025 discussed broadening testosterone eligibility, revising prostate-related warnings, and the drug's controlled-substance status; the Endocrine Society issued a statement in July 2026 reiterating that diagnosis requires both compatible symptoms and consistently low, properly measured concentrations, and that symptoms alone are not sufficient. Expect the labeled indications and the prescribing environment to shift faster than the diagnostic evidence does. Verify current status before relying on any of it.</p>
+    </div>
+  </section>
+
+
+  <div class="arrow"></div>
+
+  <!-- ============ STAGE 9 ============ -->
+  <section class="stage">
+    <div class="stagehead">
+      <div class="num" style="background:var(--sport)">9</div>
+      <div>
+        <h2>The tested athlete — anti-doping and the TUE</h2>
+        <p class="sub">A separate adjudication with a stricter standard than clinical care. Everything upstream in this pathway is exactly what a TUE committee is trying to reconstruct — the organic/functional determination at Stage 4 is the determination they will make, and they will make it on your documentation alone.</p>
+      </div>
+    </div>
+
+    <div class="card tint-sport">
+      <span class="verdict v-sport">Ask first</span>
+      <h4>Who this applies to</h4>
+      <p style="margin:0 0 8px">Any man competing under a signatory of the World Anti-Doping Code — national and international federations, Olympic and Paralympic pathways, and <strong>masters and amateur athletes in sanctioned events</strong>, who are frequently unaware they are covered. Collegiate athletes fall under separate NCAA medical-exception rules; tactical and military populations have their own policies. Ask at the first visit. A man who discloses competition after the first injection has a materially worse problem than one who discloses before it.</p>
+    </div>
+
+    <div class="grid2" style="margin-top:14px">
+      <div class="card tint-teal">
+        <span class="verdict v-go">TUE plausible</span>
+        <h4>Organic etiology — documented, unequivocal</h4>
+        <ul>
+          <li><strong>Primary:</strong> Klinefelter syndrome and variants, congenital anorchia, bilateral orchiectomy, cryptorchidism, testicular torsion or trauma, severe bilateral orchitis with atrophy, radiation or chemotherapy, 46,XY DSD, LH/hCG receptor defects</li>
+          <li><strong>Secondary:</strong> congenital hypogonadotropic hypogonadism, panhypopituitarism, structural/destructive/infiltrative hypothalamic or pituitary disease, hypophysitis, pituitary surgery or irradiation, hemochromatosis, sickle cell disease</li>
+          <li>Iatrogenic causes require the operative or treatment records themselves — surgical reports, radiation fields, chemotherapy regimens</li>
+        </ul>
+      </div>
+      <div class="card tint-rose">
+        <span class="verdict v-stop">TUE will almost certainly be denied</span>
+        <h4>Functional etiology — however well documented</h4>
+        <ul>
+          <li>Obesity- and metabolic-related, opioid- or glucocorticoid-related, OSA-related, energy-deficit and overtraining-related</li>
+          <li>Age-related decline; “andropause” is not an accepted diagnosis</li>
+          <li>Prior exogenous androgen use as the proximate cause</li>
+          <li>Low levels without a defined organic etiology do not justify a TUE <strong>even where treatment is within the standard of care and appropriately prescribed</strong></li>
+          <li>Fatigue, slow recovery, and reduced libido in isolation are explicitly insufficient</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nuance" style="border-color:var(--sport-line);background:var(--sport-bg)">
+      <h5 style="color:var(--sport)">The single most important sentence to say out loud</h5>
+      <p>For a tested athlete, this pathway's Stage 4 is not a clinical nicety — it is the whole case. A committee that cannot see an unequivocal organic lesion will deny the application no matter how carefully the biochemistry was performed, and the athlete then faces a choice between an untreated diagnosis and an anti-doping violation. Say this at the first visit, before any expectation has formed.</p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h4>What is prohibited — the alternatives are narrower than they look</h4>
+      <ul>
+        <li><strong>Testosterone and all androgens</strong> — S1, prohibited at all times</li>
+        <li><strong>hCG and LH</strong> and their releasing factors — S2, testosterone-stimulating peptides, prohibited in males. The common “fertility-sparing” workaround is itself prohibited and needs its own TUE</li>
+        <li><strong>Aromatase inhibitors and SERMs</strong> (anastrozole, clomiphene, tamoxifen) — S4. Several appear in supplements and “research chemical” products; the category uses open-ended language, so novel compounds are captured without being named</li>
+        <li>Verify against the current year's Prohibited List before assuming any non-prohibited alternative exists — the application must state which non-prohibited alternatives were tried and what happened, or why none was attempted</li>
+      </ul>
+    </div>
+
+    <div class="grid2" style="margin-top:14px">
+      <div class="card tint-sport">
+        <h4>Medical report — required contents</h4>
+        <ul class="checklist">
+          <li><strong>History:</strong> puberty timing and progression; relevant family history; libido, erections, ejaculation and frequency of sexual activity, with duration and severity of each problem; shaving onset and frequency; hot flushes and sweats; testicular disorders (cryptorchidism, torsion, orchitis, injury); <strong>significant head injuries</strong>; nonspecific symptoms recorded <em>whether present or absent</em></li>
+          <li><strong>Examination:</strong> acne; gynecomastia; hair pattern (truncal, axillary, pubic); testicular volume by orchidometer or ultrasound; height, weight, BMI; muscular development and tone — all must be explicitly addressed</li>
+          <li><strong>Interpretation</strong> of history, presentation and laboratory results by the treating physician, preferably an endocrinologist with andrology subspecialization</li>
+          <li><strong>Diagnosis:</strong> primary or secondary; organic or functional, stated as such, with ICD-10 code</li>
+          <li><strong>Substance prescribed</strong> (testosterone or hCG) with dose, frequency and route</li>
+          <li><strong>Treatment and monitoring plan</strong>, and for renewals, evidence of actual follow-up by a qualified physician</li>
+          <li>A physician's letter confirming the reasoning, and the athlete's signature on the application</li>
+        </ul>
+      </div>
+      <div class="card tint-sport">
+        <h4>Laboratory package — required</h4>
+        <ul class="checklist">
+          <li>At least <strong>two baseline measurements</strong> of total testosterone, LH, FSH and SHBG</li>
+          <li>Morning, fasting, drawn 07:00–10:00, <strong>within a 4-week period and at least one week apart</strong></li>
+          <li>Analyzed by an accurate and reliable method. Free testosterone by equilibrium dialysis, or calculated from total testosterone — <strong>direct free-T immunoassay is not accepted</strong></li>
+          <li>Semen analysis with count and motility where fertility is a consideration; DXA where appropriate</li>
+          <li>If already on therapy: a washout per the current WADA physician guidelines before any sample is drawn, with anabolic urine screens from the washout period included</li>
+          <li>For secondary hypogonadism: detailed corticosteroid and opioid history, exclusion of hemochromatosis, and pituitary MRI with and without contrast plus pituitary function testing (morning cortisol or ACTH stimulation, TSH, free T4, prolactin)</li>
+          <li>All laboratory results and clinical notes in chronological order, most recent first, with reference ranges</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card tint-rose" style="margin-top:14px">
+      <span class="verdict v-stop">Sequence</span>
+      <h4>Do not start therapy before the decision</h4>
+      <ul>
+        <li>Apply and obtain approval <em>before</em> the first dose. Retroactive TUEs are limited to narrow circumstances and are not a plan</li>
+        <li>Incomplete or disorganized applications are returned unread — the practical failure mode is administrative, not clinical</li>
+        <li>Document the confounders you considered and excluded: diet and energy availability, overtraining, stress, prior exogenous steroid use, supplements, off-label medications</li>
+        <li>The working standard: the committee must be able to reach <strong>your diagnosis and your treatment plan without ever seeing the patient</strong>. Write the note as though that is the only thing they will read, because it is</li>
+        <li>Renewals require evidence of ongoing monitoring, not a repeat of the original submission</li>
+      </ul>
+    </div>
+
+    <div class="nuance">
+      <h5>Individualization note 9 · where individualization stops</h5>
+      <p>This is the one place in the pathway where the individual reference has no standing. A documented personal baseline, a compensating LH, a coherent symptom pattern at 400 ng/dL — all of it is good medicine and none of it is a TUE. The committee is applying a categorical rule for a reason: within-range testosterone still confers advantage, so a permissive individualized standard would be unworkable in sport. Recognizing that boundary early is what keeps a well-intentioned trial of therapy from ending an athlete's career.</p>
+    </div>
+  </section>
+
+  <!-- ============ SAFEGUARDS ============ -->
+  <p class="sectionrule" style="margin-top:34px">Built-in safeguards — remove any of these and this becomes the thing it was written against</p>
+  <div class="grid3">
+    <div class="card tint-navy"><h4>Stage 4</h4><p style="margin:0">Reversibility before diagnosis. Functional hypogonadism that corrects was never hypogonadism.</p></div>
+    <div class="card tint-navy"><h4>Stage 6B</h4><p style="margin:0">The discipline to conclude <em>sufficient</em>. Not treating is a legitimate and frequent output of this pathway.</p></div>
+    <div class="card tint-navy"><h4>Stage 7</h4><p style="margin:0">A stopping rule written and spoken before the first dose, and honored at the pre-specified date.</p></div>
+    <div class="card tint-navy" style="border-left:4px solid var(--sport)"><h4>Stage 9</h4><p style="margin:0">Competition status established at the first visit, before any expectation of therapy has formed.</p></div>
+  </div>
+
+  <div class="disclaimer" style="margin-top:14px">
+    <strong>What this framework does not do.</strong> No composite score here is validated against outcomes — the individual components are evidence-based, their combination is reasoned. Relative decline within the reference range remains unvalidated as a diagnostic criterion. Tissue-level androgen action remains unmeasurable in practice. The ±30% repeat threshold at Stage 1 is expert opinion and should be replaced by a value derived from your own laboratory's coefficient of variation before this is published or deployed. Thresholds differ between societies and none of them is the truth; they are decision aids attached to different tolerances for over- and under-diagnosis.
+  </div>
+
+  <div class="refs">
+    <h3>Anchors</h3>
+    <ol>
+      <li>Bhasin S, Brito JP, Cunningham GR, et al. Testosterone therapy in men with hypogonadism: an Endocrine Society clinical practice guideline. <em>J Clin Endocrinol Metab.</em> 2018;103(5):1715–1744.</li>
+      <li>Mulhall JP, Trost LW, Brannigan RE, et al. Evaluation and management of testosterone deficiency: AUA guideline. <em>J Urol.</em> 2018;200(2):423–432 (and subsequent AUA updates).</li>
+      <li>Jayasena CN, de Silva NL, O'Reilly MW, et al. Standardising the biochemical confirmation of adult male hypogonadism: joint position statement, Society for Endocrinology and Association of Clinical Biochemistry and Laboratory Medicine. <em>Clin Endocrinol.</em> 2024;101(5):531–534.</li>
+      <li>Salonia A, Boeri L, Capogrosso P, et al. EAU guidelines on sexual and reproductive health — male hypogonadism. European Association of Urology, 2026 edition.</li>
+      <li>Lincoff AM, Bhasin S, Flevaris P, et al. Cardiovascular safety of testosterone-replacement therapy (TRAVERSE). <em>N Engl J Med.</em> 2023;389(2):107–117.</li>
+      <li>Wittert G, Bracken K, Robledo KP, et al. Testosterone treatment to prevent or revert type 2 diabetes in men enrolled in a lifestyle programme (T4DM). <em>Lancet Diabetes Endocrinol.</em> 2021;9(1):32–45.</li>
+      <li>Bhasin S, Lincoff AM, Nissen SE, et al. Effect of testosterone on progression from prediabetes to diabetes in men with hypogonadism: a TRAVERSE substudy. <em>JAMA Intern Med.</em> 2024;184(4):353–362.</li>
+      <li>Finkelstein JS, Lee H, Burnett-Bowie SM, et al. Gonadal steroids and body composition, strength, and sexual function in men. <em>N Engl J Med.</em> 2013;369(11):1011–1022.</li>
+      <li>Vermeulen A, Verdonck L, Kaufman JM. A critical evaluation of simple methods for the estimation of free testosterone in serum. <em>J Clin Endocrinol Metab.</em> 1999;84(10):3666–3672.</li>
+      <li>Kaufman JM. Diagnosis of hypogonadism in ageing men. <em>Rev Endocr Metab Disord.</em> 2022;23(6):1139–1150.</li>
+      <li>Lauzier F, Turgeon AF, Boutin A, et al. Clinical outcomes, predictors, and prevalence of anterior pituitary disorders following traumatic brain injury: systematic review and meta-analysis. <em>Crit Care Med.</em> 2014;42(3):712–721.</li>
+      <li>Schneider HJ, Schneider M, Saller B, et al. Prevalence of anterior pituitary insufficiency 3 and 12 months after traumatic brain injury. <em>Eur J Endocrinol.</em> 2006;154(2):259–265.</li>
+      <li>Tanriverdi F, Schneider HJ, Aimaretti G, et al. Pituitary dysfunction after traumatic brain injury: clinical perspectives. <em>Endocr Rev.</em> 2015;36(3):305–342.</li>
+      <li>Leproult R, Van Cauter E. Effect of 1 week of sleep restriction on testosterone levels in young healthy men. <em>JAMA.</em> 2011;305(21):2173–2174.</li>
+      <li>Dubin JM, Jesse E, Fantus RJ, et al. Guideline-discordant care among direct-to-consumer testosterone therapy platforms. <em>JAMA Intern Med.</em> 2022;182(12):1321–1323.</li>
+      <li>World Anti-Doping Agency. TUE Physician Guidelines — Male Hypogonadism; and Checklist for TUE Application — Male Hypogonadism. Reviewed annually; verify the current version.</li>
+      <li>US Anti-Doping Agency. TUE application for testosterone — physician worksheet (androgen deficiency / male hypogonadism).</li>
+      <li>World Anti-Doping Agency. Prohibited List, current edition (S1 anabolic agents; S2.2.1 testosterone-stimulating peptides in males; S4 hormone and metabolic modulators).</li>
+      <li>Endocrine Society statement on the diagnosis of hypogonadism and appropriate use of testosterone therapy, July 2026; FDA advisory committee on testosterone products, December 2025.</li>
+    </ol>
+  </div>
+
+  <div class="disclaimer">
+    Clinical decision support for licensed clinicians. It summarizes published guidance and expert reasoning; it does not replace clinical judgment, and it is not a protocol for direct patient use. Thresholds, contraindications, and regulatory status change — verify against the current primary sources before applying. Items flagged <span class="flag eo">Expert opinion</span> are the author's operationalizations and are not guideline-derived.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var state = {biochem:0, symptoms:0, axis:0, endorgan:0};
+
+  document.querySelectorAll('.chan').forEach(function(chan){
+    var key = chan.getAttribute('data-ch');
+    chan.querySelectorAll('.seg button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        chan.querySelectorAll('.seg button').forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+        btn.setAttribute('aria-pressed','true');
+        state[key] = parseInt(btn.getAttribute('data-v'), 10);
+        render();
+      });
+    });
+  });
+
+  function render(){
+    var vals = [state.biochem, state.symptoms, state.axis, state.endorgan];
+    var lows = vals.filter(function(v){return v === -1;}).length;
+    var oks  = vals.filter(function(v){return v === 1;}).length;
+    var neus = vals.filter(function(v){return v === 0;}).length;
+
+    var name, text, note, color;
+
+    if (lows >= 3 && oks === 0){
+      color = '#007C8A';
+      name = 'Pattern A — concordant deficient';
+      text = 'The channels agree that this man is androgen-insufficient. Treat, after the fertility, hematocrit, and prostate conversations, and still set a pre-specified endpoint so response is measurable.';
+      note = lows + ' of 4 channels support deficiency, 0 against.';
+    } else if (oks >= 3 && lows === 0){
+      color = '#A8324A';
+      name = 'Pattern B — concordant sufficient';
+      text = 'He is not androgen-deficient. Name it in the note, and redirect the workup to what is actually producing the symptoms — sleep, mood, iron, thyroid, anemia, alcohol, deconditioning, life context. This is a successful visit.';
+      note = oks + ' of 4 channels argue against deficiency, 0 support it.';
+    } else if (lows === 0 && oks === 0 && neus === 4){
+      color = '#5B47A0';
+      name = 'Pattern C — discordant (all equivocal)';
+      text = 'Nothing is pointing anywhere yet. Before a therapeutic trial, go back and finish Stage 4 — the most common reason every channel reads equivocal is that a driver has not been given a fair trial at target.';
+      note = 'All four channels equivocal.';
+    } else {
+      color = '#5B47A0';
+      name = 'Pattern C — discordant';
+      text = 'The channels do not agree. This is the man at 400, and this is where judgment is actually required rather than a threshold. Proceed to a designed n-of-1 trial with a written stopping rule, or to continued driver optimization with a scheduled re-read.';
+      note = lows + ' support deficiency, ' + oks + ' argue against, ' + neus + ' equivocal.';
+    }
+
+    var el = document.getElementById('patName');
+    el.textContent = name;
+    el.style.color = color;
+    document.getElementById('patText').textContent = text;
+    document.getElementById('patNote').textContent = note;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
