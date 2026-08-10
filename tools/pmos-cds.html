@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMOS Clinical Decision Support · True Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#13302D; --petrol:#1C4742; --teal:#2C7A70; --teal-d:#1F5B53;
+    --amber:#B5732E; --amber-soft:#F4E7D4; --clay:#A84B2A;
+    --rose:#B0392F; --rose-soft:#F6E0DD;
+    --sage:#4C7A57; --sage-soft:#E2EDE2;
+    --paper:#EEF1EE; --card:#FFFFFF; --line:#DCE2DD; --line-2:#EAEEEA;
+    --muted:#5C6B66; --muted-2:#7C8A85;
+    --shadow:0 1px 2px rgba(19,48,45,.05), 0 8px 24px -12px rgba(19,48,45,.18);
+    --shadow-lg:0 24px 60px -28px rgba(19,48,45,.42);
+    --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:80px;
+  }
+  ::selection{background:var(--amber-soft);color:var(--ink)}
+  h1,h2,h3,h4{font-family:'Fraunces',Georgia,serif;font-weight:500;letter-spacing:-.01em;line-height:1.15}
+  .mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+  /* ---------- Header ---------- */
+  header{
+    background:
+      radial-gradient(120% 140% at 88% -20%, rgba(44,122,112,.55) 0%, transparent 55%),
+      radial-gradient(90% 120% at 0% 120%, rgba(181,115,46,.4) 0%, transparent 50%),
+      linear-gradient(160deg,#10302C 0%, #173E39 60%, #1C4742 100%);
+    color:#EAF1EE; padding:30px clamp(18px,5vw,56px) 0; position:relative; overflow:hidden;
+  }
+  header:before{
+    content:"";position:absolute;inset:0;opacity:.06;pointer-events:none;
+    background-image:radial-gradient(#EAF1EE 1px, transparent 1px);background-size:22px 22px;
+  }
+  .brand{display:flex;align-items:center;gap:13px;position:relative;z-index:2}
+  .brand .mark{
+    width:42px;height:42px;border-radius:11px;flex:none;
+    background:linear-gradient(145deg,#2C7A70,#B5732E);
+    display:grid;place-items:center;font-family:'Fraunces',serif;font-size:22px;color:#fff;font-weight:600;
+    box-shadow:0 6px 18px -6px rgba(0,0,0,.5);
+  }
+  .brand .tag{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#9DC3BB;font-weight:600}
+  .brand .name{font-family:'Fraunces',serif;font-size:18px;color:#EAF1EE;line-height:1.05}
+  .hero{position:relative;z-index:2;max-width:900px;padding:26px 0 30px}
+  .hero .pill{
+    display:inline-flex;align-items:center;gap:8px;background:rgba(234,241,238,.1);
+    border:1px solid rgba(157,195,187,.32);color:#CFE3DE;padding:5px 13px;border-radius:100px;
+    font-size:12px;font-weight:600;letter-spacing:.02em;margin-bottom:18px;
+  }
+  .hero .pill .dot{width:7px;height:7px;border-radius:50%;background:#7FD3C6;box-shadow:0 0 0 4px rgba(127,211,198,.2)}
+  .hero h1{font-size:clamp(30px,5.2vw,52px);color:#fff;font-weight:500}
+  .hero h1 .ren{color:#E9C79A;font-style:italic;font-weight:400}
+  .hero h1 .old{font-size:.42em;color:#8FB3AB;font-weight:400;vertical-align:middle;text-decoration:line-through;text-decoration-thickness:1.5px;margin-left:6px}
+  .hero p{font-size:clamp(15px,1.8vw,18px);color:#C2D6D1;max-width:680px;margin-top:14px}
+  .hero .credit{margin-top:18px;font-size:13px;color:#9DC3BB}
+  .hero .credit b{color:#E9F2EF;font-weight:600}
+
+  /* ---------- Nav ---------- */
+  nav{
+    position:sticky;top:0;z-index:30;background:rgba(238,241,238,.86);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+    padding:0 clamp(10px,5vw,56px);
+  }
+  .nav-inner{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  .nav-inner::-webkit-scrollbar{display:none}
+  .nav-inner button{
+    font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);
+    background:none;border:none;padding:16px 15px 14px;cursor:pointer;white-space:nowrap;
+    border-bottom:2.5px solid transparent;transition:.18s;letter-spacing:.01em;display:flex;align-items:center;gap:7px;
+  }
+  .nav-inner button .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal);opacity:.7}
+  .nav-inner button:hover{color:var(--ink)}
+  .nav-inner button.active{color:var(--ink);border-bottom-color:var(--amber)}
+  .nav-inner button.active .n{color:var(--amber);opacity:1}
+
+  /* ---------- Layout ---------- */
+  main{max-width:1120px;margin:0 auto;padding:34px clamp(16px,5vw,40px)}
+  .panel{display:none;animation:fade .4s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .sec-head{margin-bottom:22px}
+  .sec-head .k{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:600}
+  .sec-head h2{font-size:clamp(24px,3.4vw,34px);margin-top:6px}
+  .sec-head p{color:var(--muted);max-width:760px;margin-top:8px;font-size:15px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+  .grid{display:grid;gap:16px}
+  @media(min-width:760px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+  .pad{padding:22px}
+  .card h3{font-size:19px;margin-bottom:4px}
+  .card h3 + .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+
+  /* chips & stats */
+  .statrow{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
+  @media(min-width:680px){.statrow{grid-template-columns:repeat(4,1fr)}}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+  .stat .big{font-family:'Fraunces',serif;font-size:32px;color:var(--petrol);line-height:1}
+  .stat .lbl{font-size:12.5px;color:var(--muted);margin-top:8px;font-weight:500}
+  .stat.amber .big{color:var(--amber)}
+  .stat.rose .big{color:var(--rose)}
+  .stat.sage .big{color:var(--sage)}
+
+  .tagline{display:inline-flex;gap:7px;align-items:center;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:.02em}
+  .t-teal{background:#E2EFEC;color:var(--teal-d)} .t-amber{background:var(--amber-soft);color:var(--amber)}
+  .t-rose{background:var(--rose-soft);color:var(--rose)} .t-sage{background:var(--sage-soft);color:var(--sage)}
+  .t-line{background:#EEF1EE;color:var(--muted);border:1px solid var(--line)}
+
+  /* lists */
+  ul.clean{list-style:none}
+  ul.clean li{position:relative;padding-left:20px;margin:7px 0;font-size:14.5px}
+  ul.clean li:before{content:"";position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:2px;background:var(--teal);transform:rotate(45deg)}
+  ul.clean li.amb:before{background:var(--amber)}
+  ul.clean li.sage:before{background:var(--sage)}
+  ul.clean li b{font-weight:600}
+
+  /* interactive checker */
+  .checkbox-row{display:flex;align-items:flex-start;gap:13px;padding:15px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:.18s;background:#fff;margin-bottom:10px}
+  .checkbox-row:hover{border-color:var(--teal);background:#FBFDFC}
+  .checkbox-row.on{border-color:var(--teal);background:#EAF4F1;box-shadow:inset 0 0 0 1px var(--teal)}
+  .checkbox-row .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:none;display:grid;place-items:center;transition:.18s;margin-top:1px}
+  .checkbox-row.on .box{background:var(--teal);border-color:var(--teal)}
+  .checkbox-row .box svg{opacity:0;transform:scale(.5);transition:.18s}
+  .checkbox-row.on .box svg{opacity:1;transform:scale(1)}
+  .checkbox-row .txt strong{display:block;font-size:15px;font-weight:600}
+  .checkbox-row .txt span{font-size:13px;color:var(--muted)}
+
+  .verdict{border-radius:14px;padding:22px;margin-top:6px;border:1.5px solid var(--line);background:#fff;transition:.3s}
+  .verdict.met{border-color:var(--sage);background:linear-gradient(180deg,#EAF3EB,#F6FAF6)}
+  .verdict.notmet{border-color:var(--line);background:#F7F9F7}
+  .verdict .vh{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .verdict .vh .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none;font-size:18px}
+  .verdict.met .vh .ic{background:var(--sage);color:#fff}
+  .verdict.notmet .vh .ic{background:#E3E8E3;color:var(--muted)}
+  .verdict h3{font-size:20px}
+  .verdict .pheno{font-family:'IBM Plex Mono',monospace;font-size:14px;margin-top:6px;color:var(--petrol)}
+  .verdict .note{font-size:13.5px;color:var(--muted);margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+
+  /* calculator */
+  .calc{display:grid;gap:14px}
+  @media(min-width:560px){.calc{grid-template-columns:1fr 1fr 1fr}}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:.01em}
+  .field input,.field select{
+    width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;padding:11px 12px;
+    border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);transition:.15s;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(44,122,112,.12)}
+  .field .u{font-size:11px;color:var(--muted-2);font-weight:400;text-transform:none;letter-spacing:0}
+  .result{margin-top:16px;padding:18px;border-radius:12px;background:var(--ink);color:#EAF1EE;display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+  .result .rv{font-family:'IBM Plex Mono',monospace}
+  .result .rv .num{font-size:30px;font-weight:600;line-height:1;display:block}
+  .result .rv .rl{font-size:11.5px;color:#9DC3BB;letter-spacing:.04em;text-transform:uppercase;margin-top:5px}
+  .result .flag{margin-left:auto;font-size:13px;font-weight:600;padding:7px 14px;border-radius:100px}
+  .flag.hi{background:var(--rose);color:#fff} .flag.ok{background:var(--sage);color:#fff} .flag.mid{background:var(--amber);color:#fff}
+
+  /* lab table */
+  .labgroup{margin-bottom:18px}
+  .labgroup > .lh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .labgroup > .lh .ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex:none}
+  .labgroup > .lh h4{font-size:16px}
+  .lab{border:1px solid var(--line);border-radius:11px;background:#fff;overflow:hidden}
+  .lab .li{display:grid;grid-template-columns:1fr;gap:2px;padding:13px 16px;border-bottom:1px solid var(--line-2)}
+  @media(min-width:640px){.lab .li{grid-template-columns:200px 1fr;gap:18px;align-items:baseline}}
+  .lab .li:last-child{border-bottom:none}
+  .lab .li .test{font-weight:600;font-size:14.5px}
+  .lab .li .test .rg{display:block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--teal-d);font-weight:500;margin-top:2px}
+  .lab .li .interp{font-size:13.5px;color:var(--muted)}
+  .lab .li .interp b{color:var(--ink);font-weight:600}
+
+  /* treatment cards */
+  .tx{border-left:4px solid var(--teal);padding:18px 18px 18px 20px;background:#fff;border-radius:0 12px 12px 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:100%}
+  .tx.a{border-left-color:var(--amber)} .tx.r{border-left-color:var(--rose)} .tx.s{border-left-color:var(--sage)} .tx.p{border-left-color:var(--petrol)}
+  .tx h4{font-size:16px;margin-bottom:3px}
+  .tx .goal{font-size:12px;color:var(--muted);margin-bottom:12px;font-style:italic}
+  .tx .line{display:flex;gap:9px;margin:9px 0;font-size:13.7px}
+  .tx .line .rank{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;flex:none;padding:2px 7px;border-radius:5px;height:fit-content;margin-top:2px}
+  .rank.f{background:var(--sage-soft);color:var(--sage)} .rank.alt{background:var(--amber-soft);color:var(--amber)} .rank.adj{background:#EEF1EE;color:var(--muted)} .rank.stop{background:var(--rose-soft);color:var(--rose)}
+  .tx .line b{font-weight:600}
+  .tbl-wrap{overflow-x:auto;margin:10px 0}
+  table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:540px}
+  table.tbl th{background:var(--teal);color:#fff;text-align:left;padding:8px 11px;font-weight:600;font-size:11.5px;letter-spacing:.02em;vertical-align:top}
+  table.tbl th:first-child{border-top-left-radius:8px} table.tbl th:last-child{border-top-right-radius:8px}
+  table.tbl td{padding:8px 11px;border-top:1px solid var(--line);vertical-align:top;color:#22332F;line-height:1.45}
+  table.tbl tr:nth-child(even) td{background:#F7FAF8}
+  table.tbl td b{color:var(--ink)} table.tbl .rowh{font-weight:600;color:var(--teal-d)}
+  .goalbar{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+  .goalchip{border:1px solid var(--teal);color:var(--teal-d);background:var(--card);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .12s}
+  .goalchip:hover{background:var(--line-2)}
+  .goalchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+  table.tbl tr.dim td{opacity:.32}
+  table.tbl tr.hot td{background:#FBF4E9 !important}
+  .ev{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:9px;letter-spacing:.02em;white-space:nowrap}
+  .ev.mod{background:var(--sage-soft);color:var(--sage)} .ev.low{background:var(--amber-soft);color:var(--amber)}
+  .ev.vlow{background:var(--rose-soft);color:var(--rose)} .ev.neg{background:#ECEEF0;color:var(--muted)} .ev.std{background:#E2EFEC;color:var(--teal-d)}
+  .lwgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+  @media(max-width:760px){.lwgrid{grid-template-columns:1fr}}
+  .lwcol{border:1px solid var(--line);border-radius:12px;padding:13px 14px;background:var(--card)}
+  .lwcol h4{font-size:13px;color:var(--teal-d);margin-bottom:4px}
+  .ckline{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:12px;color:var(--ink);cursor:pointer}
+  .ckline input{margin-top:2px;accent-color:var(--teal)}
+  .grph{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:9px 0 2px}
+  .lwbtn{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
+  .lwbtn.alt{background:var(--card);color:var(--teal-d);border:1px solid var(--teal)}
+  .lwout{white-space:pre-wrap;font-family:var(--mono,ui-monospace,monospace);font-size:11px;line-height:1.5;background:#F7FAF8;border:1px solid var(--line);border-radius:8px;padding:11px;margin-top:9px;color:var(--ink);max-height:230px;overflow:auto}
+  .copybtn{float:right;background:none;border:1px solid var(--line);border-radius:6px;font-size:10px;padding:2px 8px;cursor:pointer;color:var(--muted);font-family:inherit}
+  table.tbl tr.suppclick{cursor:pointer}
+  table.tbl tr.suppclick .rowh::before{content:"\25B8";color:var(--teal);font-size:10px;margin-right:5px;display:inline-block;transition:transform .12s}
+  table.tbl tr.suppclick.open .rowh::before{transform:rotate(90deg)}
+  table.tbl tr.exrow td{background:#F2F7F5 !important;font-size:11px;color:var(--muted);padding:8px 12px;border-top:none}
+  table.tbl tr.exrow .gr{font-weight:700;color:var(--teal-d)}
+
+  .callout{display:flex;gap:14px;padding:18px;border-radius:12px;background:linear-gradient(180deg,#FBF4E9,#FFFDFA);border:1px solid var(--amber-soft);margin-top:4px}
+  .callout .ic{width:36px;height:36px;border-radius:9px;background:var(--amber);color:#fff;display:grid;place-items:center;flex:none;font-size:18px}
+  .callout strong{color:var(--amber);font-weight:600}
+  .callout p{font-size:14px;color:var(--ink)}
+
+  /* team docs */
+  .role-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .role-tabs button{
+    font-family:inherit;font-weight:600;font-size:13.5px;padding:9px 16px;border-radius:100px;cursor:pointer;
+    border:1.5px solid var(--line);background:#fff;color:var(--muted);transition:.18s;display:flex;align-items:center;gap:8px;
+  }
+  .role-tabs button .e{font-size:15px}
+  .role-tabs button:hover{border-color:var(--teal);color:var(--ink)}
+  .role-tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .doc{display:none}.doc.on{display:block}
+  .doc-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .doc-head h3{font-size:20px}
+  .doc-head .scope{font-size:13px;color:var(--muted)}
+  .copybtn{
+    font-family:inherit;font-size:13px;font-weight:600;border:1.5px solid var(--teal);color:var(--teal-d);
+    background:#fff;padding:8px 16px;border-radius:9px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:7px;flex:none;
+  }
+  .copybtn:hover{background:var(--teal);color:#fff}
+  .copybtn.done{background:var(--sage);border-color:var(--sage);color:#fff}
+  .template{
+    font-family:'IBM Plex Mono',monospace;font-size:12.8px;line-height:1.7;white-space:pre-wrap;
+    background:#FAFCFB;border:1px solid var(--line);border-radius:12px;padding:20px;color:#23423D;margin-top:14px;
+    max-height:none;overflow-x:auto;
+  }
+  .template .ph{color:var(--amber);font-weight:600}
+  .template .hd{color:var(--teal-d);font-weight:600}
+
+  /* monitoring timeline */
+  .tl{position:relative;padding-left:8px}
+  .tl .row{display:grid;gap:14px;grid-template-columns:120px 1fr;align-items:start;padding:14px 0;border-bottom:1px solid var(--line-2)}
+  .tl .row:last-child{border-bottom:none}
+  .tl .when{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--petrol);background:var(--sage-soft);padding:5px 11px;border-radius:7px;text-align:center;height:fit-content}
+  .tl .when.amb{background:var(--amber-soft);color:var(--amber)}
+  .tl .what{font-size:14px}
+  .tl .what b{font-weight:600}
+  .ref-grid{display:grid;gap:12px}
+  @media(min-width:640px){.ref-grid{grid-template-columns:1fr 1fr}}
+  .ref{display:flex;gap:12px;padding:14px;border:1px solid var(--line);border-radius:11px;background:#fff}
+  .ref .ic{width:32px;height:32px;border-radius:8px;background:#EEF1EE;display:grid;place-items:center;flex:none;font-size:15px}
+  .ref strong{font-size:14px;display:block} .ref span{font-size:13px;color:var(--muted)}
+
+  .note-box{background:#F4F7F5;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:0 10px 10px 0;padding:14px 16px;font-size:13.5px;color:var(--muted);margin-top:14px}
+  .note-box b{color:var(--ink)}
+
+  footer{max-width:1120px;margin:30px auto 0;padding:24px clamp(16px,5vw,40px);border-top:1px solid var(--line);font-size:12.5px;color:var(--muted-2)}
+  footer .disc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;color:var(--muted)}
+  footer .disc b{color:var(--ink)}
+  footer a{color:var(--teal-d)}
+  .refs{display:grid;gap:6px;margin-top:10px}
+  .refs div{font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">TH</div>
+    <div>
+      <div class="tag">True Health · Endocrinology &amp; Cardiometabolic Medicine</div>
+      <div class="name">Clinical Decision Support</div>
+    </div>
+  </div>
+  <div class="hero">
+    <span class="pill"><span class="dot"></span>Updated to 2026 nomenclature · Lancet global consensus</span>
+    <h1><span class="ren">PMOS</span> Care Pathway <span class="old">PCOS</span></h1>
+    <p>Polyendocrine Metabolic Ovarian Syndrome — point-of-care support for diagnosis, laboratory interpretation, treatment selection, and structured team-based documentation across PCP, RD, health coaching, and psychology.</p>
+    <div class="credit">Built for collaborative care · <b>Anthony, MD, CDCES, CCD</b> · Aligned to the 2023 International Evidence-Based Guideline</div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner" id="nav"></div>
+</nav>
+
+<main>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section class="panel active" id="overview">
+    <div class="sec-head">
+      <div class="k">01 · Nomenclature &amp; Framing</div>
+      <h2>From PCOS to PMOS</h2>
+      <p>As of the <b>May 2026 Lancet global consensus</b>, the condition is renamed <b>Polyendocrine Metabolic Ovarian Syndrome (PMOS)</b>. The change re-centers the diagnosis on the endocrine and metabolic biology your team already treats — it is not cosmetic.</p>
+    </div>
+
+    <div class="statrow" style="margin-bottom:20px">
+      <div class="stat"><div class="big">1 in 8</div><div class="lbl">Women affected (~170M worldwide)</div></div>
+      <div class="stat amber"><div class="big">~85%</div><div class="lbl">Insulin resistance (clamp) · 75% even in lean</div></div>
+      <div class="stat rose"><div class="big">~70%</div><div class="lbl">Remain undiagnosed at any given time</div></div>
+      <div class="stat"><div class="big">3-yr</div><div class="lbl">Global transition &amp; ICD recoding period</div></div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card pad">
+        <h3>Why the name changed</h3>
+        <div class="sub">What to tell patients and the care team</div>
+        <ul class="clean">
+          <li>The "cysts" on ultrasound are <b>arrested antral follicles</b>, not pathological cysts — and patients are <b>not</b> more likely to have true ovarian cysts.</li>
+          <li>The old label drove <b>diagnostic delay, fragmented care, and stigma</b>, and obscured the metabolic and cardiovascular dimensions.</li>
+          <li><b>Polyendocrine</b> names the interacting hormonal drivers — insulin, androgens, and neuroendocrine (GnRH/LH) dysfunction.</li>
+          <li><b>Metabolic</b> foregrounds insulin resistance and cardiometabolic risk as core, not incidental.</li>
+          <li><b>Ovarian</b> is retained for continuity and the reproductive phenotype.</li>
+        </ul>
+        <div class="note-box">Consensus from <b>56 organizations</b> and ~22,000 stakeholders. The new, accurate symptom-based name was favored by <b>86% of patients</b> and <b>71% of clinicians</b> over keeping the PCOS acronym or a generic name. Diagnostic criteria are <b>unchanged</b>. A managed <b>3-year transition</b> covers EHR/SNOMED-CT and ICD recoding (via WHO) and integration into the International Guideline's <b>2028 update</b> — so PCOS billing codes persist in the interim.</div>
+      </div>
+
+      <div class="card pad">
+        <h3>The core loop you are treating</h3>
+        <div class="sub">Insulin resistance and androgen excess are bidirectional — both must be addressed</div>
+        <ul class="clean">
+          <li class="amb"><b>Insulin resistance →</b> compensatory hyperinsulinemia (present in ~85%) stimulates ovarian theca-cell androgen synthesis and lowers SHBG (raising free androgen).</li>
+          <li class="amb"><b>Androgen excess →</b> disrupts folliculogenesis (follicular arrest), drives hirsutism, acne, alopecia.</li>
+          <li class="amb"><b>HPO disruption →</b> elevated LH:FSH, increased GnRH pulse frequency, relative LH excess → more thecal androgen.</li>
+          <li class="amb"><b>Adiposity/adipokines →</b> visceral fat amplifies IR; leptin resistance, low adiponectin, IL-6/TNF-α inflammation.</li>
+        </ul>
+        <div class="callout" style="margin-top:14px">
+          <div class="ic">⚑</div>
+          <p><strong>Clinical anchor.</strong> Treating insulin resistance is treating PMOS at its root. On gold-standard euglycemic-clamp studies, IR is present in <b>~85%</b> overall and <b>~75% of lean patients</b> (BMI ≤25) — it is intrinsic, not adiposity-driven. Never defer the metabolic workup on the basis of normal weight.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Long-term risk this diagnosis flags</h3>
+      <div class="sub">PMOS is a systemic cardiometabolic disorder, not a gynecologic one</div>
+      <div class="statrow">
+        <div class="stat rose"><div class="big">4–7×</div><div class="lbl">Type 2 diabetes</div></div>
+        <div class="stat amber"><div class="big">2–3×</div><div class="lbl">Metabolic syndrome</div></div>
+        <div class="stat amber"><div class="big">1.7–2.5×</div><div class="lbl">CVD 1.68 · MI 2.50 · stroke 1.71 (OR)</div></div>
+        <div class="stat rose"><div class="big">3×</div><div class="lbl">Endometrial cancer</div></div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Quick reference</h3>
+      <div class="sub">Diagnostic criteria and the competing classification systems, at a glance</div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Rotterdam domain (adults)</th><th>Threshold / test</th></tr></thead>
+          <tbody>
+            <tr><td class="rowh">Hyperandrogenism</td><td>Clinical (hirsutism mFG ≥4–6, ethnicity-adjusted; acne/alopecia weaker) <b>or</b> biochemical (calculated free T / FAI; total T by LC-MS/MS; DHEAS/androstenedione if T normal)</td></tr>
+            <tr><td class="rowh">Ovulatory dysfunction</td><td>Cycles &lt;21 or &gt;35 d (or &lt;8/yr) from 3 yr post-menarche; any cycle &gt;90 d; low mid-luteal progesterone confirms</td></tr>
+            <tr><td class="rowh">Polycystic morphology</td><td>FNPO ≥20 in ≥1 ovary <b>or</b> ovarian volume &gt;10 mL; <b>or</b> elevated assay-specific AMH (adults only)</td></tr>
+            <tr><td class="rowh">Diagnostic rule</td><td><b>Any 2 of 3</b> after excluding mimics. Irregular cycles + hyperandrogenism → no imaging/AMH needed. <b>Adolescents:</b> require both hyperandrogenism <b>and</b> ovulatory dysfunction (no morphology/AMH within 8 yr of menarche)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Classification system</th><th>Basis</th><th>Types</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="rowh">Rotterdam A–D</td><td>HA × ovulatory dysfunction × PCOM (reproductive only)</td><td>4</td><td><b>Operative</b> — 2023 Guideline &amp; 2012 NIH</td></tr>
+            <tr><td class="rowh">AE-PCOS / Azziz A–G</td><td>Splits hyperandrogenism (biochemical vs clinical) × OD × PCOM</td><td>7</td><td>Defined enumeration; reproductive only (the checker)</td></tr>
+            <tr><td class="rowh">Myers–Unfer A–G</td><td>Rotterdam features <b>+ insulin resistance as 4th axis</b></td><td>7+</td><td>Proposal (2023) — not guideline-adopted</td></tr>
+            <tr><td class="rowh">Data-driven clusters</td><td>Unsupervised ML on endocrine-metabolic variables</td><td>3–4</td><td>Emerging (Gao <i>Nat Med</i> 2025); not yet adopted</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Guidelines &amp; evidence base (what's current)</h3>
+      <div class="sub">There is no newer standalone US guideline — US and international practice both run on the 2023 international document</div>
+      <div class="grid g2" style="margin-top:6px">
+        <div>
+          <ul class="clean">
+            <li><b>2023 International Evidence-Based Guideline</b> (Teede et al, <i>Eur J Endocrinol</i>) — the operative global standard, developed with ESHRE, ASRM, the AE-PCOS Society and 39 organizations; used in <b>195 countries</b>; next update <b>2028</b>.</li>
+            <li><b>2025 international adolescent recommendations</b> (Peña et al, <i>BMC Med</i>) — stricter pediatric criteria; no morphology/AMH criterion.</li>
+            <li><b>2026 Lancet consensus</b> — rename to PMOS; criteria unchanged.</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="clean">
+            <li><b>US landscape:</b> the Endocrine Society's dedicated PCOS guideline (2013) and ACOG bulletin predate the above; the <b>AE-PCOS Society is US-based</b> and co-led the 2023 guideline, which US practice now follows.</li>
+            <li><b>Recent literature:</b> <i>Nat Rev Dis Primers</i> 2024 (pathophysiology); multi-ancestry GWAS <i>Nat Genet</i> 2025; global prevalence <i>Hum Reprod Update</i> 2026; CVD meta-analysis <i>JAHA</i> 2024.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note-box"><b>Coming in the 2028 update:</b> full incorporation of <b>PMOS</b> terminology; likely formalization of <b>GLP-1 RA positioning</b> in the treatment algorithm; an expanded cardiometabolic-risk framework aligned with the endocrine-metabolic reframing; and enhanced <b>adolescent risk stratification</b> and longitudinal follow-up. The Monash PCOS/PMOS Guideline hub hosts the living documentation and full algorithms.</div>
+    </div>
+  </section>
+  <section class="panel" id="pathophys">
+    <div class="sec-head">
+      <div class="k">02 · Pathophysiology</div>
+      <h2>A polyendocrine, multisystem disorder</h2>
+      <p>The rename is biology-led: PMOS is driven by interacting <b>neuroendocrine (brain)</b>, <b>metabolic/gut</b>, and <b>immune-inflammatory</b> circuits — not an isolated ovarian problem. Each axis below feeds the others, which is why single-target therapy underperforms.</p>
+    </div>
+
+    <div class="card pad" style="margin-bottom:16px">
+      <h3>The self-perpetuating core loop</h3>
+      <div class="sub">Three reinforcing drivers — break any one and the others ease</div>
+      <div class="grid g3" style="margin-top:8px">
+        <div class="tx a"><h4>Hyperinsulinemia</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">IR in ~85% (≥75% of lean). Insulin sensitizes the ovary to LH, drives theca-cell androgen synthesis, and suppresses hepatic SHBG → more free androgen.</p></div>
+        <div class="tx p"><h4>Androgen excess</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">Theca P450c17 overactivity. Androgens impair follicle selection, worsen central neuroendocrine drive, and promote visceral adiposity → more IR.</p></div>
+        <div class="tx" style="border-left-color:var(--teal)"><h4>Neuroendocrine drive</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">↑ GnRH pulse frequency → relative LH excess → more thecal androgen. Reduced progesterone-negative feedback locks the loop.</p></div>
+      </div>
+    </div>
+
+    <div class="grid g3">
+      <div class="card pad">
+        <div class="labgroup"><div class="lh"><div class="ic" style="background:#E2EFEC;color:var(--teal-d)">🧠</div><h4>Brain / neuroendocrine</h4></div></div>
+        <ul class="clean">
+          <li><b>Accelerated GnRH pulsatility</b> raises LH:FSH; low FSH limits aromatase, so androgens aren't converted to estradiol.</li>
+          <li><b>KNDy neurons</b> (kisspeptin / neurokinin B / dynorphin) are dysregulated and set the fast GnRH pulse generator.</li>
+          <li><b>Arcuate GABA neurons</b> and <b>AgRP/NPY</b> circuits — stimulated by hyperinsulinemia and leptin — amplify GnRH/LH output.</li>
+          <li><b>Elevated AMH</b> acts centrally on GnRH neurons, adding to LH drive.</li>
+          <li><b>Developmental programming:</b> prenatal/early-life androgen exposure appears to "set" this circuitry (prenatally-androgenized models reproduce the phenotype).</li>
+          <li>Impaired <b>steroid (progesterone) negative feedback</b> sustains the high-frequency pulse pattern.</li>
+        </ul>
+      </div>
+
+      <div class="card pad">
+        <div class="labgroup"><div class="lh"><div class="ic" style="background:var(--sage-soft);color:var(--sage)">🦠</div><h4>Gut / microbiome</h4></div></div>
+        <ul class="clean">
+          <li><b>Dysbiosis:</b> reduced α-diversity, altered Firmicutes : Bacteroidetes, depleted <i>Akkermansia muciniphila</i>; correlates with testosterone and HOMA-IR.</li>
+          <li><b>Barrier failure</b> (↑ zonulin) → endotoxemia (LPS) → systemic low-grade inflammation and IR.</li>
+          <li><b>↓ short-chain fatty acids → ↓ GLP-1</b> secretion — a mechanistic link to the GLP-1 RA treatment signal.</li>
+          <li><b>Bile-acid signaling</b> (TGR5; bile-acid–IL-22 axis) is disrupted, blunting hypothalamic androgen feedback.</li>
+          <li><b>Gut–brain axis:</b> microbial GABA/serotonin modulate GnRH via vagal signaling; GABA-producing taxa track with higher LH:FSH.</li>
+          <li><span class="tagline t-line">Experimental</span> probiotics/prebiotics and FMT are investigational — not standard care.</li>
+        </ul>
+      </div>
+
+      <div class="card pad">
+        <div class="labgroup"><div class="lh"><div class="ic" style="background:var(--rose-soft);color:var(--rose)">🔥</div><h4>Inflammation / immunometabolic</h4></div></div>
+        <ul class="clean">
+          <li><b>Chronic low-grade inflammation:</b> ↑ hsCRP <b>independent of obesity</b>, with IL-6, TNF-α and NF-κB activation.</li>
+          <li><b>Adipose dysfunction:</b> visceral fat, leptin resistance, <b>low adiponectin</b> — amplifying IR and androgen output.</li>
+          <li><b>Oxidative stress &amp; mitochondrial dysfunction</b> create a self-reinforcing cycle that degrades oocyte quality.</li>
+          <li>Inflammatory signaling within theca/granulosa cells impairs folliculogenesis (ferroptosis is an emerging mechanism).</li>
+          <li>Lipopolysaccharide from gut barrier failure is a key upstream inflammatory trigger — tying the gut and immune axes together.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card pad">
+        <h3>Genetic &amp; developmental origins</h3>
+        <ul class="clean">
+          <li><b>~70% heritable</b> (twin studies); strongly <b>polygenic</b> — multi-ancestry GWAS (2025) implicate neuroendocrine, metabolic, and gonadotropin pathways.</li>
+          <li><b>DENND1A</b> and loci in insulin signaling, steroidogenesis, and PI3K-Akt recur across studies.</li>
+          <li><b>Epigenetic</b> programming (DNA methylation in granulosa cells; fetal androgen exposure) links environment to phenotype.</li>
+          <li>Functional ovarian hyperandrogenism (exaggerated 17-OHP response) is present in ~2/3; a minority have an adrenal-predominant source.</li>
+        </ul>
+      </div>
+      <div class="card pad" style="background:linear-gradient(180deg,#FBF4E9,#FFFDFA);border-color:var(--amber-soft)">
+        <h3 style="color:var(--amber)">Why this matters at the bedside</h3>
+        <ul class="clean">
+          <li class="amb"><b>Treat the metabolic root:</b> insulin-sensitizing therapy and weight management improve all downstream axes — the rationale for metformin, GLP-1 RA, and lifestyle as first-line.</li>
+          <li class="amb"><b>Lean ≠ low-risk:</b> IR and the inflammatory/neuroendocrine drivers are intrinsic, not adiposity-dependent.</li>
+          <li class="amb"><b>The GLP-1 signal is mechanistic,</b> not just weight-mediated — gut–incretin biology is part of the disease.</li>
+          <li class="amb"><b>Multisystem framing</b> justifies the team model: metabolic, dermatologic, reproductive, and psychological care in parallel.</li>
+        </ul>
+        <div class="note-box" style="background:#fff">Sources: Stener-Victorin et al. <i>Nat Rev Dis Primers</i> 2024; recent gut-microbiome &amp; neuroendocrine reviews 2024–2026; multi-ancestry GWAS, <i>Nat Genet</i> 2025. See References.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DIAGNOSIS ===================== -->
+  <section class="panel" id="diagnosis">
+    <div class="sec-head">
+      <div class="k">03 · Diagnostic Workup</div>
+      <h2>Criteria, phenotype &amp; exclusions</h2>
+      <p>Diagnosis still rests on the <b>Rotterdam criteria (2 of 3)</b> after exclusion of mimics. The 2023 guideline permits <b>elevated AMH</b> as an alternative to ultrasound for the follicular-morphology criterion in adults.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card pad">
+        <h3>Diagnosis &amp; phenotype checker</h3>
+        <div class="sub">Diagnosis = Rotterdam 2-of-3 (per 2023 Guideline); phenotype = AES 7-class (A–G). Toggle the four features.</div>
+
+        <div class="checkbox-row" data-crit="bioHA" onclick="toggleCrit(this)">
+          <div class="box"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="txt"><strong>Biochemical hyperandrogenemia</strong><span>↑ calculated free T / FAI / total T (LC-MS/MS), DHEAS, or androstenedione</span></div>
+        </div>
+        <div class="checkbox-row" data-crit="hir" onclick="toggleCrit(this)">
+          <div class="box"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="txt"><strong>Clinical hyperandrogenism</strong><span>Hirsutism (mFG ≥4–6, ethnicity-adjusted), acne, or androgenic alopecia</span></div>
+        </div>
+        <div class="checkbox-row" data-crit="ov" onclick="toggleCrit(this)">
+          <div class="box"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="txt"><strong>Ovulatory dysfunction</strong><span>Oligo-/anovulation; &lt;21 or &gt;35 d (or &lt;8/yr) from 3 yr post-menarche; any cycle &gt;90 d. Low mid-luteal progesterone confirms even with regular-appearing cycles.</span></div>
+        </div>
+        <div class="checkbox-row" data-crit="pcom" onclick="toggleCrit(this)">
+          <div class="box"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="txt"><strong>Polycystic ovarian morphology</strong><span>FNPO ≥20 in ≥1 ovary OR ovarian vol &gt;10 mL; <b>or</b> elevated assay-specific AMH (adults only)</span></div>
+        </div>
+        <div class="checkbox-row" data-crit="ir" onclick="toggleCrit(this)" style="border-style:dashed">
+          <div class="box"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="txt"><strong>Insulin resistance / metabolic dysfunction <span class="tagline t-amber">metabolic axis</span></strong><span>↑ HOMA-IR, impaired glucose tolerance/IFG, or metabolic-syndrome features. <b>Overlay only</b> — does not change the A–G letter, but adds the metabolic axis (Myers–Unfer 2023 intent).</span></div>
+        </div>
+
+        <div class="verdict notmet" id="verdict">
+          <div class="vh"><div class="ic" id="vic">○</div><h3 id="vtitle">Select features present</h3></div>
+          <div class="pheno" id="vpheno">—</div>
+          <div class="note" id="vnote">Hyperandrogenism = biochemical <b>or</b> clinical. Diagnosis needs <b>2 of 3</b> Rotterdam domains after excluding mimics. In <b>adolescents</b> require both hyperandrogenism and ovulatory dysfunction — morphology/AMH is not a criterion within 8 yr of menarche.</div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <h3>Must-exclude differential</h3>
+        <div class="sub">PMOS remains a diagnosis of exclusion — clear these before labeling</div>
+        <ul class="clean">
+          <li><b>Pregnancy</b> — urine/serum hCG before any workup or prescribing.</li>
+          <li><b>Thyroid dysfunction</b> — TSH (mimics menstrual irregularity).</li>
+          <li><b>Hyperprolactinemia</b> — prolactin.</li>
+          <li><b>Nonclassic CAH</b> — early-AM follicular 17-OHP; &gt;200 ng/dL → ACTH stimulation. <span class="tagline t-rose">high-yield miss in fertility patients</span></li>
+          <li><b>Androgen-secreting tumor</b> — rapid virilization, total T &gt;150 ng/dL, or DHEAS &gt;700 µg/dL → imaging.</li>
+          <li><b>Cushing syndrome</b> — if stigmata present (AM cortisol / dexamethasone suppression / late-night salivary).</li>
+          <li><b>Functional hypothalamic amenorrhea</b> — low LH/FSH, low BMI, high training load.</li>
+          <li><b>Primary ovarian insufficiency</b> — high FSH, low AMH + amenorrhea.</li>
+        </ul>
+        <div class="note-box"><b>Differential AMH tip:</b> very <b>low</b> AMH + amenorrhea points to POI; very <b>high</b> AMH + amenorrhea supports PMOS.</div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>The seven phenotypes (AE-PCOS / Azziz 2009 — A–G)</h3>
+      <div class="sub">This checker uses the <b>Azziz 2009 enumeration</b>: four features — biochemical hyperandrogenemia (H<sub>b</sub>), clinical hirsutism (H<sub>c</sub>), oligo-anovulation (O), polycystic morphology (P). All A–G require some hyperandrogenism. <b>This is a different "A–G" from the Myers–Unfer 2023 proposal</b> (which adds insulin resistance as a 4th axis — see Classification landscape below).</div>
+      <div class="grid g4" style="margin-top:8px">
+        <div class="tx p"><h4>A · Complete</h4><div class="goal">Classic, most common</div><span class="tagline t-rose">H<sub>b</sub>+H<sub>c</sub>+O+P</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">All four features. Highest IR &amp; cardiometabolic risk.</p></div>
+        <div class="tx p"><h4>B · Non-PCOM classic</h4><div class="goal">Anovulatory, no morphology</div><span class="tagline t-rose">H<sub>b</sub>+H<sub>c</sub>+O</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Metabolic risk comparable to A.</p></div>
+        <div class="tx a"><h4>C · Biochemical+PCOM</h4><div class="goal">Anovulatory, no overt hirsutism</div><span class="tagline t-amber">H<sub>b</sub>+O+P</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Androgen excess biochemical only.</p></div>
+        <div class="tx a"><h4>D · Biochemical only</h4><div class="goal">Anovulatory, no hirsutism/PCOM</div><span class="tagline t-amber">H<sub>b</sub>+O</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Diagnosed on labs + cycles.</p></div>
+        <div class="tx a"><h4>E · Clinical+PCOM</h4><div class="goal">Hirsute, normal measured androgens</div><span class="tagline t-amber">H<sub>c</sub>+O+P</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Check assay/free-T method before calling androgens "normal."</p></div>
+        <div class="tx a"><h4>F · Clinical only</h4><div class="goal">Hirsute, no PCOM, normal labs</div><span class="tagline t-amber">H<sub>c</sub>+O</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Overlaps idiopathic hirsutism — exclude carefully.</p></div>
+        <div class="tx s"><h4>G · Ovulatory</h4><div class="goal">Regular cycles</div><span class="tagline t-sage">H<sub>b</sub>+H<sub>c</sub>+P</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Hyperandrogenic but ovulatory; milder metabolic profile.</p></div>
+        <div class="tx" style="border-left-color:var(--muted)"><h4>Outside A–G</h4><div class="goal">Normoandrogenic</div><span class="tagline t-line">O+P only</span><p style="font-size:12.5px;margin-top:9px;color:var(--muted)">Meets Rotterdam ("classic phenotype D") but excluded from the hyperandrogenism-required AES set.</p></div>
+      </div>
+      <div class="note-box"><b>Letter-collision warning:</b> the AE-PCOS/Azziz A–G labels here are <b>not</b> the same as the older Rotterdam A–D labels (where "D" = the non-androgenic phenotype). Document the component features alongside the letter to avoid ambiguity. Across phenotypes, the hyperandrogenic/anovulatory clusters (A, B) carry the greatest IR, dyslipidemia and T2D burden; ovulatory (G) and normoandrogenic variants are mildest. Phenotype tends to attenuate with age (falling androgens, rising FSH).</div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Beyond A–D: the classification landscape (emerging)</h3>
+      <div class="sub">Three paradigms now coexist. The convergent signal across data-driven studies: the fundamental axis of heterogeneity is <b>metabolic vs reproductive</b> — which the reproductive-only A–D system omits.</div>
+      <div class="grid g3" style="margin-top:8px">
+        <div class="tx"><h4>Rotterdam A–D</h4><div class="goal">Operative · 2023 Guideline &amp; 2012 NIH</div><p style="font-size:12.5px;color:var(--muted);margin-top:8px">Four phenotypes from HA × OD × PCOM. A metabolic gradient exists by HOMA-IR: <b>A (3.59) &gt; D (2.73) &gt; B (2.59) &gt; C (2.05)</b>; IR ~57.5% and phenotype-dependent (Szkodziak 2025).</p></div>
+        <div class="tx a"><h4>AE-PCOS / Azziz A–G</h4><div class="goal">Phenotype enumeration (2009)</div><p style="font-size:12.5px;color:var(--muted);margin-top:8px">Splits biochemical vs clinical hyperandrogenism → 7 hyperandrogenic cells (the checker above). Granular, but still reproductive/endocrine — <b>no metabolic axis.</b></p></div>
+        <div class="tx p"><h4>Myers–Unfer A–G</h4><div class="goal">Proposal · <i>Trends Endocrinol Metab</i> 2023</div><p style="font-size:12.5px;color:var(--muted);margin-top:8px">Adds <b>insulin resistance as a 4th axis</b> to Rotterdam → up to 7+ combinations, to direct insulin-sensitizing therapy by metabolic phenotype. <b>Not guideline-adopted</b> (guideline notes clinical IR assays are inaccurate).</p></div>
+      </div>
+
+      <div class="note-box" style="border-left-color:var(--teal)"><b>Recommended use:</b> for diagnosis, stay with <b>Rotterdam (operative/guideline)</b>; for phenotyping, the <b>Azziz A–G</b> above is the only defined, enumerable A–G (the checker). Then adopt the <b>intent of the latest A–G (Myers–Unfer 2023)</b> by always recording the <b>insulin-resistance / metabolic axis</b> alongside the letter — toggle "IR / metabolic dysfunction" in the checker. <b>The key difference:</b> Azziz A–G <i>splits hyperandrogenism</i> (biochemical vs clinical) into 7 reproductive cells; Myers–Unfer A–G instead keeps Rotterdam's three features and <i>adds IR as a 4th axis</i>. Don't report a "Myers–Unfer letter" as validated — it's a proposal without a fixed enumeration — but do let the IR axis drive therapy, which is exactly what the data-driven clusters below support.</div>
+
+      <h4 style="font-size:15px;margin:16px 0 6px;color:var(--teal-d)">Data-driven subtypes — Gao et al, <i>Nature Medicine</i> 2025</h4>
+      <div class="sub" style="margin-bottom:8px">Unsupervised clustering of 9 variables in <b>11,908 women</b>, validated across 5 cohorts with 6.5-yr follow-up — four reproducible subtypes with distinct trajectories:</div>
+      <div class="grid g4">
+        <div class="tx p"><h4>Hyperandrogenic</h4><div class="goal">25% · ↑T/DHEA-S, mild metabolic</div><p style="font-size:12px;color:var(--muted);margin-top:7px">Highest 2nd-trimester loss &amp; dyslipidemia incidence.</p></div>
+        <div class="tx r"><h4>Obesity</h4><div class="goal">26% · ↑BMI/glucose/insulin</div><p style="font-size:12px;color:var(--muted);margin-top:7px">Most severe metabolic (T2D 7.9%, dyslipidemia 75.3%, HTN 28.7%); lowest IVF live birth — but highest remission.</p></div>
+        <div class="tx s"><h4>High-SHBG</h4><div class="goal">26% · ↑SHBG, lowest BMI</div><p style="font-size:12px;color:var(--muted);margin-top:7px">Most favorable reproductive outcomes; lowest diabetes/hypertension.</p></div>
+        <div class="tx a"><h4>High-LH/AMH</h4><div class="goal">23% · ↑LH, FSH, AMH</div><p style="font-size:12px;color:var(--muted);margin-top:7px">Greatest OHSS risk; lowest remission rate.</p></div>
+      </div>
+
+      <div class="note-box" style="margin-top:14px"><b>Converging evidence:</b> independent clustering studies repeatedly resolve a metabolic-vs-reproductive split — van der Ham (<i>JCEM</i> 2024, 3 subtypes), Burns (<i>Front Endocrinol</i> 2025, "may be separate disorders"), Ho (<i>Fertil Steril</i> 2026, MD/MS/NR clusters; MD lowest live birth 44.8% vs 59.3%, GDM 33%), and Wang (<i>Front Endocrinol</i> 2026: IR independently fuels the hyperandrogenic phenotype, HOMA-IR aOR 1.35 with BMI non-significant, while neuroendocrine factors dominate non-hyperandrogenic cases). <b>Where the field stands:</b> A–D remains the operative diagnostic system; these subtypes are not yet guideline-adopted, but they point toward subtype-/IR-tailored therapy, and the PMOS rename is an opportunity to fold the metabolic dimension into future phenotyping.</div>
+    </div>
+  </section>
+
+  <!-- ===================== LABS ===================== -->
+  <section class="panel" id="labs">
+    <div class="sec-head">
+      <div class="k">04 · Laboratory Evaluation</div>
+      <h2>Panel, interpretation &amp; calculators</h2>
+      <p>Order <b>total testosterone by LC-MS/MS + SHBG</b> and calculate free T — never a direct/analog free-T immunoassay. Calculators below use the Vermeulen method, HOMA-IR, and FAI.</p>
+    </div>
+
+    <!-- calculators -->
+    <div class="grid g2" style="margin-bottom:18px">
+      <div class="card pad">
+        <h3>Calculated free testosterone</h3>
+        <div class="sub">Vermeulen equation · total T (LC-MS/MS) + SHBG + albumin</div>
+        <div class="calc">
+          <div class="field"><label>Total T <span class="u">ng/dL</span></label><input id="ft_tt" type="number" placeholder="e.g. 55" oninput="calcFreeT()"></div>
+          <div class="field"><label>SHBG <span class="u">nmol/L</span></label><input id="ft_shbg" type="number" placeholder="e.g. 30" oninput="calcFreeT()"></div>
+          <div class="field"><label>Albumin <span class="u">g/dL</span></label><input id="ft_alb" type="number" value="4.3" step="0.1" oninput="calcFreeT()"></div>
+        </div>
+        <div class="result" id="ft_res" style="display:none">
+          <div class="rv"><span class="num" id="ft_pg">—</span><span class="rl">Free T · pg/mL</span></div>
+          <div class="rv"><span class="num" id="ft_pct">—</span><span class="rl">% Free</span></div>
+          <div class="flag" id="ft_flag">—</div>
+        </div>
+        <div class="note-box">Adult-female reference for calculated free T is <b>assay- and lab-dependent</b> (commonly ~0.6–6.4 pg/mL). Interpret against <b>your</b> reference range, not a universal cutoff.</div>
+      </div>
+
+      <div class="card pad">
+        <h3>HOMA-IR &amp; Free Androgen Index</h3>
+        <div class="sub">Fasting insulin resistance estimate · FAI screen</div>
+        <div class="calc" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>Fasting glucose <span class="u">mg/dL</span></label><input id="h_glu" type="number" placeholder="e.g. 95" oninput="calcHoma()"></div>
+          <div class="field"><label>Fasting insulin <span class="u">µU/mL</span></label><input id="h_ins" type="number" placeholder="e.g. 14" oninput="calcHoma()"></div>
+        </div>
+        <div class="result" id="h_res" style="display:none">
+          <div class="rv"><span class="num" id="h_val">—</span><span class="rl">HOMA-IR</span></div>
+          <div class="flag" id="h_flag">—</div>
+        </div>
+        <div class="calc" style="grid-template-columns:1fr 1fr;margin-top:14px">
+          <div class="field"><label>Total T <span class="u">nmol/L</span></label><input id="fai_tt" type="number" placeholder="e.g. 1.9" step="0.1" oninput="calcFai()"></div>
+          <div class="field"><label>SHBG <span class="u">nmol/L</span></label><input id="fai_shbg" type="number" placeholder="e.g. 28" oninput="calcFai()"></div>
+        </div>
+        <div class="result" id="fai_res" style="display:none">
+          <div class="rv"><span class="num" id="fai_val">—</span><span class="rl">Free Androgen Index</span></div>
+          <div class="flag" id="fai_flag">—</div>
+        </div>
+        <div class="note-box"><b>HOMA-IR &gt;2.5</b> suggests insulin resistance (population/assay dependent). <b>FAI &gt;~5</b> supports biochemical hyperandrogenism (typical female reference ~0.4–4.5). <b>Guideline caveat:</b> the 2023 Guideline states clinical insulin assays are inaccurate and <b>does not recommend routine IR/HOMA-IR measurement for diagnosis</b> — use the <b>OGTT</b> for glycemic status. IR remains a pathophysiologic driver; treat it via lifestyle/metabolic therapy regardless of whether you measure it.</div>
+      </div>
+    </div>
+
+    <!-- lab panel -->
+    <div class="card pad">
+      <h3>Recommended panel &amp; interpretation</h3>
+      <div class="sub">Always document a negative pregnancy test first</div>
+
+      <div class="labgroup" style="margin-top:14px">
+        <div class="lh"><div class="ic" style="background:var(--amber-soft);color:var(--amber)">A</div><h4>Androgen panel</h4></div>
+        <div class="lab">
+          <div class="li"><div class="test">Total testosterone <span class="rg">15–70 ng/dL · LC-MS/MS</span></div><div class="interp">Day 3–5 AM draw. <b>&gt;150 ng/dL or rapid virilization → tumor workup.</b></div></div>
+          <div class="li"><div class="test">Calculated free T / FAI <span class="rg">lab-dependent</span></div><div class="interp">Most sensitive biochemical HA marker. <b>Use calculated free T</b> — never direct/analog immunoassay (underestimates at low end).</div></div>
+          <div class="li"><div class="test">SHBG <span class="rg">~20–130 nmol/L</span></div><div class="interp"><b>Low SHBG</b> (driven by hyperinsulinemia) raises free-androgen bioavailability — a metabolic fingerprint.</div></div>
+          <div class="li"><div class="test">DHEAS <span class="rg">age-dependent</span></div><div class="interp">Adrenal source; no cycle timing needed. <b>&gt;700 µg/dL → adrenal imaging.</b></div></div>
+          <div class="li"><div class="test">17-OH progesterone <span class="rg">&lt;200 ng/dL (follicular AM)</span></div><div class="interp">Excludes NCCAH. <b>200–800 → ACTH stimulation</b> (stimulated &gt;1000 confirms). Order in every initial workup.</div></div>
+        </div>
+      </div>
+
+      <div class="labgroup">
+        <div class="lh"><div class="ic" style="background:var(--sage-soft);color:var(--sage)">M</div><h4>Metabolic panel</h4></div>
+        <div class="lab">
+          <div class="li"><div class="test">Fasting glucose + insulin <span class="rg">HOMA-IR &gt;2.5 = IR</span></div><div class="interp">Foundational — IR present in ~85% on clamp studies (~75% even when lean).</div></div>
+          <div class="li"><div class="test">75 g OGTT <span class="rg">preferred over HbA1c</span></div><div class="interp"><b>First-line glycemic screen</b> — HbA1c has reduced sensitivity in PMOS. Captures post-load IR; repeat every 1–3 yrs <b>regardless of weight.</b></div></div>
+          <div class="li"><div class="test">HbA1c <span class="rg">5.7–6.4 pre-DM · ≥6.5 DM</span></div><div class="interp">Acceptable if OGTT impractical, but less sensitive — do not rely on it alone to exclude dysglycemia.</div></div>
+          <div class="li"><div class="test">Fasting lipids <span class="rg">↑TG, ↓HDL pattern</span></div><div class="interp">Calculate LDL-C; treat dyslipidemia proactively.</div></div>
+          <div class="li"><div class="test">Uric acid <span class="rg">hyperuricemia ↔ IR / MetS</span></div><div class="interp">Frequently elevated in PMOS and <b>correlates with insulin resistance, metabolic syndrome and cardiometabolic risk</b>. A severity/risk marker — not diagnostic.</div></div>
+          <div class="li"><div class="test">ALT / hsCRP <span class="rg">if overweight/obese</span></div><div class="interp">Routine LFTs <b>not recommended unless overweight/obese</b> (low sensitivity/specificity for MASLD); hsCRP indexes low-grade inflammation.</div></div>
+        </div>
+      </div>
+
+      <div class="labgroup">
+        <div class="lh"><div class="ic" style="background:#E2EFEC;color:var(--teal-d)">R</div><h4>Reproductive / exclusion</h4></div>
+        <div class="lab">
+          <div class="li"><div class="test">LH / FSH <span class="rg">LH:FSH &gt;2 supportive</span></div><div class="interp">Supportive, <b>not required</b> for diagnosis.</div></div>
+          <div class="li"><div class="test">Mid-luteal progesterone <span class="rg">—</span></div><div class="interp">Low/absent confirms anovulation.</div></div>
+          <div class="li"><div class="test">Prolactin · TSH <span class="rg">—</span></div><div class="interp">Exclude hyperprolactinemia and thyroid dysfunction.</div></div>
+          <div class="li"><div class="test">Cushing's screen <span class="rg">only if stigmata</span></div><div class="interp"><b>Not routine.</b> If central obesity with violaceous striae, proximal myopathy, easy bruising, or resistant hypertension: <b>1-mg overnight or low-dose dexamethasone suppression test (LDDST)</b>, late-night salivary cortisol, or 24-h urinary free cortisol; confirm with a second test.</div></div>
+          <div class="li"><div class="test">AMH <span class="rg">assay-specific · ≥125 pmol/L (~≥17.5 ng/mL Beckman Gen II)</span></div><div class="interp"><b>2023 guideline:</b> elevated AMH may replace ultrasound for morphology in adults. <b>Not interchangeable across platforms</b> — record the assay. Does <b>not</b> reflect androgen status or IR.</div></div>
+          <div class="li"><div class="test">Pelvic ultrasound <span class="rg">≥20 follicles 2–9mm/ovary OR vol &gt;10 mL</span></div><div class="interp">Not needed if HA + OA already met. Avoid transvaginal within 8 yrs of menarche.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Lab workflow: order → boilerplate → patient discussion</h3>
+      <div class="sub">Build a structured order set, then convert results into standardized interpretation and a plain-language patient script. All outputs are copyable.</div>
+      <div class="lwgrid">
+        <div class="lwcol">
+          <h4>1 · Structured order set</h4>
+          <div class="grph">Diagnostic core</div>
+          <label class="ckline"><input type="checkbox" data-grp="Diagnostic core" data-order="Total testosterone (LC-MS/MS)" checked>Total testosterone (LC-MS/MS)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Diagnostic core" data-order="SHBG (→ calculated free T / FAI)" checked>SHBG (→ calc free T / FAI)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Diagnostic core" data-order="TSH" checked>TSH</label>
+          <label class="ckline"><input type="checkbox" data-grp="Diagnostic core" data-order="Prolactin" checked>Prolactin</label>
+          <label class="ckline"><input type="checkbox" data-grp="Diagnostic core" data-order="17-OH progesterone (AM, follicular)" checked>17-OH progesterone (AM)</label>
+          <div class="grph">Androgen extension (if T normal)</div>
+          <label class="ckline"><input type="checkbox" data-grp="Androgen extension" data-order="DHEAS">DHEAS</label>
+          <label class="ckline"><input type="checkbox" data-grp="Androgen extension" data-order="Androstenedione">Androstenedione</label>
+          <div class="grph">Metabolic / glycemic</div>
+          <label class="ckline"><input type="checkbox" data-grp="Metabolic" data-order="75-g OGTT (fasting + 2-h glucose)" checked>75-g OGTT (fasting + 2-h)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Metabolic" data-order="Fasting lipid panel" checked>Fasting lipid panel</label>
+          <label class="ckline"><input type="checkbox" data-grp="Metabolic" data-order="Uric acid">Uric acid</label>
+          <label class="ckline"><input type="checkbox" data-grp="Metabolic" data-order="ALT / AST (NAFLD screen)">ALT / AST (NAFLD)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Metabolic" data-order="HbA1c (lower sensitivity than OGTT)">HbA1c (adjunct)</label>
+          <div class="grph">Exclusion (if indicated)</div>
+          <label class="ckline"><input type="checkbox" data-grp="Exclusion" data-order="Low-dose dexamethasone suppression test (LDDST) — if Cushing's stigmata">LDDST (if Cushing's stigmata)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Exclusion" data-order="24-h urinary free cortisol / late-night salivary cortisol">24-h UFC / late-night salivary cortisol</label>
+          <div class="grph">Morphology / preconception</div>
+          <label class="ckline"><input type="checkbox" data-grp="Morphology/preconception" data-order="AMH (assay-specific; if morphology needed)">AMH (if morphology needed)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Morphology/preconception" data-order="Vitamin D (25-OH)">Vitamin D (25-OH)</label>
+          <label class="ckline"><input type="checkbox" data-grp="Morphology/preconception" data-order="Preconception: rubella/varicella immunity, folate, TSH target <2.5">Preconception panel (if planning pregnancy)</label>
+          <button class="lwbtn" onclick="buildOrders()">Build order list</button>
+          <div class="lwout" id="orderout" style="display:none"></div>
+        </div>
+        <div class="lwcol">
+          <h4>2 · Results → interpretation + discussion</h4>
+          <div class="grph">Androgens</div>
+          <label class="ckline"><input type="checkbox" data-pat="hyperandro">Biochemical hyperandrogenism (↑ free T / FAI)</label>
+          <label class="ckline"><input type="checkbox" data-pat="normandro">Androgens normal (clinical HA only)</label>
+          <label class="ckline"><input type="checkbox" data-pat="dheas_high">DHEAS markedly elevated (&gt;700)</label>
+          <label class="ckline"><input type="checkbox" data-pat="shbg_low">SHBG low</label>
+          <label class="ckline"><input type="checkbox" data-pat="ohp_bord">17-OHP borderline (200–800 → stim)</label>
+          <label class="ckline"><input type="checkbox" data-pat="ohp_high">17-OHP high (NCCAH likely)</label>
+          <div class="grph">Glycemic</div>
+          <label class="ckline"><input type="checkbox" data-pat="ogtt_norm">OGTT normal</label>
+          <label class="ckline"><input type="checkbox" data-pat="ogtt_impaired">OGTT: impaired (IFG/IGT — prediabetes)</label>
+          <label class="ckline"><input type="checkbox" data-pat="ogtt_dm">OGTT: diabetes range</label>
+          <label class="ckline"><input type="checkbox" data-pat="a1c_pre">HbA1c pre-diabetes (5.7–6.4%)</label>
+          <label class="ckline"><input type="checkbox" data-pat="homair">HOMA-IR elevated (supportive)</label>
+          <div class="grph">Lipids / metabolic</div>
+          <label class="ckline"><input type="checkbox" data-pat="dyslip">Dyslipidemia (↑LDL/TG, ↓HDL)</label>
+          <label class="ckline"><input type="checkbox" data-pat="uric">Uric acid elevated</label>
+          <label class="ckline"><input type="checkbox" data-pat="alt">ALT elevated (MASLD)</label>
+          <label class="ckline"><input type="checkbox" data-pat="hscrp">hsCRP elevated</label>
+          <div class="grph">Thyroid / pituitary</div>
+          <label class="ckline"><input type="checkbox" data-pat="tsh">TSH abnormal</label>
+          <label class="ckline"><input type="checkbox" data-pat="prl">Prolactin elevated</label>
+          <div class="grph">Ovarian / adrenal</div>
+          <label class="ckline"><input type="checkbox" data-pat="amh">AMH high / PCOM confirmed</label>
+          <label class="ckline"><input type="checkbox" data-pat="lhfsh">LH:FSH &gt;2 (supportive)</label>
+          <label class="ckline"><input type="checkbox" data-pat="lddst">Dexamethasone non-suppression</label>
+          <div class="grph">Vitamins</div>
+          <label class="ckline"><input type="checkbox" data-pat="vitd">Vitamin D deficient/insufficient</label>
+          <label class="ckline"><input type="checkbox" data-pat="b12">B12 low (on metformin)</label>
+          <button class="lwbtn" onclick="genDiscuss()">Generate</button>
+          <button class="lwbtn alt" onclick="clearPats()">Clear</button>
+          <div class="lwout" id="discout" style="display:none"></div>
+        </div>
+      </div>
+      <div class="note-box">Boilerplate is a starting point — always individualize. The patient-facing text is intentionally plain-language and non-alarming; adapt it to the person in front of you, and pair difficult results (e.g., diabetes range) with a clear plan and support.</div>
+    </div>
+  </section>
+
+  <!-- ===================== TREATMENT ===================== -->
+  <section class="panel" id="treatment">
+    <div class="sec-head">
+      <div class="k">05 · Management</div>
+      <h2>Goal-directed treatment</h2>
+      <p>Goals: restore menstrual regularity · reduce androgen excess · treat insulin resistance · meet reproductive goals · prevent long-term cardiometabolic disease. <b>Lifestyle is first-line therapy, not an adjunct.</b></p>
+    </div>
+
+    <div class="callout" style="margin-bottom:18px">
+      <div class="ic">▲</div>
+      <p><strong>Lifestyle as medicine.</strong> A <b>5–10% weight reduction restores ovulation in 55–100%</b> of anovulatory patients. Quantify it, prescribe it, and monitor it like a drug — and pursue visceral-fat reduction and insulin sensitivity even when the scale does not move (especially in lean phenotypes).</p>
+    </div>
+
+    <div class="card pad" style="margin-bottom:18px">
+      <h3>Treatment framework — four escalating tiers</h3>
+      <div class="sub">Tiers run in parallel, not strict sequence — match to the patient's dominant goal (symptoms, metabolic risk, or fertility)</div>
+      <div class="grid g4" style="margin-top:8px">
+        <div class="tx s"><h4>Tier 1 · Foundation</h4><p style="font-size:12.5px;color:var(--muted);margin-top:8px"><b>Lifestyle as therapy</b> — nutrition, activity, sleep, behavioral &amp; emotional health for <b>all</b> patients, lifelong.</p></div>
+        <div class="tx"><h4>Tier 2 · Symptom-targeted</h4><p style="font-size:12.5px;color:var(--muted);margin-top:8px"><b>CHC, progestogen, spironolactone, metformin</b> — cycle/endometrial protection, hyperandrogenism, metabolic features.</p></div>
+        <div class="tx a"><h4>Tier 3 · Weight / metabolic</h4><p style="font-size:12.5px;color:var(--muted);margin-top:8px"><b>GLP-1 RA, orlistat, bariatric surgery</b> — adjuncts to lifestyle for higher weight (guideline-supported).</p></div>
+        <div class="tx r"><h4>Tier 4 · Fertility</h4><p style="font-size:12.5px;color:var(--muted);margin-top:8px"><b>Ovulation induction ladder</b> — letrozole first-line → escalation → IVF/ICSI.</p></div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-bottom:18px">
+      <h3>Phenotype- &amp; cluster-tailored treatment matrix</h3>
+      <div class="sub">Maps the dominant subtype (Gao clusters / Azziz phenotype) to therapy emphasis. <b>Mechanism- and association-driven, hypothesis-generating</b> — no trial has randomized by these subtypes. Individualize with shared decision-making.</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Dominant subtype</th><th>Key features</th><th>Therapy emphasis (non-fertility)</th><th>Fertility approach</th><th>Watch-outs</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="rowh">Hyperandrogenic<br><span style="font-weight:400;color:var(--muted)">Gao HA · Azziz A–C</span></td>
+              <td>↑ testosterone/DHEA-S, hirsutism; mild–moderate metabolic</td>
+              <td><b>CHC + spironolactone</b> for androgen symptoms; lifestyle; <b>add metformin ± GLP-1 RA</b> if IR axis present (regardless of BMI)</td>
+              <td><b>Letrozole</b> first-line</td>
+              <td>↑ 2nd-trimester loss &amp; dyslipidemia (Gao); anti-androgens require contraception</td>
+            </tr>
+            <tr>
+              <td class="rowh">Obesity / metabolic<br><span style="font-weight:400;color:var(--muted)">Gao Obesity</span></td>
+              <td>↑ BMI, glucose, insulin; T2D 7.9%, dyslipidemia 75.3%, HTN 28.7%</td>
+              <td><b>Weight-centric:</b> lifestyle + <b>GLP-1 RA / tirzepatide</b>; metformin; consider <b>bariatric at lower BMI</b>; aggressive CV/T2D/lipid screening</td>
+              <td>Optimize weight first, then letrozole; highest remission with weight loss</td>
+              <td>Lowest IVF live-birth — optimize preconception; contraception with GLP-1/bariatric</td>
+            </tr>
+            <tr>
+              <td class="rowh">High-SHBG<br><span style="font-weight:400;color:var(--muted)">Gao SHBG</span></td>
+              <td>↑ SHBG, lowest BMI, lower LH/T; most favorable</td>
+              <td><b>Lightest touch:</b> lifestyle; cycle regulation (CHC / cyclic progestogen) as needed; minimal metabolic pharmacotherapy</td>
+              <td>Most favorable outcomes; standard care</td>
+              <td>Avoid over-treatment; still screen metabolically per guideline</td>
+            </tr>
+            <tr>
+              <td class="rowh">High-LH/AMH<br><span style="font-weight:400;color:var(--muted)">Gao LH/AMH</span></td>
+              <td>↑ LH, FSH, AMH; high follicle count</td>
+              <td>Cycle regulation; lifestyle</td>
+              <td>Letrozole → low-dose step-up gonadotropins; <b>IVF with antagonist + agonist trigger + freeze-all</b>; adjunct metformin to ↓ OHSS</td>
+              <td><b>Greatest OHSS risk</b>; lowest remission — counsel</td>
+            </tr>
+            <tr>
+              <td class="rowh">Normoandrogenic<br><span style="font-weight:400;color:var(--muted)">Rotterdam D / ovulatory</span></td>
+              <td>No/minimal androgen excess; milder metabolic profile</td>
+              <td>Endometrial protection (cyclic progestogen / CHC) if oligomenorrheic; lifestyle; lower drug burden</td>
+              <td>Often ovulatory or responds to lifestyle / letrozole</td>
+              <td>Ensure endometrial protection with long cycles; reassess over time</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note-box"><b>Cross-cutting IR overlay:</b> for any subtype with the <b>insulin-resistance / metabolic axis</b> (checker toggle), add or intensify insulin-sensitizing therapy — lifestyle + metformin ± GLP-1 RA — <b>regardless of BMI</b>. This is the practical expression of the "latest A–G" (Myers–Unfer) intent and the convergent cluster evidence. <b>Caveat:</b> subtype-directed therapy is not yet guideline-endorsed; use as a reasoning aid alongside the 2023 Guideline, not a substitute.</div>
+    </div>
+
+    <h3 style="font-size:17px;margin:6px 0 10px">Tier 1–2 · Symptom-targeted therapy</h3>
+    <div class="grid g2">
+      <div class="tx"><h4>Menstrual &amp; endometrial protection</h4><div class="goal">Goal: ≥4 withdrawal bleeds/year to protect the endometrium</div>
+        <div class="line"><span class="rank f">1st</span><div><b>Combined hormonal contraceptive</b> — cycle control + androgen suppression.</div></div>
+        <div class="line"><span class="rank alt">alt</span><div><b>Cyclic progestogen</b> 10–14 d/cycle if CHC contraindicated.</div></div>
+        <div class="line"><span class="rank alt">alt</span><div><b>LNG-IUD</b> — contraception + endometrial protection.</div></div>
+      </div>
+
+      <div class="tx a"><h4>Hyperandrogenism</h4><div class="goal">Goal: reduce hirsutism, acne, androgenic alopecia</div>
+        <div class="line"><span class="rank f">1st</span><div><b>CHC</b> with anti-androgenic progestin (drospirenone, norgestimate).</div></div>
+        <div class="line"><span class="rank alt">add</span><div><b>Spironolactone 25–100 mg/d</b> (2023 guideline range — lower adverse-effect risk; higher doses used in practice). Off-label; <b>requires reliable contraception</b>. Add after ≥6 mo of COCP/cosmetic if response suboptimal.</div></div>
+        <div class="line"><span class="rank adj">adj</span><div><b>Laser/light therapy</b> (evidence-based for facial hirsutism + QoL) &amp; <b>topical eflornithine</b>. <b>Finasteride</b> (hepatotoxicity risk) for alopecia; <b>avoid cyproterone ≥10 mg</b> (meningioma) and flutamide/bicalutamide (severe hepatotoxicity).</div></div>
+      </div>
+
+      <div class="tx s"><h4>Insulin resistance / metabolic</h4><div class="goal">Goal: treat PMOS at its root</div>
+        <div class="line"><span class="rank f">1st</span><div><b>Metformin</b> — improves cycle regularity, modest androgen + weight benefit; first-line IR agent.</div></div>
+        <div class="line"><span class="rank alt">emerg</span><div><b>GLP-1 RA</b> — greater weight loss + insulin-sensitivity gains than metformin, with ↓testosterone and improved ovulation. <b>Not yet approved for PMOS itself;</b> justified for comorbid approved indications (obesity, T2D, OSA, HF). Avoid peri-conception.</div></div>
+        <div class="line"><span class="rank adj">adj</span><div><b>Inositol</b> — modest metabolic benefit, limited clinical benefit (see Supplements below); <b>statin</b> for dyslipidemia; <b>ACEi/ARB</b> for hypertension.</div></div>
+      </div>
+
+      <div class="tx r"><h4>Fertility / ovulation induction</h4><div class="goal">Goal: achieve ovulation &amp; pregnancy</div>
+        <div class="line"><span class="rank f">1st</span><div><b>Letrozole</b> (aromatase inhibitor) — superior live-birth vs clomiphene in PMOS.</div></div>
+        <div class="line"><span class="rank alt">alt</span><div><b>Clomiphene</b> — alternative; higher multiple-pregnancy rate.</div></div>
+        <div class="line"><span class="rank adj">adj</span><div><b>Metformin + OI</b> modest benefit (esp. non-obese); <b>gonadotropins / IVF</b> → refer reproductive endocrinology.</div></div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Lifestyle prescription — quantified targets</h3>
+      <div class="grid g3" style="margin-top:8px">
+        <div>
+          <span class="tagline t-sage">Nutrition</span>
+          <ul class="clean" style="margin-top:10px">
+            <li>No single "PMOS diet" — <b>adherence dominates outcomes.</b></li>
+            <li>Low-GI / Mediterranean pattern: ↓IR, ↓androgens, ↓inflammation.</li>
+            <li>Protein <b>1.2–1.6 g/kg</b> for satiety + lean mass.</li>
+            <li>Limit ultra-processed foods, added sugar, refined carbs.</li>
+          </ul>
+        </div>
+        <div>
+          <span class="tagline t-teal">Exercise</span>
+          <ul class="clean" style="margin-top:10px">
+            <li><b>≥150 min/wk</b> moderate + <b>2×/wk resistance.</b></li>
+            <li>Resistance training improves IR <b>independent of weight loss.</b></li>
+            <li>HIIT ≥ MICT for IR and androgens.</li>
+            <li>Target visceral fat — outcomes track this over scale weight.</li>
+          </ul>
+        </div>
+        <div>
+          <span class="tagline t-amber">Behavioral &amp; sleep</span>
+          <ul class="clean" style="margin-top:10px">
+            <li>Screen depression/anxiety <b>every visit</b> (2–3× prevalence).</li>
+            <li>CBT / acceptance-based therapy is evidence-based.</li>
+            <li>Treat OSA/insomnia — sleep loss worsens IR.</li>
+            <li>Motivational interviewing for durable change.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note-box">See the dedicated <b>Supplements</b> card below for evidence-graded guidance (inositol, berberine, vitamin D, omega-3, NAC). Position all as adjuncts to lifestyle, never substitutes.</div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Tier 3 · Weight management &amp; metabolic optimization</h3>
+      <div class="sub">2023 Guideline (rec 4.5, 4.9): anti-obesity pharmacotherapy and bariatric surgery as adjuncts to lifestyle for higher-weight PMOS, per general-population guidelines</div>
+      <div class="grid g2" style="margin-top:8px">
+        <div class="tx a"><h4>Anti-obesity pharmacotherapy</h4>
+          <div class="line"><span class="rank f">opt</span><div><b>GLP-1 RA</b> (liraglutide, semaglutide) &amp; <b>orlistat</b> — added to lifestyle for higher weight. Tirzepatide (GLP-1/GIP) used under obesity/T2D indications.</div></div>
+          <div class="line"><span class="rank adj">safety</span><div><b>Effective contraception mandatory</b> — GLP-1 RAs are not pregnancy-safe; <b>~2-month washout before conception</b> for semaglutide. Gradual dose escalation to limit GI effects.</div></div>
+          <div class="line"><span class="rank adj">note</span><div>High weight-regain risk after stopping; counsel on likely long-term use and the absence of PMOS-specific long-term safety data.</div></div>
+        </div>
+        <div class="tx s"><h4>Bariatric / metabolic surgery</h4>
+          <div class="line"><span class="rank f">opt</span><div>Improves weight, BP, glycemia, hirsutism, cycle regularity, ovulation and pregnancy rates; follow general-population criteria.</div></div>
+          <div class="line"><span class="rank alt">access</span><div>PMOS is a metabolic condition and <b>may qualify at a lower BMI threshold</b>, analogous to type 2 diabetes.</div></div>
+          <div class="line"><span class="rank adj">safety</span><div>Counsel on <b>rapid return of fertility</b> — continue contraception until weight stable (usually ~1 year) to avoid adverse pregnancy outcomes.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>GLP-1 / GIP agents — the emerging evidence</h3>
+      <div class="sub">Mechanistically central given insulin resistance is the disease root — but <b>not yet first-line guideline therapy</b>; used under existing obesity/T2D indications</div>
+      <div class="statrow" style="margin:6px 0 14px">
+        <div class="stat amber"><div class="big">~75%</div><div class="lbl">IR prevalence (93.9% with obesity · 59.3% normal-weight)</div></div>
+        <div class="stat"><div class="big">−18%</div><div class="lbl">Visceral fat · liraglutide 26 wk (liver fat −44%, weight −5.6%)</div></div>
+        <div class="stat sage"><div class="big">↑↑</div><div class="lbl">Menstrual frequency &amp; spontaneous pregnancy (meta-analysis, p&lt;0.001)</div></div>
+        <div class="stat"><div class="big">4×</div><div class="lbl">Tirzepatide share of GLP-1-treated PMOS, 2022→25 (0.7→2.8%)</div></div>
+      </div>
+      <div class="grid g2">
+        <div>
+          <ul class="clean">
+            <li class="amb"><b>Liraglutide 3.0 mg × 32 wk</b> improved HOMA-IR, OGTT-derived insulin sensitivity, early insulin response, FAI, and menstrual frequency vs placebo (Elkind-Hirsh).</li>
+            <li class="amb"><b>GLP-1 RA + metformin</b> is emerging as the preferred regimen for the combined hyperandrogenic + metabolic phenotype (higher ovulation rates than comparators).</li>
+            <li class="amb"><b>Real-world tirzepatide</b> (n≈4,200, ObesityWeek 2025): &gt;90% achieved ≥10% weight loss by 10 months; mean ~18.8%.</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="clean">
+            <li>Improvements in ovulation/pregnancy track with the degree of IR and weight reduction — consistent with the metabolic-root model.</li>
+            <li><b>Caveats:</b> evidence base still low-to-moderate certainty; no proven live-birth benefit; pregnancy-unsafe; weight regain on cessation.</li>
+            <li>Truveta real-world data are preliminary/non-peer-reviewed; ~98% of GLP-1-treated PMOS patients also carried obesity/T2D (i.e., prescribed on existing indications).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note-box">Sources: 2025 systematic review, <i>Ther Adv Endocrinol Metab</i>; GLP-1 RA narrative review, <i>Endocr Connect</i> 2025; ObesityWeek 2025 real-world tirzepatide cohort; Truveta utilization analysis 2025. See References.</div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Tier 4 · Ovulation-induction ladder (fertility goal)</h3>
+      <div class="sub">2023 Guideline infertility algorithm — exclude pregnancy, optimize preconception (weight, BP, OGTT, folate) first; agents are off-label in many countries</div>
+      <div class="tl" style="margin-top:8px">
+        <div class="row"><div class="when">1st line</div><div class="what"><b>Letrozole</b> — confirmed first-line (superior ovulation, clinical pregnancy, and <b>live-birth</b> rates vs clomiphene; strong recommendation, high-quality evidence). Increase dose as needed.</div></div>
+        <div class="row"><div class="when amb">2nd line</div><div class="what"><b>Clomiphene citrate ± metformin</b> — alternative oral OI; clomiphene+metformin improves ovulation/pregnancy over either alone. Higher multiple-pregnancy rate; monitor.</div></div>
+        <div class="row"><div class="when amb">2nd line</div><div class="what"><b>FSH gonadotropins</b> — low-dose step-up protocol; intensive ultrasound monitoring; <b>cancel cycle if &gt;2 follicles &gt;14 mm</b> to avoid multiples.</div></div>
+        <div class="row"><div class="when amb">2nd line</div><div class="what"><b>Laparoscopic ovarian surgery</b> — option for clomiphene-resistant cases with no other infertility factors; weigh surgical/anesthetic risk.</div></div>
+        <div class="row"><div class="when">3rd line</div><div class="what"><b>IVF / ICSI</b> — after first/second-line failure. <b>GnRH-antagonist protocol</b> preferred; <b>agonist trigger + freeze-all</b> to cut OHSS; adjunct metformin if agonist long protocol used. <b>Single-embryo transfer</b> standard. Consider IVM where OHSS risk is high.</div></div>
+      </div>
+      <div class="note-box">Counsel on OHSS risk (elevated AMH predicts it) and the rapid return of fertility after weight loss/surgery. Refer to reproductive endocrinology for gonadotropins/IVF.</div>
+    </div>
+
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Pregnancy &amp; preconception care</h3>
+      <div class="sub">PMOS is a <b>high-risk pregnancy condition</b> — flag the diagnosis in antenatal records and monitor. All points below are guideline recommendations (2023 Guideline §1.9, 4.10–4.11, 5.1).</div>
+
+      <div class="grid g2" style="margin-top:10px">
+        <div class="tx r"><h4>Increased pregnancy risks</h4>
+          <ul class="clean" style="margin-top:6px">
+            <li><b>Gestational diabetes</b> — screen proactively.</li>
+            <li><b>Hypertensive disorders / pre-eclampsia.</b></li>
+            <li><b>Miscarriage</b> and <b>preterm birth.</b></li>
+            <li><b>IUGR / small-for-gestational-age / low birth weight.</b></li>
+            <li>Higher gestational weight gain; ↑ caesarean rate.</li>
+            <li class="sage"><b>Not</b> increased: macrosomia / large-for-gestational-age / instrumental delivery. ART confers no excess risk over non-PMOS.</li>
+          </ul>
+        </div>
+        <div class="tx s"><h4>Preconception optimization</h4>
+          <ul class="clean" style="margin-top:6px">
+            <li><b>OGTT</b> + <b>blood pressure</b> before pregnancy / fertility treatment.</li>
+            <li><b>Folate</b> — higher dose if BMI &gt;30; routine preconception care.</li>
+            <li>Weight, smoking, alcohol, nutrition, activity, sleep, mental &amp; sexual health.</li>
+            <li>Optimize pre-existing diabetes, hypertension, thyroid, mental health.</li>
+            <li>Reproductive life plan; early lifestyle support offered in pregnancy.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid g2" style="margin-top:12px">
+        <div class="tx"><h4>Glycemic screening in pregnancy</h4>
+          <div class="line"><span class="rank f">all</span><div><b>75-g OGTT</b> preconception for all with PMOS planning pregnancy / fertility treatment.</div></div>
+          <div class="line"><span class="rank alt">then</span><div>If not done preconception → <b>first antenatal visit</b>, and repeat at <b>24–28 weeks</b>.</div></div>
+        </div>
+        <div class="tx a"><h4>Other PMOS medications</h4>
+          <div class="line"><span class="rank adj">stop</span><div><b>GLP-1 RA</b> — not pregnancy-safe; stop with effective contraception, ~2-mo washout (semaglutide) before conception.</div></div>
+          <div class="line"><span class="rank adj">stop</span><div><b>Anti-androgens</b> (spironolactone) — risk of male-fetus undervirilization; stop, ensure contraception. <b>Letrozole</b> — stop once pregnancy confirmed.</div></div>
+        </div>
+      </div>
+
+      <div class="note-box"><b>Metformin in pregnancy — the nuanced answer to "stay on it":</b> the guideline is clear that metformin <b>does not prevent</b> gestational diabetes, late miscarriage, hypertension/pre-eclampsia, or macrosomia (EBR 4.11.1). It <b>may be considered in select circumstances</b> (e.g., elevated preterm-birth risk) to <b>reduce preterm delivery and limit excess gestational weight gain</b> (EBR 4.11.2), and is continued per diabetes-in-pregnancy guidance when there's a glycemic indication. So continuation is a <b>shared-decision, indication-driven</b> choice — not a routine measure to prevent the complications above. Counsel that long-term offspring effects are unclear (a signal toward higher childhood weight, causality uncertain); GI side effects are mild and no worse in pregnancy.</div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Supplements — what the evidence supports</h3>
+      <div class="sub">2023 Guideline grades inositol as low-evidence/limited-benefit; berberine is not addressed by any major guideline. Frame all as adjuncts and counsel on supplement-grade quality/regulation.</div>
+      <div class="lab" style="margin-top:12px">
+        <div class="li"><div class="test">Inositol (myo- ± D-chiro) <span class="rg">2023 Guideline: EBR, ⊕◯◯◯ low</span></div><div class="interp"><b>"Could be considered"</b> per patient preference — limited harm, possible improvement in some <b>metabolic</b> measures, but <b>limited clinical benefit</b> for ovulation, hirsutism, or weight. <b>Metformin preferred over inositol</b> for hirsutism/central adiposity (though more GI effects). <b>Experimental for fertility</b> — not recommended as a fertility therapy. Specific dose/form can't be guideline-endorsed (commonly studied: myo-inositol 2 g BID ± D-chiro 50 mg, 40:1).</div></div>
+        <div class="li"><div class="test">Berberine <span class="rg">not in guideline · small RCTs/MA</span></div><div class="interp">Meta-analyses suggest <b>insulin-sensitizing, lipid-lowering, and androgen/LH:FSH-reducing</b> effects, broadly comparable to metformin in small trials — but <b>evidence is low quality</b> and no solid effect on live birth. <b>Cautions:</b> supplement-grade quality varies; CYP3A4/P-glycoprotein drug interactions; GI effects; <b>contraindicated in pregnancy/lactation</b> (bilirubin displacement → kernicterus risk) — stop before conception. Typical study dose ~0.5 g TID. Not a recommended therapy; know it because patients use it.</div></div>
+        <div class="li"><div class="test">Vitamin D <span class="rg">replete deficiency</span></div><div class="interp">Correct documented deficiency (general-population practice); may modestly support metabolic measures. Not a PCOS-specific therapeutic.</div></div>
+        <div class="li"><div class="test">Omega-3 (EPA+DHA) <span class="rg">adjunct</span></div><div class="interp">Anti-inflammatory; may lower triglycerides and androgens modestly. Reasonable adjunct, especially with dyslipidemia.</div></div>
+        <div class="li"><div class="test">N-acetylcysteine / magnesium <span class="rg">weak/adjunct</span></div><div class="interp">NAC: antioxidant with mixed ovulatory data; magnesium if deficient. Low-priority adjuncts.</div></div>
+      </div>
+      <div class="note-box"><b>Shared counseling point (guideline practice point):</b> supplement regulation and quality control differ from pharmaceuticals — dose, purity, and combinations vary by product. Ask patients to disclose all supplements, and document shared decision-making.</div>
+    </div>
+  </section>
+
+  <!-- ===================== LIFESTYLE & SUPPLEMENTS ===================== -->
+  <section class="panel" id="lifestyle">
+    <div class="sec-head">
+      <div class="k">06 · Lifestyle &amp; Supplement Decision Support</div>
+      <h2>Evidence-based, weight-inclusive optimization</h2>
+      <p>Lifestyle is the one therapy recommended for <b>every</b> patient, lifelong. Supplements are adjuncts — most carry low-certainty evidence — so target them to phenotype and trial them deliberately.</p>
+    </div>
+
+    <h3 style="font-size:17px;margin:2px 0 10px">Lifestyle prescription — by domain</h3>
+    <div class="grid g3">
+      <div class="card pad"><div class="labgroup"><div class="lh"><div class="ic" style="background:var(--sage-soft);color:var(--sage)">△</div><h4>Nutrition</h4></div></div>
+        <ul class="clean">
+          <li><b>No single “PMOS diet”</b> — no composition beats another (guideline EBR). Pick a sustainable pattern; Mediterranean-style suits many.</li>
+          <li>Emphasize fiber, protein, whole foods; limit refined carbs &amp; sugary drinks.</li>
+          <li>Tailor to preferences/culture; <b>avoid restrictive diets</b> — screen for disordered eating at any weight.</li>
+          <li class="sage">Health benefits accrue <b>even without weight loss.</b></li>
+        </ul></div>
+      <div class="card pad"><div class="labgroup"><div class="lh"><div class="ic" style="background:var(--amber-soft);color:var(--amber)">⚡</div><h4>Physical activity</h4></div></div>
+        <ul class="clean">
+          <li><b>150–300 min/wk moderate</b> (or 75–150 vigorous) + <b>resistance ×2/wk</b> — prevention.</li>
+          <li><b>≥250 min/wk moderate</b> for weight management / regain prevention.</li>
+          <li>Resistance training independently improves IR &amp; body composition.</li>
+          <li>Reduce sedentary time; <b>any activity beats none.</b></li>
+        </ul></div>
+      <div class="card pad"><div class="labgroup"><div class="lh"><div class="ic" style="background:#E2EFEC;color:var(--teal-d)">☽</div><h4>Sleep</h4></div></div>
+        <ul class="clean">
+          <li><b>Screen &amp; treat OSA</b> — markedly more prevalent in PMOS, independent of BMI.</li>
+          <li>Short/poor sleep worsens IR &amp; appetite regulation.</li>
+          <li>Sleep-hygiene targets; refer for a sleep study if symptomatic.</li>
+        </ul></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card pad"><div class="labgroup"><div class="lh"><div class="ic" style="background:var(--rose-soft);color:var(--rose)">♥</div><h4>Behavioral &amp; emotional</h4></div></div>
+        <ul class="clean">
+          <li>Behavioral support: goal-setting, self-monitoring, <b>SMART goals</b>, relapse prevention.</li>
+          <li><b>Screen depression &amp; anxiety</b> (high prevalence); CBT helps adherence and symptoms.</li>
+          <li>Motivational interviewing improves engagement and durability of change.</li>
+        </ul></div>
+      <div class="card pad" style="background:linear-gradient(180deg,#F4F8F6,#FFFFFF)"><div class="labgroup"><div class="lh"><div class="ic" style="background:var(--sage-soft);color:var(--sage)">⚖</div><h4>Weight approach — weight-inclusive</h4></div></div>
+        <ul class="clean">
+          <li><b>5–10% loss restores ovulation in 55–100%</b> of anovulatory patients — but pursue visceral-fat/IR gains even when the scale doesn’t move.</li>
+          <li>Offer <b>weight-inclusive</b> (healthy-behavior) or weight-centric care per patient preference.</li>
+          <li>Ask permission to weigh; use non-stigmatizing language; consider blind weighing.</li>
+        </ul></div>
+    </div>
+
+    <div class="card pad" style="margin-top:18px">
+      <h3>Supplement decision support — evidence-graded</h3>
+      <div class="sub">Filter by therapeutic goal to highlight agents with a signal. Evidence grades: <span class="ev mod">MOD</span> moderate · <span class="ev low">LOW</span> low · <span class="ev vlow">V-LOW</span> very low certainty · <span class="ev neg">NEG</span> no benefit · <span class="ev std">STD</span> standard care. <b>Click any row for the GRADE rationale.</b></div>
+      <div class="goalbar" id="goalbar">
+        <button class="goalchip on" data-goal="all" onclick="filterSupps('all',this)">Show all</button>
+        <button class="goalchip" data-goal="metabolic" onclick="filterSupps('metabolic',this)">Metabolic / IR</button>
+        <button class="goalchip" data-goal="fertility" onclick="filterSupps('fertility',this)">Ovulation / fertility</button>
+        <button class="goalchip" data-goal="androgen" onclick="filterSupps('androgen',this)">Hyperandrogenism</button>
+        <button class="goalchip" data-goal="inflammation" onclick="filterSupps('inflammation',this)">Inflammation</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl" id="supptbl">
+          <thead><tr><th>Supplement</th><th>Best-supported use</th><th>Studied dose</th><th>Evidence</th><th>Cautions / interactions</th></tr></thead>
+          <tbody>
+            <tr data-goals="metabolic androgen fertility"><td class="rowh">Myo-inositol (± D-chiro 40:1)</td><td>↓ IR (HOMA-IR SMD −0.81), ↑ SHBG; DCI may aid ovulation</td><td>MI 2 g BID ± DCI 50 mg</td><td><span class="ev mod">MOD</span> metabolic; <span class="ev low">LOW</span> clinical</td><td>Mild GI (&lt; metformin); quality varies; experimental for fertility</td></tr>
+            <tr data-goals="metabolic fertility inflammation"><td class="rowh">Vitamin D</td><td>Correct deficiency (67–85% deficient); ↑ IR markers, glucose, mood</td><td>Replete to sufficiency (e.g., 1000–4000 IU/d)</td><td><span class="ev low">LOW</span> (best if deficient)</td><td>Check level; avoid megadosing</td></tr>
+            <tr data-goals="metabolic inflammation androgen"><td class="rowh">Omega-3 (EPA+DHA)</td><td>Dyslipidemia (LDL SMD −9.6, HDL +2.3), anti-inflammatory, modest ↓ androgens/TG</td><td>1–3 g/d EPA+DHA</td><td><span class="ev low">LOW</span></td><td>Bleeding risk at high dose; oxidation/quality</td></tr>
+            <tr data-goals="inflammation metabolic"><td class="rowh">Probiotics / synbiotics</td><td>↓ CRP (SMD −0.82); modest IR &amp; androgen improvement via gut</td><td>Multi-strain, 8–12 wk</td><td><span class="ev low">LOW</span> (short, heterogeneous)</td><td>Strain-dependent; caution if immunocompromised</td></tr>
+            <tr data-goals="metabolic androgen"><td class="rowh">Berberine</td><td>Metformin-like: ↓ IR/lipids/androgens; cycle regularity</td><td>0.5 g TID (or phytosome 550 mg BID)</td><td><span class="ev low">LOW</span> (≈ metformin)</td><td><b>Contraindicated in pregnancy/lactation</b>; CYP3A4/P-gp interactions; GI</td></tr>
+            <tr data-goals="fertility inflammation"><td class="rowh">N-acetylcysteine (NAC)</td><td>Adjunct to letrozole → more follicles, modest ↑ pregnancy (OR ~2.15)</td><td>600 mg BID–TID</td><td><span class="ev vlow">V-LOW</span></td><td>GI; limited pregnancy-safety data</td></tr>
+            <tr data-goals="fertility metabolic"><td class="rowh">Coenzyme Q10</td><td>↓ IR/lipids; oocyte/ART outcomes (OR ~2.49 pregnancy)</td><td>100–200 mg/d</td><td><span class="ev vlow">V-LOW</span> fertility</td><td>Well-tolerated; may potentiate warfarin</td></tr>
+            <tr data-goals="fertility metabolic"><td class="rowh">L-carnitine</td><td>Endocrine-metabolic signal; pregnancy OR very large but fragile</td><td>250 mg–3 g/d</td><td><span class="ev vlow">V-LOW</span> (small trials)</td><td>GI; interpret huge OR cautiously</td></tr>
+            <tr data-goals="fertility"><td class="rowh">Melatonin</td><td>Oocyte quality; pregnancy OR ~1.66 in ART</td><td>3 mg nightly</td><td><span class="ev vlow">V-LOW</span></td><td>Sedation; use only with clear indication</td></tr>
+            <tr data-goals="androgen"><td class="rowh">Spearmint tea</td><td>Specific anti-androgen: ↓ free T, hirsutism</td><td>2 cups/day</td><td><span class="ev low">LOW</span> (small trials)</td><td>Minimal; well tolerated</td></tr>
+            <tr data-goals="metabolic inflammation"><td class="rowh">Curcumin</td><td>↑ insulin sensitivity, ↓ glucose &amp; inflammatory markers</td><td>500–1500 mg/d (bioavailable form)</td><td><span class="ev low">LOW</span></td><td>Poor absorption; anticoagulant interaction; mild GI</td></tr>
+            <tr data-goals="metabolic inflammation"><td class="rowh">Alpha-lipoic acid (ALA)</td><td>↓ fasting glucose (SMD −0.60) &amp; HOMA-IR (SMD −2.03; high heterogeneity); antioxidant/anti-inflammatory. No clear androgen/lipid effect.</td><td>600–1200 mg/d</td><td><span class="ev mod">MOD</span> FBG; <span class="ev low">LOW</span> HOMA-IR</td><td>May lower glucose (watch with insulin/sulfonylurea); GI; often combined with inositol</td></tr>
+            <tr data-goals="metabolic"><td class="rowh">Chromium (picolinate)</td><td>↓ IR (SMD −0.84), ↓ fasting insulin &amp; BMI; ovulation improved in a 6-mo RCT</td><td>200–1000 µg/d</td><td><span class="ev low">LOW</span> (mixed)</td><td><b>Some MAs show ↑ total/free T (SMD +0.36/+0.80)</b> — caution in hyperandrogenic phenotype; short-term use</td></tr>
+            <tr data-goals="androgen metabolic"><td class="rowh">Resveratrol</td><td>↓ total testosterone &amp; DHEAS; ↓ insulin / improved sensitivity (small RCTs)</td><td>~800 mg–1.5 g/d</td><td><span class="ev low">LOW</span></td><td>Bioavailability; theoretical estrogenic activity; quality varies</td></tr>
+            <tr data-goals="androgen metabolic inflammation"><td class="rowh">Quercetin</td><td>↓ testosterone &amp; LH; ↓ IR, ↑ adiponectin (emerging RCTs)</td><td>500–1000 mg/d</td><td><span class="ev low">LOW</span></td><td>CYP/drug interactions; supplement quality</td></tr>
+            <tr data-goals="metabolic androgen"><td class="rowh">Zinc</td><td>↓ insulin/IR; improved hirsutism &amp; alopecia; deficiency common</td><td>30–50 mg/d (short term)</td><td><span class="ev low">LOW</span></td><td>Copper depletion with prolonged high dose</td></tr>
+            <tr data-goals="inflammation androgen"><td class="rowh">Vitamin E</td><td>Antioxidant; ↓ oxidative stress, modest androgen/IR signal — usually co-supplemented</td><td>~400 IU/d</td><td><span class="ev low">LOW</span> (co-supp)</td><td>Bleeding risk at high dose; hard to isolate effect</td></tr>
+            <tr data-goals="metabolic"><td class="rowh">Cinnamon</td><td>Modest ↓ fasting glucose/IR; some cycle-regularity signal</td><td>1–1.5 g/d</td><td><span class="ev vlow">V-LOW</span></td><td>Prefer Ceylon — cassia coumarin is hepatotoxic at high dose</td></tr>
+            <tr data-goals="metabolic inflammation"><td class="rowh">Selenium</td><td>Mixed: some ↓ insulin/CRP, but inconsistent and possible adverse lipid/glycemic signals</td><td>~200 µg/d</td><td><span class="ev vlow">V-LOW</span> (mixed)</td><td>Narrow safety window; avoid if replete (selenosis)</td></tr>
+            <tr data-goals="fertility"><td class="rowh">Folate (preconception)</td><td>All patients planning pregnancy; ↓ homocysteine</td><td>0.4–5 mg/d (higher if BMI &gt;30)</td><td><span class="ev std">STD</span> preconception</td><td>Routine preconception care</td></tr>
+            <tr data-goals="metabolic"><td class="rowh">Vitamin B12</td><td>Monitor &amp; replete if on long-term metformin</td><td>Per level</td><td><span class="ev std">STD</span> monitoring</td><td>Metformin lowers B12 over time</td></tr>
+            <tr data-goals="metabolic androgen"><td class="rowh">Magnesium</td><td>No PMOS-specific benefit — replete only if deficient</td><td>—</td><td><span class="ev neg">NEG</span> (2024 MA)</td><td>De-prioritize unless documented deficiency</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note-box"><b>Decision principles:</b> supplements are <b>adjuncts, not substitutes</b> for lifestyle and indicated medical therapy. Most evidence is low/very-low certainty (small trials, frequent co-supplementation). Pick <b>3–4 agents targeted to the phenotype</b>, trial for <b>~3 months</b>, then reassess against labs/symptoms. Skip multi-ingredient “PCOS blends” in favor of single agents at studied doses. Counsel on supplement-grade quality/regulation, ask patients to disclose everything they take, and <b>stop berberine (and review others) before conception.</b></div>
+    </div>
+
+    <div class="card pad" style="margin-top:18px">
+      <h3>Gut microbiome — role &amp; microbiome-targeted interventions</h3>
+      <div class="sub">An emerging, mechanistically central axis: dysbiosis links to insulin resistance, hyperandrogenism and inflammation. Interventions are promising but evidence is still <b>low-certainty and non-standardized</b>.</div>
+      <div class="grid g2" style="margin-top:8px">
+        <div class="tx s"><h4>Why it matters</h4>
+          <ul class="clean" style="margin-top:6px">
+            <li><b>Dysbiosis:</b> reduced α-diversity, altered Firmicutes : Bacteroidetes, depleted <i>Akkermansia</i> — correlates with testosterone &amp; HOMA-IR.</li>
+            <li><b>SCFA depletion</b> → less GLP-1/PYY signaling and weaker gut-barrier integrity.</li>
+            <li><b>↑ permeability (zonulin) → LPS endotoxemia</b> → TLR4/NF-κB inflammation → IR &amp; androgens.</li>
+            <li>Bile-acid–IL-22 and microbial-GABA gut–brain pathways modulate ovarian function.</li>
+          </ul>
+        </div>
+        <div class="tx a"><h4>Interventions (graded)</h4>
+          <div class="line"><span class="rank f">1st</span><div><b>Diet &amp; fiber</b> — Mediterranean/DASH + fermentable fiber raise SCFAs and diversity; the highest-yield, lowest-risk lever. <span class="ev low">LOW</span></div></div>
+          <div class="line"><span class="rank alt">add</span><div><b>Synbiotics &gt; probiotics &gt; prebiotics</b> — synbiotics (e.g., <i>L. acidophilus/casei + B. bifidum +</i> inulin, 12 wk) ↓ HOMA-IR &amp; insulin, ↑ SHBG, ↓ total T; probiotics ↓ CRP (SMD −0.82). <span class="ev low">LOW</span></div></div>
+          <div class="line"><span class="rank adj">exp</span><div><b>Fecal microbiota transplant (FMT)</b> — mostly animal/early data; <b>experimental</b>, not for clinical use. <span class="ev vlow">V-LOW</span></div></div>
+        </div>
+      </div>
+      <div class="note-box">Strain, dose and duration are <b>not standardized</b> — frame microbiome therapy as a <b>diet-first</b> strategy with synbiotics as a reasonable 8–12-week adjunct in IR/hyperandrogenic phenotypes, and treat FMT/postbiotics as research-stage. Sources: Shamasbi 2020 &amp; overview of SRs; <i>Front Microbiol/Endocrinol</i> 2024–2026.</div>
+    </div>
+  </section>
+
+  <!-- ===================== TEAM DOCS ===================== -->
+  <section class="panel" id="team">
+    <div class="sec-head">
+      <div class="k">07 · Team-Based Documentation</div>
+      <h2>Role-specific note templates</h2>
+      <p>Shared workflow: EMR documentation · RPM/CCM touchpoints · one shared care plan · warm handoffs. Select a role, edit the placeholders, and copy into your EMR. Replace <span class="ph">[bracketed]</span> fields.</p>
+    </div>
+
+    <div class="card pad">
+      <div class="role-tabs" id="roleTabs">
+        <button class="on" data-role="pcp" onclick="setRole(this)"><span class="e">🩺</span>PCP / Endocrinology</button>
+        <button data-role="rd" onclick="setRole(this)"><span class="e">🥗</span>Registered Dietitian</button>
+        <button data-role="coach" onclick="setRole(this)"><span class="e">🎯</span>Health Coach</button>
+        <button data-role="psych" onclick="setRole(this)"><span class="e">🧠</span>Psychology</button>
+      </div>
+
+      <!-- PCP -->
+      <div class="doc on" id="doc-pcp">
+        <div class="doc-head">
+          <div><h3>PCP / Endocrinology — diagnosis &amp; medical management</h3><div class="scope">Owns: diagnosis, labs, pharmacotherapy, cardiometabolic risk, referrals, annual review</div></div>
+          <button class="copybtn" onclick="copyDoc('pcp',this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 3V2.2A1 1 0 016.5 1.2h3.8A1 1 0 0111.3 2.2V9a1 1 0 01-1 1H9.5" stroke="currentColor" stroke-width="1.5"/></svg>Copy note</button>
+        </div>
+        <div class="template" id="tpl-pcp"></div>
+      </div>
+
+      <!-- RD -->
+      <div class="doc" id="doc-rd">
+        <div class="doc-head">
+          <div><h3>Registered Dietitian — medical nutrition therapy</h3><div class="scope">Owns: nutrition assessment, individualized pattern, disordered-eating screen, supplement guidance</div></div>
+          <button class="copybtn" onclick="copyDoc('rd',this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 3V2.2A1 1 0 016.5 1.2h3.8A1 1 0 0111.3 2.2V9a1 1 0 01-1 1H9.5" stroke="currentColor" stroke-width="1.5"/></svg>Copy note</button>
+        </div>
+        <div class="template" id="tpl-rd"></div>
+      </div>
+
+      <!-- Coach -->
+      <div class="doc" id="doc-coach">
+        <div class="doc-head">
+          <div><h3>Health Coach — behavior change &amp; monitoring</h3><div class="scope">Owns: exercise Rx, adherence, biometrics/CGM, sleep &amp; stress coaching, between-visit bridge</div></div>
+          <button class="copybtn" onclick="copyDoc('coach',this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 3V2.2A1 1 0 016.5 1.2h3.8A1 1 0 0111.3 2.2V9a1 1 0 01-1 1H9.5" stroke="currentColor" stroke-width="1.5"/></svg>Copy note</button>
+        </div>
+        <div class="template" id="tpl-coach"></div>
+      </div>
+
+      <!-- Psych -->
+      <div class="doc" id="doc-psych">
+        <div class="doc-head">
+          <div><h3>Psychology — behavioral health</h3><div class="scope">Owns: mood/anxiety, eating-behavior assessment, body image, CBT/ACT, coordination</div></div>
+          <button class="copybtn" onclick="copyDoc('psych',this)"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 3V2.2A1 1 0 016.5 1.2h3.8A1 1 0 0111.3 2.2V9a1 1 0 01-1 1H9.5" stroke="currentColor" stroke-width="1.5"/></svg>Copy note</button>
+        </div>
+        <div class="template" id="tpl-psych"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MONITORING ===================== -->
+  <section class="panel" id="monitoring">
+    <div class="sec-head">
+      <div class="k">08 · Monitoring &amp; Referral</div>
+      <h2>Surveillance cadence &amp; handoffs</h2>
+      <p>PMOS is a lifelong cardiometabolic condition — structure the follow-up like chronic-disease management.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card pad">
+        <h3>Monitoring cadence</h3>
+        <div class="tl" style="margin-top:8px">
+          <div class="row"><div class="when">Every visit</div><div class="what">BP, weight, <b>waist circumference</b>; menstrual regularity; medication adherence; <b>mood screen</b> (PHQ/GAD).</div></div>
+          <div class="row"><div class="when">3–6 mo</div><div class="what">Fasting glucose/insulin/HOMA-IR; androgen panel if on therapy; behavioral-goal review.</div></div>
+          <div class="row"><div class="when">Annually</div><div class="what">Fasting lipids, hepatic panel if overweight/obese (MASLD); reassess reproductive goals; <b>endometrial-protection review.</b> Counsel to report any abnormal bleeding — routine endometrial-thickness ultrasound is <b>not</b> recommended in asymptomatic patients.</div></div>
+          <div class="row"><div class="when amb">Q1–3 yr</div><div class="what"><b>75 g OGTT (preferred over HbA1c)</b> for all patients regardless of weight — high T2D conversion; HbA1c less sensitive in PMOS.</div></div>
+          <div class="row"><div class="when">As needed</div><div class="what">Repeat pelvic US <b>not</b> routinely required; repeat labs per symptom/treatment change.</div></div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <h3>When to refer</h3>
+        <div class="ref-grid" style="margin-top:8px">
+          <div class="ref"><div class="ic">🧬</div><div><strong>Reproductive endocrinology</strong><span>≥2 failed letrozole OI cycles; IVF; co-existing infertility.</span></div></div>
+          <div class="ref"><div class="ic">🔬</div><div><strong>Ob/Gyn</strong><span>Endometrial biopsy if anovulation &gt;1 yr or abnormal bleeding.</span></div></div>
+          <div class="ref"><div class="ic">💠</div><div><strong>Dermatology</strong><span>Severe/refractory hirsutism, acne, or alopecia.</span></div></div>
+          <div class="ref"><div class="ic">🧠</div><div><strong>Behavioral health / psychiatry</strong><span>Significant mood disorder or eating-disorder comorbidity.</span></div></div>
+          <div class="ref"><div class="ic">😴</div><div><strong>Sleep medicine</strong><span>OSA symptoms — 5–30× more prevalent in PMOS.</span></div></div>
+          <div class="ref"><div class="ic">⚕️</div><div><strong>Endocrinology</strong><span>Atypical presentation, ↑17-OHP, suspected Cushing/adrenal tumor.</span></div></div>
+        </div>
+        <div class="note-box"><b>Pre-conception:</b> optimize metabolic status 3–6 mo before conception; folic acid; early GDM screening (3× risk); flag preeclampsia/preterm risk → high-risk OB.</div>
+      </div>
+    </div>
+
+    <div class="card pad" style="margin-top:16px">
+      <h3>Special populations</h3>
+      <div class="grid g4" style="margin-top:6px">
+        <div class="tx p"><h4>Adolescents</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">Require HA <b>and</b> OA; morphology not a criterion within 8 yr of menarche. Lifestyle first; screen disordered eating early; avoid premature labeling.</p></div>
+        <div class="tx a"><h4>Lean / normal-weight</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">20–30% of patients; often delayed. <b>Always check HOMA-IR.</b> Prioritize diet quality + exercise over weight loss.</p></div>
+        <div class="tx s"><h4>Perimenopause</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">Androgenic symptoms may ease; metabolic risk accelerates → aggressive CV risk management. Continue cycle protection until menopause confirmed.</p></div>
+        <div class="tx r"><h4>Pregnancy</h4><p style="font-size:13px;color:var(--muted);margin-top:8px">3× GDM risk → early screen; higher HTN/preeclampsia/preterm risk; metformin may reduce early miscarriage in some.</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="disc">
+    <b>Clinical decision support — not a substitute for clinical judgment.</b> This tool summarizes guideline-concordant practice for licensed clinicians and does not constitute individualized medical advice. Reference ranges and thresholds are <b>assay- and laboratory-dependent</b>; verify against your local laboratory and the current full guideline before acting. Calculators are estimates for screening, not diagnosis.
+  </div>
+  <div class="refs">
+    <div><b>Key references:</b></div>
+    <div>1. Teede HJ, Bahri Khomami M, Morman R, Laven JSE, Joham AE, Costello MF, Patil M, Rees DA, Berry L, Cree MG, Zhao H, Norman RJ, Dokras A, Piltonen T, on behalf of the Global Name Change Consortium. Polyendocrine metabolic ovarian syndrome, the new name for polycystic ovary syndrome: a multistep global consensus process. <i>Lancet</i>. 2026 May 12 (online). doi:10.1016/S0140-6736(26)00717-8.</div>
+    <div>2. Shukla A, Rasquin LI, Anastasopoulou C. Polyendocrine Metabolic Ovarian Syndrome. StatPearls [Internet]. Treasure Island (FL): StatPearls Publishing; updated 2025 Jul 7. NBK459251.</div>
+    <div>3. Teede HJ, Tay CT, Laven JSE, et al; International PCOS Network. Recommendations from the 2023 international evidence-based guideline for the assessment and management of PCOS. <i>Eur J Endocrinol</i>. 2023;189(2):G43–64. (Next update 2028; used in 195 countries.)</div>
+    <div>4. Cassar S, et al. Insulin resistance in PCOS: meta-analysis of euglycaemic-hyperinsulinaemic clamp studies. <i>Hum Reprod</i>. 2016;31(11):2619–31. (Basis for the ~85% / ~75%-lean IR figures.)</div>
+    <div>5. Tay CT, Mousa A, et al. 2023 guideline update: elevated cardiovascular disease in PCOS. <i>J Am Heart Assoc</i>. 2024;13:e033572. (Composite CVD OR 1.68, MI 2.50, stroke 1.71.)</div>
+    <div>6. Azziz R, Carmina E, Dewailly D, et al. The Androgen Excess and PCOS Society criteria for PCOS: the complete task force report. <i>Fertil Steril</i>. 2009;91(2):456–88. (Basis for the A–G phenotypes.)</div>
+    <div>7. Peña AS, Witchel SF, Boivin J, et al. International evidence-based recommendations for PCOS in adolescents. <i>BMC Med</i>. 2025;23:151.</div>
+    <div>8. Stener-Victorin E, Teede H, Norman RJ, et al. Polycystic ovary syndrome. <i>Nat Rev Dis Primers</i>. 2024;10:27. (Multisystem pathophysiology.)</div>
+    <div>9. Zhao H, Xu Y, Xue B, et al. Multi-ancestry genome-wide association analyses of PCOS. <i>Nat Genet</i>. 2025;57:2669–81.</div>
+    <div>10. Neven ACH, Forslund M, Ranasinha S, et al. Prevalence of PCOS: a global and regional systematic review and meta-analysis. <i>Hum Reprod Update</i>. 2026 (online Jan 13).</div>
+    <div>11. Vermeulen A, et al. Estimation of free testosterone in serum. <i>J Clin Endocrinol Metab</i>. 1999;84:3666–72.</div>
+    <div>12. Zhao H, Xing C, Zhang J, He B. Comparative efficacy of oral insulin sensitizers (metformin, thiazolidinediones, inositol, berberine) in PCOS: a network meta-analysis. <i>Reprod Health</i>. 2021;18:171.</div>
+    <div>13. Effect of berberine on reproduction and metabolism in PCOS: systematic review &amp; meta-analysis of RCTs. <i>Evid Based Complement Alternat Med</i>. 2019 (PMC6930782) — low-quality evidence; no proven live-birth benefit.</div>
+    <div>14. Hoteit BH, et al. The dual impact of GLP-1 receptor agonists on metabolic and reproductive health in PCOS. <i>Ther Adv Endocrinol Metab</i>. 2025. (IR in ~75%; menstrual/pregnancy and metabolic outcomes.)</div>
+    <div>15. Clift A. Real-world weight-loss outcomes with tirzepatide in women with PCOS (n≈4,241). ObesityWeek 2025 (abstract). · Truveta. Rising GLP-1 use among women with PCOS, 2025 (preliminary, non-peer-reviewed).</div>
+    <div>16. Gao X, Zhao S, Du Y, et al. Data-driven subtypes of PCOS and their association with clinical outcomes. <i>Nat Med</i>. 2025 (online Oct 29). doi:10.1038/s41591-025-03984-1.</div>
+    <div>17. Myers SH, Russo M, Dinicola S, Forte G, Unfer V. Questioning PCOS phenotypes for reclassification and tailored therapy. <i>Trends Endocrinol Metab</i>. 2023;34(11):694–703.</div>
+    <div>18. van der Ham K, et al. Clustering identifies subtypes in PCOS. <i>J Clin Endocrinol Metab</i>. 2024;109(12):3096–107. · Burns KA, et al. <i>Front Endocrinol</i>. 2025;16:1572427. · Ho VNA, et al. <i>Fertil Steril</i>. 2026. · Wang X, et al. <i>Front Endocrinol</i>. 2026;17:1758861. · Szkodziak P, et al. <i>Sci Rep</i>. 2025;15:42649.</div>
+    <div>19. Alpha-lipoic acid in PCOS: SR &amp; MA of RCTs. <i>Obstet Gynecol Sci</i>. 2023 (ogs.23206) — FBG SMD −0.60 (moderate), HOMA-IR SMD −2.03 (low). · Dose-response MA of ALA on cardiometabolic risk (63 RCTs). 2025.</div>
+    <div>20. Umbrella MA of supplements in PCOS (46 RCTs, n=30,133): myo-inositol HOMA-IR SMD −0.81, SHBG +9.65; probiotics CRP −0.82; omega-3 LDL −9.57. · Chromium SR/MA (Tang 2018): IR SMD −0.84, total/free T +0.36/+0.80.</div>
+    <div>21. Gut microbiota in PCOS — probiotics/prebiotics/synbiotics overview of SRs; synbiotic + inulin ↓HOMA-IR, ↑SHBG (Shamasbi 2020; Nasri/Samimi). <i>Front Microbiol</i> 2024–25; <i>Front Endocrinol</i> 2026.</div>
+    <div style="margin-top:8px;color:var(--muted-2)">True Health · Endocrinology &amp; Cardiometabolic Medicine · generated as a team-based care aid.</div>
+  </div>
+</footer>
+
+<script>
+/* ---------- Nav ---------- */
+const panels=[
+  {id:'overview',n:'01',t:'Overview'},
+  {id:'pathophys',n:'02',t:'Pathophysiology'},
+  {id:'diagnosis',n:'03',t:'Diagnosis'},
+  {id:'labs',n:'04',t:'Labs'},
+  {id:'treatment',n:'05',t:'Treatment'},
+  {id:'lifestyle',n:'06',t:'Lifestyle & Supps'},
+  {id:'team',n:'07',t:'Team Docs'},
+  {id:'monitoring',n:'08',t:'Monitoring'}
+];
+const nav=document.getElementById('nav');
+panels.forEach((p,i)=>{
+  const b=document.createElement('button');
+  b.innerHTML=`<span class="n">${p.n}</span>${p.t}`;
+  if(i===0)b.classList.add('active');
+  b.onclick=()=>{
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));
+    document.getElementById(p.id).classList.add('active');
+    b.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  nav.appendChild(b);
+});
+
+/* ---------- Diagnosis + AES A–G phenotype checker ---------- */
+const crit={bioHA:false,hir:false,ov:false,pcom:false,ir:false};
+const phenoMap={ // key = bioHA,hir,ov,pcom
+  '1111':['A','Complete / classic — all four features','Highest IR and cardiometabolic risk.'],
+  '1110':['B','Classic without PCOM','Anovulatory hyperandrogenic; metabolic risk comparable to A.'],
+  '1011':['C','Biochemical hyperandrogenism + anovulation + PCOM','Androgen excess biochemical (no overt hirsutism).'],
+  '1010':['D','Biochemical hyperandrogenism + anovulation','Diagnosed on labs + cycle history.'],
+  '0111':['E','Clinical hirsutism + anovulation + PCOM','Measured androgens normal — verify free-T method/assay.'],
+  '0110':['F','Clinical hirsutism + anovulation','Overlaps idiopathic hirsutism; exclude carefully.'],
+  '1101':['G','Ovulatory hyperandrogenic + PCOM','Regular cycles; mildest metabolic profile of A–G.']
+};
+function toggleCrit(el){
+  const k=el.dataset.crit; crit[k]=!crit[k];
+  el.classList.toggle('on',crit[k]);
+  renderVerdict();
+}
+function renderVerdict(){
+  const v=document.getElementById('verdict');
+  const ic=document.getElementById('vic');
+  const title=document.getElementById('vtitle');
+  const pheno=document.getElementById('vpheno');
+  const note=document.getElementById('vnote');
+  const anyHA=crit.bioHA||crit.hir;
+  const domains=[anyHA,crit.ov,crit.pcom].filter(Boolean).length; // Rotterdam: HA, OvDysf, PCOM
+  const key=`${crit.bioHA?1:0}${crit.hir?1:0}${crit.ov?1:0}${crit.pcom?1:0}`;
+  const noteBase='Hyperandrogenism = biochemical <b>or</b> clinical. Confirm only after excluding mimics. In adolescents require both hyperandrogenism and ovulatory dysfunction; morphology/AMH not a criterion within 8 yr of menarche.';
+  if(domains>=2){
+    v.className='verdict met'; ic.textContent='✓';
+    title.textContent=`Meets Rotterdam criteria (${domains} of 3 domains)`;
+    let line='';
+    if(phenoMap[key]){
+      const[L,d,r]=phenoMap[key];
+      line=`▸ AES phenotype ${L} — ${d}`;
+      note.innerHTML=`<b>${r}</b><br>${noteBase}`;
+    }else if(!anyHA){ // ov + pcom only
+      line='▸ Normoandrogenic — meets Rotterdam ("classic phenotype D"), outside the AES A–G set';
+      note.innerHTML=`This non-hyperandrogenic phenotype is the mildest metabolically and is <b>not</b> assigned an AES letter. ${noteBase}`;
+    }else{
+      line='▸ Hyperandrogenic variant — meets diagnosis; not a single canonical A–G cell';
+      note.innerHTML=`Document the component features (Hb/Hc/O/P). ${noteBase}`;
+    }
+    if(crit.ir){
+      pheno.innerHTML=`${line} <span style="color:var(--amber)">+ metabolic (IR) axis</span>`;
+      note.innerHTML=`<b style="color:var(--amber-d,#8a5418)">Metabolic axis present (Myers–Unfer 2023 overlay):</b> prioritize insulin-sensitizing therapy — lifestyle, metformin, ± GLP-1 RA — <b>regardless of BMI</b>. This adds the metabolic dimension the A–D/A–G reproductive letters omit; the letter itself is unchanged.<br>` + note.innerHTML;
+    }else{
+      pheno.textContent=line;
+    }
+  }else{
+    v.className='verdict notmet'; ic.textContent='○';
+    title.textContent= domains===1?'1 of 3 domains — criteria not yet met':'Select features present';
+    pheno.textContent='—';
+    note.innerHTML=`Rotterdam needs <b>2 of 3</b> domains (hyperandrogenism, ovulatory dysfunction, PCOM). ${noteBase}`;
+  }
+}
+
+/* ---------- Vermeulen calculated free T ---------- */
+function calcFreeT(){
+  const ttng=parseFloat(document.getElementById('ft_tt').value);
+  const shbg=parseFloat(document.getElementById('ft_shbg').value);
+  const albgdl=parseFloat(document.getElementById('ft_alb').value);
+  const res=document.getElementById('ft_res');
+  if(!ttng||!shbg||!albgdl){res.style.display='none';return;}
+  // convert
+  const T=ttng*0.0347*1e-9;          // ng/dL -> nmol/L -> mol/L
+  const S=shbg*1e-9;                 // nmol/L -> mol/L
+  const A=(albgdl*10)/69000;         // g/dL -> g/L -> mol/L
+  const Kt=1.0e9, Ka=3.6e4;
+  const N=1+Ka*A;
+  const b=N+Kt*(S-T);
+  const FT=(-b+Math.sqrt(b*b+4*N*Kt*T))/(2*N*Kt); // mol/L
+  // FT(mol/L) -> nmol/L (*1e9) -> ng/dL (/0.0347) -> pg/mL (*10)
+  const ftNgdl=FT*1e9/0.0347;
+  const pgml=ftNgdl*10;
+  const pct=(FT/T)*100;
+  document.getElementById('ft_pg').textContent=pgml.toFixed(2);
+  document.getElementById('ft_pct').textContent=pct.toFixed(2)+'%';
+  const flag=document.getElementById('ft_flag');
+  // rough female upper bound ~6.4 pg/mL (assay dependent)
+  if(pgml>6.4){flag.className='flag hi';flag.textContent='Above typical female range';}
+  else if(pgml>4.0){flag.className='flag mid';flag.textContent='Upper range — correlate clinically';}
+  else{flag.className='flag ok';flag.textContent='Within common female range';}
+  res.style.display='flex';
+}
+
+/* ---------- HOMA-IR ---------- */
+function calcHoma(){
+  const g=parseFloat(document.getElementById('h_glu').value);
+  const i=parseFloat(document.getElementById('h_ins').value);
+  const res=document.getElementById('h_res');
+  if(!g||!i){res.style.display='none';return;}
+  const homa=(g*i)/405; // glucose mg/dL
+  document.getElementById('h_val').textContent=homa.toFixed(2);
+  const f=document.getElementById('h_flag');
+  if(homa>2.5){f.className='flag hi';f.textContent='Suggests insulin resistance';}
+  else if(homa>2.0){f.className='flag mid';f.textContent='Borderline';}
+  else{f.className='flag ok';f.textContent='Low likelihood of IR';}
+  res.style.display='flex';
+}
+
+/* ---------- FAI ---------- */
+function calcFai(){
+  const tt=parseFloat(document.getElementById('fai_tt').value); // nmol/L
+  const s=parseFloat(document.getElementById('fai_shbg').value);
+  const res=document.getElementById('fai_res');
+  if(!tt||!s){res.style.display='none';return;}
+  const fai=(tt/s)*100;
+  document.getElementById('fai_val').textContent=fai.toFixed(1);
+  const f=document.getElementById('fai_flag');
+  if(fai>5){f.className='flag hi';f.textContent='Supports hyperandrogenism';}
+  else if(fai>4.5){f.className='flag mid';f.textContent='Upper limit';}
+  else{f.className='flag ok';f.textContent='Within range';}
+  res.style.display='flex';
+}
+
+/* ---------- Team documentation templates ---------- */
+const today='[DATE]';
+const templates={
+pcp:
+`<span class="hd">PMOS (Polyendocrine Metabolic Ovarian Syndrome) — Endocrinology / PCP Note</span>
+Date: ${today}    Provider: <span class="ph">[NAME, credentials]</span>
+
+<span class="hd">SUBJECTIVE</span>
+- Age <span class="ph">[__]</span>, reproductive status: <span class="ph">[cycling / contraception / TTC / perimenopause]</span>
+- Menstrual pattern: <span class="ph">[cycles/yr, LMP]</span>; androgenic sx: <span class="ph">[hirsutism FG score __, acne, alopecia]</span>
+- Reproductive goal: <span class="ph">[contraception / fertility now / future fertility]</span>
+- Metabolic: weight trend, sleep/OSA sx, mood screen (PHQ-__/GAD-__)
+
+<span class="hd">OBJECTIVE</span>
+- BMI <span class="ph">[__]</span>  Waist <span class="ph">[__ cm]</span>  BP <span class="ph">[__/__]</span>
+- Labs: Total T (LC-MS/MS) <span class="ph">[__]</span>, calc free T <span class="ph">[__]</span>, SHBG <span class="ph">[__]</span>, DHEAS <span class="ph">[__]</span>,
+  17-OHP <span class="ph">[__]</span>, LH/FSH <span class="ph">[__]</span>, AMH <span class="ph">[__ — assay: ___]</span>, TSH/prolactin <span class="ph">[__]</span>
+- Metabolic: A1c <span class="ph">[__]</span>, fasting glu/insulin <span class="ph">[__]</span>, HOMA-IR <span class="ph">[__]</span>, lipids <span class="ph">[__]</span>, ALT <span class="ph">[__]</span>
+- Imaging: <span class="ph">[pelvic US findings / N/A]</span>
+
+<span class="hd">ASSESSMENT</span>
+- PMOS, Rotterdam <span class="ph">[2/3]</span> met — Phenotype <span class="ph">[A/B/C/D]</span>
+- Mimics excluded: pregnancy, thyroid, prolactin, NCCAH, tumor, Cushing
+- Cardiometabolic risk: <span class="ph">[IR present? prediabetes? dyslipidemia? MASLD?]</span>
+
+<span class="hd">PLAN</span>
+- Pharmacotherapy: <span class="ph">[CHC / progestogen / spironolactone / metformin / GLP-1 RA / letrozole]</span>
+- Endometrial protection target: ≥4 withdrawal bleeds/yr
+- Cardiometabolic: <span class="ph">[statin / antihypertensive / lifestyle Rx]</span>
+- Referrals to team: RD (MNT), Health Coach (exercise + monitoring), Psychology if indicated
+- Monitoring: 3–6 mo metabolic + adherence; annual A1c/lipids/hepatic; OGTT q1–3 yr
+- Shared care plan updated; warm handoff completed: <span class="ph">[yes/no]</span>`,
+
+rd:
+`<span class="hd">PMOS — Registered Dietitian / Medical Nutrition Therapy Note</span>
+Date: ${today}    RD: <span class="ph">[NAME, RD/RDN]</span>    Referred by: <span class="ph">[provider]</span>
+
+<span class="hd">NUTRITION ASSESSMENT</span>
+- Diet history / 24-h recall: <span class="ph">[summary]</span>
+- Eating pattern, meal timing, intake of ultra-processed foods / added sugar: <span class="ph">[__]</span>
+- Disordered-eating screen (e.g., SCOFF / EAT): <span class="ph">[result]</span>  — flag to Psychology if positive
+- Anthropometrics: weight <span class="ph">[__]</span>, waist <span class="ph">[__]</span>, trend
+- Relevant labs: HOMA-IR <span class="ph">[__]</span>, A1c <span class="ph">[__]</span>, lipids <span class="ph">[__]</span>, vit D <span class="ph">[__]</span>
+
+<span class="hd">NUTRITION DIAGNOSIS (PES)</span>
+- <span class="ph">[Altered nutrition-related lab values / excessive intake]</span> related to <span class="ph">[__]</span>
+  as evidenced by <span class="ph">[__]</span>.
+
+<span class="hd">INTERVENTION</span>
+- Pattern: individualized low-GI / Mediterranean; emphasis on adherence over restriction
+- Protein target 1.2–1.6 g/kg; adequate fiber; limit refined carbs / added sugar
+- Caloric strategy toward 5–10% weight reduction IF appropriate (NOT primary goal in lean phenotype — diet quality first)
+- Supplements reviewed: myo-inositol 2 g BID, omega-3 ≥2 g/d, vitamin D (replete deficiency), magnesium
+- Skills: grocery literacy, label reading, meal planning, eating-out strategies
+
+<span class="hd">GOALS & MONITORING</span>
+- SMART goal: <span class="ph">[e.g., 3 home-cooked low-GI dinners/wk x 4 wk]</span>
+- Follow-up: <span class="ph">[2–4 wk]</span>; coordinate with Health Coach on behavior + biometrics
+- Hand-back to PCP if: red-flag eating behavior, rapid weight change, or barrier requiring Rx review`,
+
+coach:
+`<span class="hd">PMOS — Health Coach Session Note</span>
+Date: ${today}    Coach: <span class="ph">[NAME]</span>    Modality: <span class="ph">[in person / virtual / RPM]</span>
+
+<span class="hd">CHECK-IN</span>
+- Patient-stated priority this period: <span class="ph">[__]</span>
+- Progress on prior goals: <span class="ph">[met / partial / barriers]</span>
+- Readiness / confidence (0–10): <span class="ph">[__]</span>
+
+<span class="hd">BIOMETRICS & DATA</span>
+- Weight <span class="ph">[__]</span>  Waist <span class="ph">[__]</span>  Steps/day <span class="ph">[__]</span>
+- CGM trends (if used): time-in-range <span class="ph">[__]</span>, post-meal excursions <span class="ph">[__]</span>
+- Sleep: avg duration <span class="ph">[__]</span>, quality <span class="ph">[__]</span>; OSA sx <span class="ph">[__]</span>
+- Mood quick-screen: <span class="ph">[__]</span> — escalate to PCP/Psychology if concerning
+
+<span class="hd">EXERCISE PRESCRIPTION</span>
+- Aerobic: target ≥150 min/wk moderate — current <span class="ph">[__]</span>
+- Resistance: 2×/wk — current <span class="ph">[__]</span>  (improves IR independent of weight loss)
+- Progression / barriers: <span class="ph">[__]</span>
+
+<span class="hd">COACHING (Motivational Interviewing)</span>
+- Change talk elicited: <span class="ph">[__]</span>
+- Stress-management / sleep-hygiene focus: <span class="ph">[__]</span>
+- Agreed next-step goal (SMART): <span class="ph">[__]</span>
+
+<span class="hd">COORDINATION</span>
+- Next check-in: <span class="ph">[date]</span>  · RPM/CCM minutes logged: <span class="ph">[__]</span>
+- Shared care plan updated; flagged to <span class="ph">[RD / PCP / Psychology]</span>: <span class="ph">[__]</span>`,
+
+psych:
+`<span class="hd">PMOS — Behavioral Health / Psychology Note</span>
+Date: ${today}    Clinician: <span class="ph">[NAME, license]</span>    Referred by: <span class="ph">[provider]</span>
+
+<span class="hd">PRESENTING CONCERNS</span>
+- Reason for referral: <span class="ph">[mood / anxiety / eating behavior / body image / adjustment]</span>
+- PMOS impact on QoL, identity, fertility-related distress: <span class="ph">[__]</span>
+
+<span class="hd">SCREENING & ASSESSMENT</span>
+- Depression (PHQ-9): <span class="ph">[__]</span>   Anxiety (GAD-7): <span class="ph">[__]</span>   (PMOS carries 2–3× risk)
+- Eating behavior (e.g., EDE-Q / binge screen): <span class="ph">[__]</span>
+- Body image / weight-stigma distress: <span class="ph">[__]</span>
+- Safety / risk assessment: <span class="ph">[__]</span>
+- Sleep, substance use, psychosocial stressors: <span class="ph">[__]</span>
+
+<span class="hd">FORMULATION</span>
+- <span class="ph">[Dx / problem list and how it interacts with metabolic + reproductive picture]</span>
+
+<span class="hd">INTERVENTION PLAN</span>
+- Evidence-based modality: <span class="ph">[CBT / acceptance-based / behavioral activation]</span>
+- Targets: <span class="ph">[mood, disordered eating, adherence support, fertility-stress]</span>
+- Frequency: <span class="ph">[weekly / biweekly]</span>; psychiatry referral for medication: <span class="ph">[yes/no]</span>
+
+<span class="hd">COORDINATION</span>
+- Coordinate w/ RD on eating behavior (avoid restrictive messaging if ED risk)
+- Communicate adherence barriers to PCP & Health Coach
+- Shared care plan updated: <span class="ph">[yes/no]</span>`
+};
+function loadTemplates(){
+  for(const k in templates){document.getElementById('tpl-'+k).innerHTML=templates[k];}
+}
+loadTemplates();
+
+function setRole(btn){
+  document.querySelectorAll('#roleTabs button').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.doc').forEach(d=>d.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('doc-'+btn.dataset.role).classList.add('on');
+}
+function copyDoc(role,btn){
+  const el=document.getElementById('tpl-'+role);
+  const text=el.innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig=btn.innerHTML;
+    btn.classList.add('done');
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Copied';
+    setTimeout(()=>{btn.classList.remove('done');btn.innerHTML=orig;},1800);
+  }).catch(()=>{
+    const r=document.createRange();r.selectNodeContents(el);
+    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  });
+}
+/* ---------- supplement goal filter ---------- */
+function filterSupps(goal,btn){
+  document.querySelectorAll('#goalbar .goalchip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('#supptbl tbody tr').forEach(tr=>{
+    const g=(tr.dataset.goals||'');
+    if(goal==='all'){tr.classList.remove('dim','hot');}
+    else if(g.indexOf(goal)>-1){tr.classList.add('hot');tr.classList.remove('dim');}
+    else{tr.classList.add('dim');tr.classList.remove('hot');}
+  });
+}
+/* ---------- lab workflow ---------- */
+function buildOrders(){
+  const groups={};
+  document.querySelectorAll('#labs input[data-order]:checked').forEach(c=>{
+    (groups[c.dataset.grp]=groups[c.dataset.grp]||[]).push(c.dataset.order);
+  });
+  let t='PMOS LAB ORDER SET\n';
+  if(!Object.keys(groups).length){t+='\n(no items selected)';}
+  for(const g in groups){ t+='\n'+g.toUpperCase()+'\n'; groups[g].forEach(o=>t+='  \u2610 '+o+'\n'); }
+  t+='\nNote: fasting AM draw; defer androgens \u22653 mo off combined hormonal contraception; exclude pregnancy before workup/Rx.';
+  window._orderout=t;
+  const el=document.getElementById('orderout'); el.style.display='block';
+  el.innerHTML='<button class="copybtn" onclick="copyLW(\'orderout\')">Copy</button>'+esc(t);
+}
+const PAT={
+ hyperandro:{g:'Androgens',c:"Biochemical hyperandrogenism confirmed (elevated calculated free testosterone / FAI), consistent with PMOS after exclusion of mimics.",p:"Your blood test shows higher-than-usual active testosterone. That fits PMOS and helps explain symptoms like irregular periods, acne, or extra hair growth."},
+ normandro:{g:'Androgens',c:"Androgens within reference range \u2014 diagnosis rests on clinical hyperandrogenism and/or other Rotterdam criteria.",p:"Your measured hormone numbers are in the normal range. The diagnosis is based on your symptoms and cycle pattern, not the blood number alone."},
+ dheas_high:{g:'Androgens',c:"DHEAS markedly elevated (>700 \u00b5g/dL) \u2014 disproportionate adrenal androgen excess; image the adrenals and consider an androgen-secreting tumor, especially with rapid onset or virilization.",p:"One adrenal hormone is quite high, so we'll arrange a scan to be sure nothing else is driving it."},
+ shbg_low:{g:'Androgens',c:"Low SHBG \u2014 a metabolic fingerprint of hyperinsulinemia that increases free-androgen bioavailability; supports an insulin-centric treatment focus.",p:"A protein that binds your hormones is low \u2014 linked to insulin \u2014 which lets more active testosterone circulate. Another reason we focus on insulin."},
+ ohp_bord:{g:'Androgens',c:"17-OHP borderline (200\u2013800 ng/dL) \u2014 proceed to ACTH-stimulation testing to exclude non-classic CAH before attributing features to PMOS.",p:"One result is in a grey zone, so we'll do a short follow-up test to rule out a look-alike adrenal condition."},
+ ohp_high:{g:'Androgens',c:"17-OHP elevated (stimulated >1000 ng/dL) \u2014 consistent with non-classic congenital adrenal hyperplasia rather than, or alongside, PMOS; manage accordingly.",p:"Your results point to an inherited adrenal condition that's treated a little differently \u2014 we'll go over what that means."},
+ ogtt_norm:{g:'Glycemic',c:"OGTT normal \u2014 no impaired glucose tolerance currently. Reassess every 1\u20133 years regardless of weight.",p:"Your sugar-handling test is normal right now. Because PMOS raises future diabetes risk, we\u2019ll recheck it every 1\u20133 years."},
+ ogtt_impaired:{g:'Glycemic',c:"Impaired fasting glucose / impaired glucose tolerance (prediabetes range). Intensify lifestyle \u00b1 metformin; recheck in ~12 months.",p:"Your test shows an early, reversible rise in blood sugar (prediabetes). Lifestyle changes \u2014 and sometimes metformin \u2014 can often bring this back to normal."},
+ ogtt_dm:{g:'Glycemic',c:"Glucose in the type 2 diabetes range \u2014 confirm and manage per diabetes guidelines; review medications and CV risk.",p:"Your blood sugar is in the diabetes range. This is manageable \u2014 we\u2019ll start a clear plan together and bring in the right support."},
+ a1c_pre:{g:'Glycemic',c:"HbA1c in the pre-diabetes range (5.7\u20136.4%) \u2014 note A1c under-detects dysglycemia in PMOS, so corroborate with OGTT; intensify lifestyle \u00b1 metformin.",p:"Your average blood sugar is slightly up (pre-diabetes). It's reversible, and we'll confirm it with the more sensitive sugar test."},
+ homair:{g:'Glycemic',c:"Elevated HOMA-IR supports insulin resistance, but the guideline does not endorse HOMA-IR for diagnosis (assay inaccuracy) \u2014 use as supportive context, not a diagnostic criterion.",p:"A calculation suggests your body is resisting insulin \u2014 common in PMOS and the main thing our plan targets."},
+ dyslip:{g:'Lipids / metabolic',c:"Dyslipidemia (\u2191LDL/TG and/or \u2193HDL). Address with lifestyle \u00b1 statin per global CV risk.",p:"Your cholesterol pattern needs some attention. Diet, activity, and sometimes medication protect your heart over the long term."},
+ uric:{g:'Lipids / metabolic',c:"Hyperuricemia \u2014 associates with insulin resistance, metabolic syndrome and cardiometabolic risk in PMOS; a severity marker that reinforces metabolic risk reduction.",p:"Your uric acid is up, which tends to track with insulin and metabolic risk \u2014 another reason the lifestyle plan matters."},
+ alt:{g:'Lipids / metabolic',c:"ALT elevated \u2014 screen for metabolic-associated steatotic liver disease (MASLD); confirm with imaging / fibrosis assessment and treat the metabolic drivers.",p:"A liver enzyme is up, often from fat in the liver linked to insulin. It usually improves with the same metabolic plan; we'll check it further."},
+ hscrp:{g:'Lipids / metabolic',c:"Elevated hsCRP \u2014 reflects the low-grade inflammation of PMOS and adds to cardiometabolic risk; non-specific, interpret with the metabolic picture.",p:"A marker of low-level inflammation is up \u2014 common in PMOS and improved by activity, diet, and sleep."},
+ tsh:{g:'Thyroid / pituitary',c:"Abnormal TSH \u2014 evaluate thyroid; hypothyroidism can mimic or worsen menstrual and metabolic features.",p:"Your thyroid test is a little off. The thyroid affects periods and metabolism, so we\u2019ll check it properly and treat if needed."},
+ prl:{g:'Thyroid / pituitary',c:"Elevated prolactin \u2014 confirm (fasting, no recent nipple stimulation) and evaluate for cause before attributing cycles to PMOS.",p:"One hormone (prolactin) is up. It can affect cycles, so we\u2019ll repeat it carefully and look into why."},
+ amh:{g:'Ovarian / adrenal',c:"Elevated AMH / polycystic morphology consistent with PMOS; note it predicts higher OHSS risk during ovarian stimulation.",p:"Your ovaries show the typical PMOS pattern of many small follicles \u2014 a sign of fertility potential that we monitor closely during any fertility treatment."},
+ lhfsh:{g:'Ovarian / adrenal',c:"LH:FSH >2 \u2014 supportive of PMOS but neither required nor diagnostic; do not use to rule in or out.",p:"One hormone ratio fits the PMOS pattern. It supports the picture but isn't needed to make the diagnosis."},
+ lddst:{g:'Ovarian / adrenal',c:"Dexamethasone non-suppression \u2014 abnormal cortisol screen; pursue formal Cushing's evaluation (repeat/confirmatory testing, endocrinology) before attributing features to PMOS.",p:"A cortisol screening test wasn't normal, so we'll do confirmatory testing to rule out a hormone condition that can mimic PMOS."},
+ vitd:{g:'Vitamins',c:"25-OH vitamin D deficient/insufficient \u2014 replete to sufficiency and recheck.",p:"Your vitamin D is low, which is common in PMOS. We\u2019ll top it up; it may help energy, mood, and metabolism."},
+ b12:{g:'Vitamins',c:"Low B12 in the context of metformin \u2014 replete and monitor periodically.",p:"Your vitamin B12 is low, which can happen on metformin. A simple top-up fixes it."}
+};
+const PAT_ORDER=['Androgens','Glycemic','Lipids / metabolic','Thyroid / pituitary','Ovarian / adrenal','Vitamins'];
+function genDiscuss(){
+  const sel=[...document.querySelectorAll('#labs input[data-pat]:checked')].map(c=>c.dataset.pat);
+  let t='CLINICIAN \u2014 INTERPRETATION\n';
+  if(!sel.length){t+='  (no patterns selected)\n';}
+  else{
+    PAT_ORDER.forEach(g=>{
+      const inG=sel.filter(k=>PAT[k].g===g);
+      if(inG.length){ t+='\n['+g+']\n'; inG.forEach(k=>t+='  \u2022 '+PAT[k].c+'\n'); }
+    });
+  }
+  t+='\nPATIENT DISCUSSION (plain language)\n';
+  sel.forEach(k=>t+='  \u2022 '+PAT[k].p+'\n');
+  if(sel.length) t+='\nNext steps: review the plan together, agree on priorities, and schedule follow-up.';
+  window._discout=t;
+  const el=document.getElementById('discout'); el.style.display='block';
+  el.innerHTML='<button class="copybtn" onclick="copyLW(\'discout\')">Copy</button>'+esc(t);
+}
+function clearPats(){
+  document.querySelectorAll('#labs input[data-pat]').forEach(c=>c.checked=false);
+  const el=document.getElementById('discout'); el.style.display='none'; el.innerHTML='';
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function copyLW(id){ navigator.clipboard&&navigator.clipboard.writeText(window['_'+id]||''); const b=event.target; const o=b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=o,1200); }
+/* ---------- supplement GRADE rationale (expand on click) ---------- */
+const SUPP_RAT=[
+ ['Myo-inositol','MOD (metabolic): consistent HOMA-IR / SHBG effects across multiple RCTs and an umbrella MA (HOMA-IR SMD −0.81); downgraded for heterogeneity and surrogate (not live-birth) outcomes. LOW (clinical): the guideline systematic review judged ovulation/fertility data limited and inconclusive.'],
+ ['Vitamin D','LOW: many RCTs, but benefit concentrates where patients are genuinely deficient; downgraded for baseline-level dependence, heterogeneity, and reliance on surrogate markers.'],
+ ['Omega-3','LOW: consistent lipid / inflammatory surrogate effects across RCTs (LDL SMD −9.6), but small samples, dosing/formulation variability, and no hard clinical endpoints.'],
+ ['Probiotics','LOW: multiple RCTs/MA (CRP SMD −0.82; HOMA-IR), but heavy strain/dose heterogeneity, short duration, and risk of bias. Synbiotics outperform single agents.'],
+ ['Berberine','LOW: small RCTs broadly comparable to metformin for IR/androgens; downgraded for risk of bias, small samples, and absence of pregnancy/live-birth data.'],
+ ['N-acetylcysteine','V-LOW: few small RCTs, imprecision and inconsistency; the adjunct-to-letrozole pregnancy signal (OR ~2.15) rests on fragile, low-event data.'],
+ ['Coenzyme Q10','V-LOW (fertility): small ART trials with imprecise estimates and surrogate endpoints. LOW (metabolic): modest, inconsistent IR/lipid effects.'],
+ ['L-carnitine','V-LOW: very few small trials; the large pregnancy OR has wide CIs and frequent co-supplementation — biologically interesting but statistically fragile.'],
+ ['Melatonin','V-LOW: small ART trials using oocyte-quality surrogates; imprecision and indirectness for live birth.'],
+ ['Spearmint','LOW: one or two small RCTs show an anti-androgen effect (↓ free T); downgraded for small samples and short duration.'],
+ ['Curcumin','LOW: several small RCTs improve glycemic/inflammatory surrogates; bioavailability and formulation heterogeneity limit certainty.'],
+ ['Alpha-lipoic acid','MOD (fasting glucose): consistent reduction across 7 RCTs (SMD −0.60). LOW (HOMA-IR): 4 RCTs with severe heterogeneity (I² 96%) widen the estimate (SMD −2.03). No clear androgen/lipid effect in the PCOS-specific MA.'],
+ ['Chromium','LOW (mixed): several RCTs/MA lower IR (SMD −0.84) and fasting insulin, but at least one MA shows a paradoxical rise in total/free testosterone — inconsistency is the main reason for the low grade.'],
+ ['Resveratrol','LOW: a few small RCTs reduce androgens and insulin; downgraded for poor bioavailability, small samples, and between-trial inconsistency.'],
+ ['Quercetin','LOW: emerging small RCTs (↓ testosterone/LH, improved IR/adiponectin); few trials and imprecision keep certainty low.'],
+ ['Zinc','LOW: small RCTs improve insulin and hirsutism/alopecia; short duration and likely deficiency-dependence limit it.'],
+ ['Vitamin E','LOW: most evidence is co-supplemented (with omega-3 or CoQ10), so the independent effect cannot be isolated; antioxidant surrogates only.'],
+ ['Cinnamon','V-LOW: few small trials with imprecise and inconsistent glycemic effects.'],
+ ['Selenium','V-LOW (mixed): inconsistent results with some adverse metabolic signals; small trials and a narrow safety window.'],
+ ['Folate','STD: standard preconception care (neural-tube-defect prevention), not a PMOS-specific therapeutic claim.'],
+ ['Vitamin B12','STD: standard monitoring/repletion for metformin-associated deficiency, not a treatment for PMOS itself.'],
+ ['Magnesium','NEG: a 2024 meta-analysis found no significant cardiometabolic or hormonal benefit in PMOS; replete only documented deficiency.']
+];
+function suppRat(name){const m=SUPP_RAT.find(r=>name.indexOf(r[0])>-1);return m?m[1]:'';}
+function initSuppRationale(){
+  const rows=document.querySelectorAll('#supptbl tbody tr');
+  rows.forEach(tr=>{
+    const cell=tr.querySelector('.rowh'); if(!cell)return;
+    const rat=suppRat(cell.textContent.trim()); if(!rat)return;
+    tr.classList.add('suppclick');
+    const ex=document.createElement('tr'); ex.className='exrow'; ex.style.display='none';
+    const td=document.createElement('td'); td.colSpan=5;
+    const grade=(rat.match(/^(MOD|LOW|V-LOW|NEG|STD)/)||['','Why this grade'])[0];
+    td.innerHTML='<span class="gr">Why this grade — </span>'+rat;
+    ex.appendChild(td); tr.after(ex);
+    tr.addEventListener('click',()=>{const open=ex.style.display!=='none';ex.style.display=open?'none':'table-row';tr.classList.toggle('open',!open);});
+  });
+}
+if(document.readyState!=='loading')initSuppRationale(); else document.addEventListener('DOMContentLoaded',initSuppRationale);
+</script>
+</body>
+</html>
