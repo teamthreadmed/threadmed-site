@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 500" font-family="Helvetica, Arial, sans-serif">
+  <rect width="920" height="500" fill="#ffffff"/>
+  <!-- HEART -->
+  <g>
+    <!-- aorta and pulmonary trunk -->
+    <path d="M205 150 C200 90 215 50 260 45 C310 40 335 70 330 110" fill="none" stroke="#c9b9b0" stroke-width="34" stroke-linecap="round"/>
+    <path d="M300 50 L300 20 M318 58 L326 26 M282 52 L276 22" stroke="#c9b9b0" stroke-width="12" stroke-linecap="round"/>
+    <path d="M250 170 C250 120 275 100 300 95" fill="none" stroke="#b9c4cc" stroke-width="30" stroke-linecap="round"/>
+    <!-- heart body -->
+    <path d="M150 175 C120 190 105 240 120 300 C140 370 210 430 290 455 C330 420 380 360 395 290 C410 220 380 165 330 150 C290 140 260 160 245 165 C215 150 180 160 150 175 Z" fill="#e8d7cf" stroke="#b79d90" stroke-width="2"/>
+    <!-- right atrium hint -->
+    <path d="M150 175 C125 200 118 235 130 262" fill="none" stroke="#b79d90" stroke-width="2"/>
+    <!-- RCA in right AV groove -->
+    <path d="M205 168 C170 185 145 225 150 280 C155 330 190 380 240 420" fill="none" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M152 250 C175 260 190 275 198 300 M165 330 C190 335 205 350 212 372" fill="none" stroke="#c0392b" stroke-width="3" stroke-linecap="round"/>
+    <!-- Left main + LAD in anterior interventricular groove -->
+    <path d="M270 170 C285 175 295 185 298 200 C300 260 300 330 292 400 C290 425 290 440 290 452" fill="none" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>
+    <path d="M298 240 C325 245 345 260 355 285 M297 300 C320 305 335 320 342 340 M298 210 C330 200 360 210 378 235" fill="none" stroke="#c0392b" stroke-width="3" stroke-linecap="round"/>
+    <!-- box on LAD -->
+    <rect x="282" y="268" width="30" height="30" fill="none" stroke="#1f2d3d" stroke-width="2"/>
+  </g>
+  <!-- zoom lines -->
+  <line x1="312" y1="268" x2="520" y2="70" stroke="#1f2d3d" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="312" y1="298" x2="520" y2="330" stroke="#1f2d3d" stroke-width="1" stroke-dasharray="4 4"/>
+
+  <!-- ARTERY CUTAWAY -->
+  <rect x="520" y="70" width="370" height="260" fill="#f6f2ee" stroke="#1f2d3d" stroke-width="2"/>
+  <!-- outer wall -->
+  <rect x="520" y="120" width="370" height="160" fill="#d9534f"/>
+  <!-- lumen -->
+  <path d="M520 145 L890 145 L890 255 L520 255 Z" fill="#f4c7c3"/>
+  <!-- plaque in wall, bulging into lumen -->
+  <path d="M600 255 C620 205 660 180 705 178 C750 178 790 205 810 255 Z" fill="#f2d16b" stroke="#c99a2e" stroke-width="2"/>
+  <!-- lipid core -->
+  <path d="M640 255 C655 225 680 210 705 210 C735 210 760 228 772 255 Z" fill="#e8a838"/>
+  <!-- fibrous cap rupture + thrombus -->
+  <path d="M690 180 C700 165 720 160 740 168 C770 175 790 195 795 210 C770 200 745 198 725 205 C710 196 697 190 690 180 Z" fill="#7b1e1e"/>
+  <path d="M705 178 L712 190 L720 179" fill="none" stroke="#f6f2ee" stroke-width="2"/>
+  <!-- flow arrow -->
+  <path d="M540 165 L600 165" stroke="#7a2a2a" stroke-width="2" marker-end="url(#a)"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#7a2a2a"/></marker></defs>
+  <text x="545" y="158" font-size="12" fill="#7a2a2a">blood flow</text>
+
+  <!-- LABELS -->
+  <g font-size="15" fill="#1f2d3d">
+    <text x="20" y="250">Right coronary</text>
+    <text x="20" y="268">artery</text>
+    <line x1="112" y1="262" x2="150" y2="268" stroke="#1f2d3d"/>
+    <text x="320" y="470">Left anterior descending</text>
+    <text x="320" y="488">(anterior interventricular) artery</text>
+    <line x1="318" y1="465" x2="296" y2="430" stroke="#1f2d3d"/>
+
+    <text x="545" y="40">Plaque in the artery wall</text>
+    <line x1="640" y1="46" x2="660" y2="200" stroke="#1f2d3d"/>
+    <text x="545" y="380">Lipid-rich core</text>
+    <line x1="600" y1="368" x2="680" y2="240" stroke="#1f2d3d"/>
+    <text x="745" y="380">Thrombus on a</text>
+    <text x="745" y="398">ruptured cap</text>
+    <line x1="780" y1="366" x2="745" y2="190" stroke="#1f2d3d"/>
+  </g>
+  <text x="600" y="460" font-size="12" fill="#6b7785">Thread Medicine · original schematic, not to scale</text>
+</svg>
