@@ -31,7 +31,7 @@ ESSAYS = [
         standfirst="From population thresholds to individual diagnosis in male hypogonadism.",
         blurb=("Why a testosterone number is a starting point rather than a diagnosis — ten nuances, "
                "a staged workup, and what mass screening gets wrong in both directions."),
-        systems=["Gonadal axis", "Bone", "Marrow", "Adipose", "Fertility", "Population health"],
+        systems=["Gonadal axis", "Bone", "Adipose", "Fertility", "Population health"],
         date="August 2026",
     ),
     dict(
