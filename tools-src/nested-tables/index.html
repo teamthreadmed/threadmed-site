@@ -65,6 +65,8 @@
   .chip.here b{opacity:.85}
   .chip.add{color:var(--muted)}
   .chip.capture{border-style:dashed}
+  .chip.personal{border-color:#c98a1b;box-shadow:inset 0 0 0 1px #c98a1b}
+  .chip.personal.here{background:#8a5a0a;border-color:#8a5a0a;box-shadow:none}
   .chip.trash{color:var(--warn)}
   .divider{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:0 2px 0 8px}
   .chip:hover{border-color:var(--accent)}
@@ -115,11 +117,11 @@
   @media(max-width:760px){
     #phonenav{display:flex!important;flex-wrap:nowrap;gap:6px;padding:6px}
     #phonenav .zoom{margin-left:auto}
-    body{padding-bottom:70px}
-    .toast{bottom:calc(84px + env(safe-area-inset-bottom))!important}
-    #phonebar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);justify-content:space-around;gap:4px}
-    #phonebar>button,#phonebar>.zoom{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:11px;border:0;background:transparent}
-    #phonebar>button i{font-size:19px;font-style:normal}
+    #phonebar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;padding:3px 6px calc(3px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);gap:0 4px}
+    #phonebar>button{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:7px 2px;font-size:12px;border:0;background:transparent;min-width:0;white-space:nowrap;overflow:hidden}
+    #phonebar>button i{font-size:15px;font-style:normal}
+    body{padding-bottom:92px}
+    .toast{bottom:calc(100px + env(safe-area-inset-bottom))!important}
     #phonebar>button.on{color:var(--accent)}
     #morepanel{display:none;position:fixed;left:8px;right:8px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:29;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:8px;flex-wrap:wrap;gap:6px}
     #morepanel.open{display:flex}
@@ -317,7 +319,7 @@
         <span class="tsize" title="Title and subtitle size"><button id="tsMinus">A−</button><button id="tsPlus">A+</button></span>
         <span class="pill" id="depth"></span>
         <button id="btnUp" title="Up to the parent table"><i>⬆</i><span class="lbl">Up</span></button>
-        <button id="btnVer" title="Save a numbered, dated version of this project"><i>🕒</i><span class="lbl">Save version</span></button>
+        <button id="btnVer" title="Save a numbered, dated version of this project"><i>🕒</i><span class="lbl">Version</span></button>
         <button id="btnDelete" class="danger" title="Delete this table and everything beneath it"><i>🗑</i><span class="lbl">Delete table</span></button>
       </div>
       <textarea id="tsub" class="subtitle" rows="1" placeholder="Subtitle or notes for this layer…" spellcheck="false"></textarea>
@@ -367,7 +369,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.20';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.22';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -492,15 +494,16 @@
       let next=1; tablesOf(p.id).forEach(t=>{ if(!t.n){ while(used.has(next)) next++; t.n=next; used.add(next); touch(t); } }); });
   }
 
-  function renderProjects(){
+  function renderProjects(){ syncLockBtn();
     const bar=$('projbar'); bar.innerHTML='';
     const all=live(); const nat=all.filter(p=>p.kind!=='capture'), cap=all.filter(p=>p.kind==='capture');
-    const chip=p=>{ const c=document.createElement('span'); c.className='chip'+(p.id===S.cur?' here':'')+(p.kind==='capture'?' capture':''); c.innerHTML='<b></b><span></span>';
+    const chip=p=>{ const c=document.createElement('span'); c.className='chip'+(p.id===S.cur?' here':'')+(p.kind==='capture'?' capture':'')+(p.enc?' personal':''); c.innerHTML='<b></b><span></span>';
       c.firstChild.textContent=(p.kind==='capture'?'📷 ':'')+'P'+p.n; c.lastChild.textContent=(p.enc?(isLocked(p)?'🔒 ':'🔓 '):'')+(p.name||'Untitled'); c.title=p.id===S.cur?'Rename, protect or delete this project':(isLocked(p)?'Locked — tap to unlock':'Open project '+p.n);
       c.onclick=()=>p.id===S.cur?projectModal(p):goProject(p.id); bar.appendChild(c); };
     const open=bar.classList.contains('open'); const lst=document.createElement('span'); lst.className='chip add pin'; lst.innerHTML='<b>'+(open?'⌃':'⌄')+'</b>'+(open?'One line':'All projects'); lst.title=open?'Back to one line':'Drop the projects down as a list'; lst.onclick=()=>toggleProjectList(); bar.appendChild(lst);
     const add=document.createElement('span'); add.className='chip add'; add.textContent='+ New'; add.title='New project'; add.onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); }; bar.appendChild(add);
-    nat.forEach(chip);
+    nat.filter(p=>!p.enc).forEach(chip);
+    const pers=nat.filter(p=>p.enc); if(pers.length){ const d=document.createElement('span'); d.className='divider'; d.textContent='personal'; bar.appendChild(d); pers.forEach(chip); }
     if(cap.length){ const d=document.createElement('span'); d.className='divider'; d.textContent='captures'; bar.appendChild(d); cap.forEach(chip); }
     const tr=trashed(); const tb=trashedBatches(); if(tr.length||tb.length){ const t=document.createElement('span'); t.className='chip add trash'; t.textContent='🗑 Trash ('+(tr.length+tb.length)+')'; t.title='Deleted projects; restore or delete forever'; t.onclick=trashModal; bar.appendChild(t); }
     const smp=document.createElement('span'); smp.className='chip add'; smp.textContent='⊕ Samples'; smp.title='Add a sample multilayer project built on clinical logic'; smp.onclick=samplesMenu; bar.appendChild(smp);
@@ -1405,8 +1408,8 @@
   function projectModal(p){
     const btns=[['Cancel','',closeModal]];
     btns.push(['Delete project','danger',()=>{ closeModal(); if(live().length<2) return toast('Keep at least one project'); confirmBox('Delete project '+p.n+'?','"'+(p.name||'Untitled')+'" moves to the Trash, where you can restore it for 30 days. After that it is removed for good.',()=>{ p.trashed=now(); p.u=now(); touchMeta(); if(S.cur===p.id){ S.cur=live()[0].id; hist=[]; } save(); render(); toast('Moved to Trash — tap 🗑 Trash to restore'); },'Move to Trash'); }]);
-    if(!p.enc) btns.push(['Set password','',()=>{ closeModal(); passwordModal('Protect project '+p.n,'Choose a password. The project is encrypted with it on this device and in the cloud store; nothing is stored in plain text. There is no recovery — if you forget it, the project is gone.',true,async pw=>{ await protectProject(p,pw); toast('Project protected'); render(); }); }]);
-    else { btns.push(['Lock now','',()=>{ closeModal(); lockProject(p); }]); btns.push(['Change / remove password','',()=>{ closeModal(); passwordModal('Change password for project '+p.n,'Enter a new password, or leave it empty to remove protection.',true,async pw=>{ if(pw){ await protectProject(p,pw); toast('Password changed'); } else { delete p.enc; delete vault[p.id]; p.u=now(); tablesOf(p.id).forEach(t=>touch(t)); touchMeta(); save(); toast('Protection removed'); } render(); },true); }]); }
+    btns.push([p.enc?'Personal: ON → turn off':'Personal: OFF → turn on','',()=>{ closeModal(); togglePersonal(p); }]);
+    if(p.enc){ btns.push(['Lock now','',()=>{ closeModal(); lockProject(p); }]); btns.push(['Change / remove password','',()=>{ closeModal(); passwordModal('Change password for project '+p.n,'Enter a new password, or leave it empty to remove protection.',true,async pw=>{ if(pw){ await protectProject(p,pw); toast('Password changed'); } else { delete p.enc; delete vault[p.id]; p.u=now(); tablesOf(p.id).forEach(t=>touch(t)); touchMeta(); save(); toast('Protection removed'); } render(); },true); }]); }
     btns.push([p.kind==='capture'?'Make natural-language project':'Mark as capture','',()=>{ p.kind=p.kind==='capture'?undefined:'capture'; if(!p.kind) delete p.kind; p.u=now(); touchMeta(); closeModal(); save(); render(); toast(p.kind?'Marked as capture':'Now a natural-language project'); }]);
     if(!p.enc){ const nv=versionsOf(p.id).length; btns.push(['Save version','',()=>{ p.name=M.extra.querySelector('input').value.trim()||('Project '+p.n); closeModal(); save(); saveVersion(p); }]); btns.push(['Versions'+(nv?' ('+nv+')':''),'',()=>{ closeModal(); versionsModal(p); }]); }
     btns.push(['Save','primary',()=>{ p.name=M.extra.querySelector('input').value.trim()||('Project '+p.n); p.u=now(); touchMeta(); closeModal(); save(); render(); }]);
@@ -1492,10 +1495,13 @@
     M.extra.appendChild(list); M.extra.style.display='block';
   }
   function passwordModal(title,text,confirm,onOk,allowEmpty){
-    showModal(title,text,false,[['Cancel','',closeModal],['OK','primary',async()=>{ const a=M.extra.querySelectorAll('input'); const pw=a[0].value; if(!pw&&!allowEmpty) return toast('Enter a password'); if(confirm&&pw&&a[1]&&a[1].value!==pw) return toast('Passwords do not match'); closeModal(); try{ await onOk(pw); }catch(e){ toast(e&&e.message||'Failed'); } }]]);
-    const i1=document.createElement('input'); i1.className='text'; i1.type='password'; i1.placeholder='Password'; i1.autocomplete='off'; M.extra.appendChild(i1);
-    if(confirm){ const i2=document.createElement('input'); i2.className='text'; i2.type='password'; i2.placeholder='Repeat password'; i2.autocomplete='off'; M.extra.appendChild(i2); }
-    M.extra.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{ if(e.key==='Enter') M.btns.querySelector('.primary').click(); });
+    showModal(title,text,false,[['Cancel','',closeModal],['OK','primary',async()=>{ const a=M.extra.querySelectorAll('input[type=password]'); const pw=a[0].value; if(!pw&&!allowEmpty) return toast('Enter a password'); if(confirm&&pw&&a[1]&&a[1].value!==pw) return toast('Passwords do not match'); closeModal(); try{ await onOk(pw); }catch(e){ toast(e&&e.message||'Failed'); } }]]);
+    const f=document.createElement('form'); f.onsubmit=e=>{ e.preventDefault(); M.btns.querySelector('.primary').click(); }; M.extra.appendChild(f);
+    const u=document.createElement('input'); u.type='text'; u.autocomplete='username'; u.name='username'; u.value='Nested Tables · '+title.replace(/^(Unlock|Protect|Change password for) project /,''); u.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;opacity:0'; u.tabIndex=-1; f.appendChild(u);
+    const i1=document.createElement('input'); i1.className='text'; i1.type='password'; i1.name='password'; i1.placeholder='Password'; i1.autocomplete=confirm?'new-password':'current-password'; f.appendChild(i1);
+    if(confirm){ const i2=document.createElement('input'); i2.className='text'; i2.type='password'; i2.name='password2'; i2.placeholder='Repeat password'; i2.autocomplete='new-password'; f.appendChild(i2); }
+    const sub=document.createElement('button'); sub.type='submit'; sub.style.display='none'; f.appendChild(sub);
+    M.extra.querySelectorAll('input[type=password]').forEach(i=>i.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); M.btns.querySelector('.primary').click(); } });
     M.extra.style.display='block'; setTimeout(()=>i1.focus(),50);
   }
 
@@ -2033,7 +2039,11 @@
     const draw=()=>{ const q=M.search.value; M.list.innerHTML=''; const res=searchAll(q).slice(0,60); res.forEach(h=>{ const d=document.createElement('div'); d.innerHTML='<span></span><small></small>'; d.firstChild.textContent=(h.txt||'').slice(0,90); d.lastChild.textContent='P'+h.p.n+' '+h.p.name+' › '+h.t.name+' › '+h.where; d.onclick=()=>{ closeModal(); go(h.t.id); if(h.ri!==undefined){ lastCell={ri:h.ri,ci:h.ci,table:h.t.id}; setTimeout(()=>{ const ta=cellTa(h.ri,h.ci); if(ta){ ta.focus({preventScroll:true}); ta.closest('td').scrollIntoView({block:'center'}); } },150); } }; M.list.appendChild(d); }); if(q.trim()&&!res.length) M.list.innerHTML='<div><small>Nothing matches</small></div>'; };
     M.search.oninput=draw; draw(); setTimeout(()=>M.search.focus(),80); }
   $('btnSearch').onclick=searchModal;
-  $('btnLock').onclick=()=>{ const p=P(); if(!p) return; if(p.enc){ lockProject(p); toast('Locked — tap the project to unlock'); } else passwordModal('Protect project '+p.n+' · '+p.name,'Choose a password. The project is encrypted with it on this device and inside every Master file and backup; nothing about it is stored in plain text. There is no recovery — if you forget it, the project is gone.',true,async pw=>{ await protectProject(p,pw); toast('Protected — 🔒 Lock again to close it; tap the project to open'); render(); }); };
+  function togglePersonal(p){ if(p.enc){ if(isLocked(p)) return promptUnlock(p,()=>togglePersonal(p)); confirmBox('Turn Personal off for "'+p.name+'"?','The project is decrypted and stored in plain text on this device and in backups again.',()=>{ delete p.enc; delete vault[p.id]; p.u=now(); tablesOf(p.id).forEach(t=>touch(t)); touchMeta(); save(); render(); toast('Personal off — stored in plain text'); },'Turn off'); return; }
+    passwordModal('Personal: '+p.name,'Personal projects are encrypted with a password of your choosing — on this device and inside every Master file and backup. Safari can save the password and fill it with Face ID. There is no recovery if you forget it.',true,async pw=>{ await protectProject(p,pw); toast('Personal — 🔓 Lock in the toolbar closes it'); render(); }); }
+  function syncLockBtn(){ const p=P(); const b=$('btnLock'); if(!b) return; const st=!p?'':p.enc?(isLocked(p)?'locked':'open'):'none'; b.innerHTML='<i>'+(st==='locked'?'🔒':st==='open'?'🔓':'🔐')+'</i><span class="lbl">'+(st==='locked'?'Unlock':st==='open'?'Lock':'Personal')+'</span>'; b.title=st==='locked'?'Unlock this personal project':st==='open'?'Lock this personal project now':'Make this project Personal: password-protected and encrypted'; }
+  let hiddenAt=0; document.addEventListener('visibilitychange',()=>{ if(document.hidden){ hiddenAt=Date.now(); } else if(hiddenAt&&Date.now()-hiddenAt>120000){ hiddenAt=0; const open=live().filter(p=>p.enc&&!isLocked(p)); if(open.length){ open.forEach(p=>lockProject(p)); toast('Locked after 2 min away'); } } });
+  $('btnLock').onclick=()=>{ const p=P(); if(!p) return; if(p.enc&&isLocked(p)){ promptUnlock(p); return; } if(p.enc){ lockProject(p); toast('Locked — tap the project to open'); return; } togglePersonal(p); };
   document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); searchModal(); } });
   // ---------- quick to-do ----------
   function todoTable(p){ let t=tablesOf(p.id).find(t=>!t.trashed&&/^to[- ]?do/i.test((t.name||'').trim())); if(t) return t;
@@ -2381,9 +2391,9 @@
     function apply(){ if(!narrow()||done) return; done=true;
       const pn=$('phonenav'), pb=$('phonebar'), mp=$('morepanel');
       [document.querySelector('.dpad[title^="Move"]'),$('btnBack'),document.querySelector('header .zoom')].forEach(e=>e&&pn.appendChild(e));
-      [$('btnCapture'),$('btnSearch'),$('btnTodo'),$('btnSave')].forEach(e=>e&&pb.appendChild(e));
+      [$('btnCapture'),$('btnSearch'),$('btnTodo'),$('btnLock'),$('btnSave'),$('btnVer')].forEach(e=>{ if(e){ e.classList.remove('more'); pb.appendChild(e); } });
       const more=document.createElement('button'); more.id='pbMore'; more.innerHTML='<i>⋯</i><span class="lbl">More</span>'; more.onclick=()=>{ mp.classList.toggle('open'); more.classList.toggle('on',mp.classList.contains('open')); }; pb.appendChild(more);
-      [$('sync'),document.querySelector('.linknav'),$('btnLock'),$('btnVer'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
+      [$('sync'),document.querySelector('.linknav'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
       mp.addEventListener('click',e=>{ if(e.target.closest('button')){ mp.classList.remove('open'); more.classList.remove('on'); } });
       document.addEventListener('click',e=>{ if(mp.classList.contains('open')&&!mp.contains(e.target)&&e.target!==more&&!more.contains(e.target)){ mp.classList.remove('open'); more.classList.remove('on'); } });
       $('pbNew').onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); };
