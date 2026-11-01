@@ -127,6 +127,8 @@
     header .bar h1{font-size:15px}
     header .bar{padding:4px 8px;min-height:0}
     #btnMore,#btnProjList{display:none!important}
+    #mArea{max-height:22vh}
+    .modal .box{max-height:84vh}
   }
   #phonenav .dpad button{min-width:52px;padding:9px 0;font-size:16px}
   #phonenav .linknav button{padding:9px 10px;font-size:15px}
@@ -282,6 +284,7 @@
     <button id="btnBack" title="Back to the previous table"><i>↩</i><span class="lbl">Back</span></button>
     <button id="btnProjList" title="Drop the projects down as a list / back to one line"><i>⌄</i><span class="lbl">Projects</span></button>
     <button id="btnCapture" title="Capture: paste text (Keep note, Live Text from a photo) → a 📷 capture project"><i>📋</i><span class="lbl">Capture</span></button>
+    <button class="more" id="btnLock" title="Password-protect this project (encrypted on this device and in every backup), or lock it now"><i>🔒</i><span class="lbl">Lock</span></button>
     <button id="btnSearch" title="Search every project for a word or words (Ctrl/⌘ K)"><i>🔍</i><span class="lbl">Search</span></button>
     <button id="btnTodo" title="Quick to-do: one line → a row in this project's To do table"><i>✓</i><span class="lbl">To-do</span></button>
     <button id="btnMore" title="More tools"><i>⋯</i></button>
@@ -362,7 +365,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.18';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.19';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1869,7 +1872,7 @@
   };
   $('btnImport').onclick=()=>{
     M.area.value='';
-    showModal('Import','Master file → load: pick "Nested Tables MASTER.json" (from Drive, Files or Downloads); projects you do not have are added and projects edited more recently in the file replace the copy here (an automatic version is saved first); nothing is deleted. Other ways in: (1) Plain text → a capture: copy a Google Keep note, or on iPhone long-press a photo and use Live Text to copy its words, paste here, tap "Lines → capture": every line becomes a row; blank lines split it into sub-tables. (2) Markdown / Obsidian: headings become tables, list items rows, [[wikilinks]] links. (3) A JSON backup: "Merge" adds the projects you do not have yet and keeps everything else; "Replace all" wipes this browser first.',true,[
+    showModal('Import','Load a file: a Master file, "Pick Personal.json" or any Nested Tables backup. Projects you do not have are added; a project edited more recently in the file replaces the copy here (a version is saved first); nothing is deleted. Or paste text below: lines → a capture, or Markdown.',true,[
       ['Cancel','',closeModal],
       ['Master file → load','primary',()=>{ const inp=M.extra.querySelector('input[data-json]'); if(inp) inp.click(); }],
       ['Lines → capture','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }],
@@ -2028,6 +2031,7 @@
     const draw=()=>{ const q=M.search.value; M.list.innerHTML=''; const res=searchAll(q).slice(0,60); res.forEach(h=>{ const d=document.createElement('div'); d.innerHTML='<span></span><small></small>'; d.firstChild.textContent=(h.txt||'').slice(0,90); d.lastChild.textContent='P'+h.p.n+' '+h.p.name+' › '+h.t.name+' › '+h.where; d.onclick=()=>{ closeModal(); go(h.t.id); if(h.ri!==undefined){ lastCell={ri:h.ri,ci:h.ci,table:h.t.id}; setTimeout(()=>{ const ta=cellTa(h.ri,h.ci); if(ta){ ta.focus({preventScroll:true}); ta.closest('td').scrollIntoView({block:'center'}); } },150); } }; M.list.appendChild(d); }); if(q.trim()&&!res.length) M.list.innerHTML='<div><small>Nothing matches</small></div>'; };
     M.search.oninput=draw; draw(); setTimeout(()=>M.search.focus(),80); }
   $('btnSearch').onclick=searchModal;
+  $('btnLock').onclick=()=>{ const p=P(); if(!p) return; if(p.enc){ lockProject(p); toast('Locked — tap the project to unlock'); } else passwordModal('Protect project '+p.n+' · '+p.name,'Choose a password. The project is encrypted with it on this device and inside every Master file and backup; nothing about it is stored in plain text. There is no recovery — if you forget it, the project is gone.',true,async pw=>{ await protectProject(p,pw); toast('Protected — 🔒 Lock again to close it; tap the project to open'); render(); }); };
   document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); searchModal(); } });
   // ---------- quick to-do ----------
   function todoTable(p){ let t=tablesOf(p.id).find(t=>!t.trashed&&/^to[- ]?do/i.test((t.name||'').trim())); if(t) return t;
@@ -2377,7 +2381,8 @@
       [document.querySelector('.dpad[title^="Move"]'),$('btnBack'),document.querySelector('header .zoom')].forEach(e=>e&&pn.appendChild(e));
       [$('btnCapture'),$('btnSearch'),$('btnTodo'),$('btnSave')].forEach(e=>e&&pb.appendChild(e));
       const more=document.createElement('button'); more.id='pbMore'; more.innerHTML='<i>⋯</i><span class="lbl">More</span>'; more.onclick=()=>{ mp.classList.toggle('open'); more.classList.toggle('on',mp.classList.contains('open')); }; pb.appendChild(more);
-      [$('sync'),document.querySelector('.linknav'),$('btnVer'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
+      [$('sync'),document.querySelector('.linknav'),$('btnLock'),$('btnVer'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
+      mp.addEventListener('click',e=>{ if(e.target.closest('button')){ mp.classList.remove('open'); more.classList.remove('on'); } });
       document.addEventListener('click',e=>{ if(mp.classList.contains('open')&&!mp.contains(e.target)&&e.target!==more&&!more.contains(e.target)){ mp.classList.remove('open'); more.classList.remove('on'); } });
       $('pbNew').onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); };
       $('btnPhone').onclick=()=>{ phone=!phone; try{ localStorage.setItem(KEY+'-phone',phone?'1':'0'); }catch(e){} renderGrid(); renderColnav(); toast(phone?'Column window: '+colN+' columns at a time':'Column window off'); };
