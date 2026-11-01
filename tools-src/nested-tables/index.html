@@ -327,7 +327,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.9';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.10';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1814,6 +1814,7 @@
 
   $('btnSave').onclick=()=>{
     const btns=[['Close','',closeModal]];
+    btns.push(['Master file → save','primary',async()=>{ closeModal(); const blob=new Blob([exportJSON()],{type:'application/json'}); await saveBlob('Nested Tables MASTER.json',blob); }]);
     btns.push(['Copy JSON','',()=>copyText(exportJSON())]);
     btns.push(['Copy Markdown','',()=>copyText(exportMarkdown())]);
     if(caps.downloads){ btns.push(['Download JSON','',()=>downloadFile('nested-tables '+stamp()+'.json',exportJSON())]); btns.push(['Download Markdown','',()=>downloadFile('nested-tables '+stamp()+'.md',exportMarkdown())]); }
@@ -1822,21 +1823,25 @@
     if(caps.mcp){ btns.push(['This project → Obsidian notes in Drive','',bundleToDrive]); btns.push(['Back up everything to Google Drive','primary',backupToDrive]); }
     if(canDl) btns.push(['Save the app as HTML (a dated copy with your data inside)','',saveStandalone]); if(caps.mcp&&!window.__standalone) btns.push(['Save the app to Google Drive','',standaloneToDrive]);
     M.area.value='';
-    showModal('Save / Backup','All projects are included; password-protected ones stay encrypted in the JSON and are left out of the Markdown while locked. JSON restores everything exactly (use Import). "Save the app as HTML" makes a single self-contained file of this tool with a snapshot of your data inside; it runs offline on a computer (iPhone Files and Drive previews do not run apps — add this page to your Home Screen instead). Markdown is a readable outline for Obsidian, Heptabase or Thread Notes.'+(caps.mcp?' The Drive backup saves both files to a "Nested Tables Backups" folder in your Drive.':''),false,btns);
+    showModal('Save / Backup','Master file → save writes "Nested Tables MASTER.json" (all projects). Keep it in one place — a Google Drive folder works on every device — and in any other browser use 📥 Master file → load; the two copies merge by last edit. Password-protected projects stay encrypted in the JSON and are left out of the Markdown while locked. "Save the app as HTML" makes a single self-contained file of this tool with a snapshot of your data inside; it runs offline on a computer (iPhone Files and Drive previews do not run apps — add this page to your Home Screen instead). Markdown is a readable outline for Obsidian, Heptabase or Thread Notes.'+(caps.mcp?' The Drive backup saves both files to a "Nested Tables Backups" folder in your Drive.':''),false,btns);
   };
   $('btnImport').onclick=()=>{
     M.area.value='';
-    showModal('Import','Three ways in. (1) Plain text → a capture: copy a Google Keep note, or on iPhone long-press a photo and use Live Text to copy its words, paste here, tap "Lines → capture": every line becomes a row; blank lines split it into sub-tables. (2) Markdown / Obsidian: headings become tables, list items rows, [[wikilinks]] links. (3) A JSON backup: "Merge" adds the projects you do not have yet and keeps everything else; "Replace all" wipes this browser first.',true,[
+    showModal('Import','Master file → load: pick "Nested Tables MASTER.json" (from Drive, Files or Downloads); projects you do not have are added and projects edited more recently in the file replace the copy here (an automatic version is saved first); nothing is deleted. Other ways in: (1) Plain text → a capture: copy a Google Keep note, or on iPhone long-press a photo and use Live Text to copy its words, paste here, tap "Lines → capture": every line becomes a row; blank lines split it into sub-tables. (2) Markdown / Obsidian: headings become tables, list items rows, [[wikilinks]] links. (3) A JSON backup: "Merge" adds the projects you do not have yet and keeps everything else; "Replace all" wipes this browser first.',true,[
       ['Cancel','',closeModal],
+      ['Master file → load','primary',()=>{ const inp=M.extra.querySelector('input[data-json]'); if(inp) inp.click(); }],
       ['Lines → capture','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }],
       ['Replace all (JSON)','danger',()=>{ const txt=M.area.value; let d; try{ d=JSON.parse(txt); }catch(e){ return toast('That is not valid JSON'); } closeModal(); confirmBox('Replace everything in this browser?','All current projects here are deleted and replaced by the backup. Versions are kept. Consider "Merge" instead.',()=>{ replaceFromJSON(d); },'Replace'); }],
       ['Markdown files…','',()=>{ const inp=M.extra.querySelector('input[type=file]'); if(inp) inp.click(); }],
       ['Import pasted Markdown','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste Markdown first'); closeModal(); importMarkdownFiles([{name:'Pasted note',text:txt}]); }],
-      ['Merge JSON','primary',()=>{ let d; try{ d=JSON.parse(M.area.value); }catch(e){ return toast('That is not valid JSON — for notes use "Lines → capture" or "Import pasted Markdown"'); } closeModal(); mergeFromJSON(d); }]
+      ['Merge pasted JSON','',()=>{ let d; try{ d=JSON.parse(M.area.value); }catch(e){ return toast('That is not valid JSON — for notes use "Lines → capture" or "Import pasted Markdown"'); } closeModal(); mergeFromJSON(d); }]
     ]);
     const f=document.createElement('input'); f.type='file'; f.accept='.md,.markdown,.txt,text/markdown,text/plain'; f.multiple=true; f.style.display='none';
     f.onchange=async()=>{ const files=[...f.files]; if(!files.length) return; const list=[]; for(const file of files){ list.push({name:file.name, text:await file.text()}); } closeModal(); importMarkdownFiles(list); };
-    M.extra.appendChild(f); M.extra.style.display='block';
+    M.extra.appendChild(f);
+    const j=document.createElement('input'); j.type='file'; j.accept='.json,application/json'; j.dataset.json='1'; j.style.display='none';
+    j.onchange=async()=>{ const file=j.files&&j.files[0]; if(!file) return; let d; try{ d=JSON.parse(await file.text()); }catch(e){ return toast('That file is not a Nested Tables JSON'); } closeModal(); mergeFromJSON(d); };
+    M.extra.appendChild(j); M.extra.style.display='block';
   };
 
   // ---------- Markdown / Obsidian import ----------
@@ -1867,14 +1872,21 @@
     }catch(e){ toast('That backup could not be read'); } }
   function mergeFromJSON(d){
     if(!(d.projects&&d.tables)){ if(d.tables&&d.root&&d.tables[d.root]){ d={projects:{x:{id:'x',n:1,name:'Imported project',root:d.root,u:now()}},tables:d.tables}; Object.values(d.tables).forEach(t=>t.p='x'); } else return toast('That is not a Nested Tables backup'); }
-    const have=new Set(live().map(p=>(p.name||'').trim().toLowerCase())); let added=0, skipped=0;
-    Object.values(d.projects).forEach(sp=>{ if(sp.trashed) return; const nm=(sp.name||'').trim().toLowerCase(); if(S.projects[sp.id]||have.has(nm)){ skipped++; return; }
+    const have=new Set(live().map(p=>(p.name||'').trim().toLowerCase())); let added=0, skipped=0, updated=0;
+    const newest=(pid,tabs)=>Math.max(0,...Object.values(tabs).filter(t=>t.p===pid&&!t.trashed).map(t=>t.u||0));
+    Object.values(d.projects).forEach(sp=>{ if(sp.trashed) return; const nm=(sp.name||'').trim().toLowerCase();
+      const lp=S.projects[sp.id];
+      if(lp&&!lp.enc&&!sp.enc){ // same project in both: keep whichever was edited last
+        const inc=Math.max(sp.u||0,newest(sp.id,d.tables)), loc=Math.max(lp.u||0,newest(lp.id,S.tables));
+        if(inc>loc+1000){ saveVersion(lp,'before update from master',{auto:true}); removeTables(tablesOf(lp.id).map(t=>t.id)); Object.values(d.tables).filter(t=>t.p===sp.id&&!t.trashed).forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); S.tables[c.id]=c; dirty.add(c.id); }); lp.root=sp.root; lp.name=sp.name; lp.u=inc; if(!S.tables[S.curTable[lp.id]]) S.curTable[lp.id]=lp.root; updated++; } else skipped++;
+        return; }
+      if(lp||have.has(nm)){ skipped++; return; }
       const map={}; const srcT=Object.values(d.tables).filter(t=>t.p===sp.id); srcT.forEach(t=>map[t.id]=S.tables[t.id]?uid():t.id);
       const np={id:S.projects[sp.id]?uid():sp.id, n:nextProjNo(), name:sp.name||'Untitled', root:map[sp.root]||sp.root, u:now()}; if(sp.kind) np.kind=sp.kind; if(sp.enc) np.enc=sp.enc;
       srcT.forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); c.id=map[t.id]; c.p=np.id; c.u=now(); if(c.parent&&map[c.parent.tableId]) c.parent.tableId=map[c.parent.tableId]; (c.rows||[]).forEach(r=>r.forEach(cell=>{ if(cell.link&&map[cell.link]) cell.link=map[cell.link]; })); S.tables[c.id]=c; dirty.add(c.id); });
       S.projects[np.id]=np; S.curTable[np.id]=np.root; added++; });
-    if(added){ touchMeta(); save(); render(); }
-    toast(added+' project'+(added===1?'':'s')+' added'+(skipped?', '+skipped+' already here (same name) skipped':''));
+    if(added||updated){ touchMeta(); hist=[]; save(); render(); }
+    toast((added?added+' added':'')+(added&&updated?', ':'')+(updated?updated+' updated from master':'')+((added||updated)?'':'Nothing newer than what is here')+(skipped?' · '+skipped+' unchanged':''));
   }
   function importLinesAsCapture(txt){
     const blocks=txt.replace(/\r/g,'').split(/\n\s*\n+/).map(b=>b.split('\n').map(l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim()).filter(Boolean)).filter(b=>b.length);
@@ -2054,6 +2066,7 @@
       [['Linked from',''],'Every cell that points at the current table; tap to go there.','Under the title']]},
     {h:'Table and layer',lead:'Each table has a title, a subtitle and its own size.',cols:['Control','Does','Notes'],rows:[
       [['Title / subtitle',''],'Edit above the grid. The subtitle is where the principle of a layer lives.','A−/A+ beside the title resize both'],
+      [['Master file',''],'💾 Master file → save makes "Nested Tables MASTER.json"; 📥 Master file → load merges it in (newer side wins per project, automatic version first, nothing deleted). One file in Drive keeps Safari, Chrome, the Home Screen app and the Claude app in step.','Do it at the end of a session in one browser and the start in another'],
       [['🕒 Save version',''],'Saves a numbered, dated copy of the current project (v1, v2…). Auto versions are also taken while you work: the first and last of each day are kept for 30 days. Tap the project chip → Versions to restore one or open it as a copy.','Kept in this browser (IndexedDB); Download JSON to keep one elsewhere'],
       [['Rows −/+ · Columns −/+',''],'Grow or shrink the table; − removes the last row or column.','Asks first if sub-tables would be lost'],
       [['Header hover',''],'Insert a row/column here, or delete this one.','Hover a row number or column letter'],
