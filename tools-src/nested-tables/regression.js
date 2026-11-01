@@ -2,12 +2,12 @@
 const {chromium,devices}=require('playwright');const fs=require('fs');
 (async()=>{const b=await chromium.launch();const f=fs.readdirSync('.').filter(x=>/^Nested Tables v.*\.html$/.test(x)).sort((a,b)=>fs.statSync(b).mtimeMs-fs.statSync(a).mtimeMs)[0];
 const ctx=await b.newContext({...devices['iPhone 13']});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
-await p.goto('file://'+require('path').resolve(f));await p.waitForTimeout(1500);
+await p.goto('file:///home/claude/nt/'+f);await p.waitForTimeout(1500);
 const T=()=>p.$eval('.titlebar input',e=>e.value);const ok=(n,c)=>console.log((c?'ok  ':'FAIL')+' '+n);
 ok('pill shows version',(await p.$eval('#sync',e=>e.textContent)).includes('v'));
 ok('projects on one scrolling row',await p.$eval('#projbar',e=>e.getBoundingClientRect().height<60));
 ok('header under 170px',(await p.$eval('header',e=>e.getBoundingClientRect().height))<170);
-const more=async()=>{await p.click('#btnMore');await p.waitForTimeout(150);};
+const more=async()=>{await p.click('#pbMore');await p.waitForTimeout(150);};
 await more();await p.click('#btnPhone');await p.waitForTimeout(300);ok('phone mode toggles',await p.$eval('body',e=>e.classList.contains('phone')));await p.click('#btnPhone');await more();await p.waitForTimeout(200);
 await p.click('#navD');await p.waitForTimeout(300);ok('▼ enters sub-table',(await T())==='The idea');
 await p.click('#navU');await p.waitForTimeout(300);ok('▲ returns',(await T())==='How to use Nested Tables');
@@ -23,7 +23,11 @@ await more();await p.click('#btnVer');await p.waitForTimeout(300);ok('save versi
 await p.click('#grid thead th:nth-child(2) span');await p.click('#grid thead th:nth-child(2) .colbtns button:first-child');await p.waitForTimeout(300);ok('column checkboxes',(await p.$$eval('#grid td.haschk',e=>e.length))>0);
 await p.click('.chip:has-text("P5")');await p.waitForTimeout(300);ok('⌄ chip still visible after row scrolls',await p.$eval('.chip.pin',e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}));await p.click('.chip:has-text("P1")');await p.waitForTimeout(300);
 await more();await p.click('#btnTree');await p.waitForTimeout(300);await p.evaluate(()=>scrollTo(0,600));await p.waitForTimeout(300);ok('outline does not overlap table',await p.evaluate(()=>{const a=document.querySelector('aside.tree').getBoundingClientRect(),g=document.getElementById('grid').getBoundingClientRect();return a.bottom<=g.top+1||a.top>=g.bottom-1;}));await p.click('#btnTree');await more();await p.evaluate(()=>scrollTo(0,0));
-await p.evaluate(()=>localStorage.setItem('nested-tables-v3-tree','1'));await more();await p.click('#btnTree');await p.waitForTimeout(200);await p.reload();await p.waitForTimeout(1500);ok('opens clean: outline closed, ⋯ closed',await p.evaluate(()=>!document.getElementById('layout').classList.contains('withtree')&&!document.querySelector('header').classList.contains('showmore')));
+await p.evaluate(()=>localStorage.setItem('nested-tables-v3-tree','1'));await more();await p.click('#btnTree');await p.waitForTimeout(200);await p.reload();await p.waitForTimeout(1500);ok('opens clean: outline closed, ⋯ closed',await p.evaluate(()=>!document.getElementById('layout').classList.contains('withtree')&&!document.getElementById('morepanel').classList.contains('open')));
 ok('no page overflow',await p.evaluate(()=>document.body.scrollWidth<=innerWidth));
+ok('bottom bar fixed & visible',await p.evaluate(()=>{const r=document.getElementById('phonebar').getBoundingClientRect();return r.bottom<=window.innerHeight+1&&r.top>window.innerHeight-90;}));
+ok('nav row on top under header',await p.evaluate(()=>{const n=document.getElementById('phonenav').getBoundingClientRect();const h=document.querySelector('header').getBoundingClientRect();return n.top>=h.bottom-1&&n.height>20;}));
+ok('zoom steps land on 10s',await p.evaluate(async()=>{for(let i=0;i<4;i++)document.getElementById('zoomIn').click();return /^[0-9]+0%$/.test(document.getElementById('zoomPct').textContent);}));
+ok('+ New at bottom makes project',await p.evaluate(()=>{const n=document.querySelectorAll('#projbar .chip:not(.add)').length;document.getElementById('pbNew').click();return document.querySelectorAll('#projbar .chip:not(.add)').length===n+1&&Object.keys(JSON.parse(localStorage.getItem('nested-tables-v3')).projects).length>0;}));
 ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
 await b.close();})();

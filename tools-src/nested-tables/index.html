@@ -111,6 +111,22 @@
   body.phone .titlebar input{flex:1 1 100%;min-width:0;font-size:19px}
     #phonenav{display:none;position:sticky;top:0;z-index:11;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.08);align-items:center;justify-content:center;gap:8px}
   body.phone #phonenav{display:flex}
+  #phonebar,#morepanel{display:none}
+  @media(max-width:760px){
+    #phonenav{display:flex!important;flex-wrap:nowrap;gap:6px;padding:6px}
+    #phonenav .zoom{margin-left:auto}
+    body{padding-bottom:70px}
+    #phonebar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);justify-content:space-around;gap:4px}
+    #phonebar>button,#phonebar>.zoom{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:11px;border:0;background:transparent}
+    #phonebar>button i{font-size:19px;font-style:normal}
+    #phonebar>button.on{color:var(--accent)}
+    #morepanel{display:none;position:fixed;left:8px;right:8px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:29;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:8px;flex-wrap:wrap;gap:6px}
+    #morepanel.open{display:flex}
+    #morepanel>button,#morepanel>.linknav,#morepanel>.pill{display:inline-flex!important}
+    header .bar h1{font-size:15px}
+    header .bar{padding:4px 8px;min-height:0}
+    #btnMore,#btnProjList{display:none!important}
+  }
   #phonenav .dpad button{min-width:52px;padding:9px 0;font-size:16px}
   #phonenav .linknav button{padding:9px 10px;font-size:15px}
   #phonenav>button{padding:9px 10px;font-size:15px}
@@ -254,12 +270,12 @@
     <h1>Nested Tables</h1>
     <span class="pill track" id="track"></span>
     <span class="pill" id="stats"></span>
-    <span class="pill" id="sync">local only</span>
+    <span class="pill more" id="sync">local only</span>
     <div class="spacer"></div>
     <span class="dpad" title="Move through the tree: ▲ parent · ▼ into the selected cell's sub-table · ◀ ▶ neighbouring tables (Alt+arrows)">
       <button id="navL" title="Previous sibling table (Alt+←)">◀</button><button id="navU" title="Up to parent (Alt+↑)">▲</button><button id="navD" title="Down into sub-table (Alt+↓)">▼</button><button id="navR" title="Next sibling table (Alt+→)">▶</button>
     </span>
-    <span class="linknav" title="Hop between hyperlinked cells in this table (Alt+[ and Alt+]); then ▼ follows the selected one">
+    <span class="linknav more" title="Hop between hyperlinked cells in this table (Alt+[ and Alt+]); then ▼ follows the selected one">
       <button id="linkPrev" title="Previous hyperlink (Alt+[)">↳◀</button><button id="linkNext" title="Next hyperlink (Alt+])">↳▶</button>
     </span>
     <button id="btnBack" title="Back to the previous table"><i>↩</i><span class="lbl">Back</span></button>
@@ -281,6 +297,8 @@
 </header>
 
 <div id="phonenav"></div>
+<div id="morepanel"></div>
+<div id="phonebar"><button id="pbNew" title="New project"><i>＋</i><span class="lbl">New</span></button></div>
 <main>
   <nav class="crumbs" id="crumbs"></nav>
   <div class="layout" id="layout">
@@ -341,7 +359,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.14';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.16';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -403,13 +421,20 @@
   }
   function load(){
     try{ const raw=localStorage.getItem(KEY); if(raw){ S=JSON.parse(raw); if(S.projects&&S.tables&&S.projects[S.cur]) { ensureSane(); mergeSeed(); return; } } }catch(e){}
-    if(window.__seed&&window.__seed.projects){ S=JSON.parse(JSON.stringify(window.__seed)); S.fresh=false; ensureSane(); return; }
+    if(window.__seed&&window.__seed.projects){ S=JSON.parse(JSON.stringify(window.__seed)); Object.values(S.projects).forEach(p=>{ p.importedAt=now(); }); S.fresh=false; ensureSane(); return; }
     if(migrateV2()) return;
     freshState();
   }
-  function mergeSeed(){ const sd=window.__seed; if(!sd||!sd.projects) return; let added=0; const have=new Set(Object.values(S.projects).filter(p=>!p.trashed).map(p=>(p.name||'').trim().toLowerCase()));
-    Object.values(sd.projects).forEach(sp=>{ if(S.projects[sp.id]||have.has((sp.name||'').trim().toLowerCase())) return; const np=JSON.parse(JSON.stringify(sp)); np.n=nextProjNo(); np.u=now(); S.projects[np.id]=np; Object.values(sd.tables).filter(t=>t.p===sp.id).forEach(t=>{ S.tables[t.id]=JSON.parse(JSON.stringify(t)); dirty.add(t.id); }); S.curTable[np.id]=np.root; added++; });
-    if(added){ touchMeta(); try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} setTimeout(()=>toast(added+' new project'+(added>1?'s':'')+' added from this file'),600); } }
+  function mergeSeed(){ const sd=window.__seed; if(!sd||!sd.projects) return; let added=0, updated=0, copies=0;
+    const byName={}; Object.values(S.projects).filter(p=>!p.trashed).forEach(p=>byName[(p.name||'').trim().toLowerCase()]=p);
+    const copyIn=(sp,name)=>{ const np=JSON.parse(JSON.stringify(sp)); if(S.projects[np.id]) np.id=uid(); np.name=name||np.name; np.n=nextProjNo(); np.u=now(); np.importedAt=now(); const map={}; const src=Object.values(sd.tables).filter(t=>t.p===sp.id); src.forEach(t=>map[t.id]=S.tables[t.id]?uid():t.id); src.forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); c.id=map[t.id]; c.p=np.id; if(c.parent&&map[c.parent.tableId]) c.parent.tableId=map[c.parent.tableId]; c.rows.forEach(r=>r.forEach(x=>{ if(x.link&&map[x.link]) x.link=map[x.link]; })); S.tables[c.id]=c; dirty.add(c.id); }); np.root=map[sp.root]||sp.root; S.projects[np.id]=np; S.curTable[np.id]=np.root; return np; };
+    Object.values(sd.projects).forEach(sp=>{ const key=(sp.name||'').trim().toLowerCase(); const lp=byName[key]||S.projects[sp.id];
+      if(!lp){ copyIn(sp); added++; return; }
+      if(!sp.srev||lp.srev===sp.srev||lp.enc) return; // same build, or nothing to compare
+      const touched=tablesOf(lp.id).some(t=>(t.u||0)>(lp.importedAt||0)+5000);
+      if(!touched){ saveVersion(lp,'before update from build '+APP_VERSION,{auto:true}); removeTables(tablesOf(lp.id).map(t=>t.id)); const np=copyIn(sp,lp.name); np.n=lp.n; np.id===lp.id||(delete S.projects[lp.id], delete S.curTable[lp.id]); if(S.cur===lp.id) S.cur=np.id; updated++; }
+      else { copyIn(sp,sp.name+' · update '+new Date().toLocaleDateString(undefined,{month:'short',day:'numeric'})); copies++; } });
+    if(added||updated||copies){ touchMeta(); try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} setTimeout(()=>toast([added&&added+' new',updated&&updated+' updated',copies&&copies+' arrived as a dated copy (yours was edited)'].filter(Boolean).join(' · ')+' from this build'),600); } }
   function ensureSane(){
     if(!S.curTable) S.curTable={};
     if(!Object.keys(S.projects).length) newProject('Project 1');
@@ -1544,7 +1569,7 @@
   $('cn3L').onclick=()=>slideCols(-3); $('cn2L').onclick=()=>slideCols(-2); $('cn3R').onclick=()=>slideCols(3); $('cn2R').onclick=()=>slideCols(2);
   const setColN=n=>{ colN=Math.max(1,Math.min(8,n)); try{ localStorage.setItem(KEY+'-coln',colN); }catch(e){} renderGrid(); renderColnav(); };
   $('cnMinus').onclick=()=>setColN(colN-1); $('cnPlus').onclick=()=>setColN(colN+1);
-  function placeNav(){ const bar=document.querySelector('header .bar'); const pn=$('phonenav'); const els=[document.querySelector('.dpad[title^="Move"]'),document.querySelector('.linknav'),$('btnBack')]; if(phone){ els.forEach(e=>pn.appendChild(e)); } else { const anchor=$('btnTree'); els.forEach(e=>bar.insertBefore(e,anchor)); } }
+  function placeNav(){ if(window.innerWidth<=760) return; const bar=document.querySelector('header .bar'); const pn=$('phonenav'); const els=[document.querySelector('.dpad[title^="Move"]'),document.querySelector('.linknav'),$('btnBack')]; if(phone){ els.forEach(e=>pn.appendChild(e)); } else { const anchor=$('btnTree'); els.forEach(e=>bar.insertBefore(e,anchor)); } }
   $('btnPhone').onclick=()=>{ phone=!phone; placeNav(); try{ localStorage.setItem(KEY+'-phone',phone?'1':'0'); }catch(e){} renderGrid(); renderColnav(); toast(phone?'Phone mode: '+colN+' columns at a time':'Phone mode off'); };
   function revealCol(ci){ const t=T(); if(colVisible(t,ci)) return false; const s=winStart(t); colWin[t.id]= ci<s ? ci : ci-colN+1; renderGrid(); renderColnav(); return true; }
 
@@ -2003,7 +2028,7 @@
   const snapOpen=()=>$('snap').classList.contains('open');
   const curZoom=()=>snapOpen()?szoom:zoom;
   const applyZoom=(z,quiet)=>snapOpen()?setSnapZoom(z):setZoom(z,quiet);
-  $('zoomIn').onclick=()=>setZoom(zoom+.1); $('zoomOut').onclick=()=>setZoom(zoom-.1); $('zoomPct').onclick=()=>setZoom(ZOOM_BASE); $('zoomPct').title='Reset to '+Math.round(ZOOM_BASE*100)+'%';
+  $('zoomIn').onclick=()=>setZoom(Math.round(zoom*10+1)/10); $('zoomOut').onclick=()=>setZoom(Math.round(zoom*10-1)/10); $('zoomPct').onclick=()=>setZoom(ZOOM_BASE); $('zoomPct').title='Reset to '+Math.round(ZOOM_BASE*100)+'%';
   document.addEventListener('keydown',e=>{ if(!(e.ctrlKey||e.metaKey)) return; if(e.key==='='||e.key==='+'){ e.preventDefault(); applyZoom(curZoom()+.1); } else if(e.key==='-'||e.key==='_'){ e.preventDefault(); applyZoom(curZoom()-.1); } else if(e.key==='0'){ e.preventDefault(); applyZoom(snapOpen()?.8:ZOOM_BASE); } });
   document.addEventListener('wheel',e=>{ if(!e.ctrlKey&&!e.metaKey) return; e.preventDefault(); applyZoom(curZoom()*(e.deltaY<0?1.05:0.95),true); clearTimeout(setZoom._t); setZoom._t=setTimeout(()=>applyZoom(curZoom()),150); },{passive:false});
   let pinch=null;
@@ -2011,11 +2036,11 @@
   const onControl=t=>!!(t&&t.closest&&t.closest('button,.chip,.dpad,.linknav,.zoom,header,#phonenav,#celltools,.jump,.chk'));
   document.addEventListener('touchstart',e=>{ if(e.touches.length===2&&!onControl(e.touches[0].target)&&!onControl(e.touches[1].target)){ pinch={d:dist(e),z:curZoom(),live:false}; } else pinch=null; },{passive:true});
   document.addEventListener('touchmove',e=>{ if(pinch&&e.touches.length===2){ const r=dist(e)/pinch.d; if(!pinch.live&&Math.abs(r-1)<0.12) return; pinch.live=true; e.preventDefault(); applyZoom(pinch.z*r,true); } },{passive:false});
-  document.addEventListener('touchend',()=>{ if(pinch){ const was=pinch.live; pinch=null; if(was) applyZoom(curZoom()); } });
+  document.addEventListener('touchend',()=>{ if(pinch){ const was=pinch.live; pinch=null; if(was) applyZoom(Math.round(curZoom()*10)/10); } });
   let gz=null;
   document.addEventListener('gesturestart',e=>{ e.preventDefault(); gz=onControl(e.target)?null:curZoom(); });
   document.addEventListener('gesturechange',e=>{ e.preventDefault(); if(gz!=null&&Math.abs(e.scale-1)>=0.12) applyZoom(gz*e.scale,true); });
-  document.addEventListener('gestureend',e=>{ e.preventDefault(); gz=null; applyZoom(curZoom()); });
+  document.addEventListener('gestureend',e=>{ e.preventDefault(); gz=null; applyZoom(Math.round(curZoom()*10)/10); });
 
   // ---------- snapshot view (whole project on one page) ----------
   let szoom=.8; try{ szoom=parseFloat(localStorage.getItem(KEY+'-szoom'))||.8; }catch(e){}
@@ -2325,6 +2350,20 @@
 
   load(); if(pruneDefaults()) save();
   placeNav();
+  (function narrowLayout(){
+    const narrow=()=>window.innerWidth<=760; let done=false;
+    function apply(){ if(!narrow()||done) return; done=true;
+      const pn=$('phonenav'), pb=$('phonebar'), mp=$('morepanel');
+      [document.querySelector('.dpad[title^="Move"]'),$('btnBack'),document.querySelector('header .zoom')].forEach(e=>e&&pn.appendChild(e));
+      [$('btnCapture'),$('btnVer'),$('btnSave')].forEach(e=>e&&pb.appendChild(e));
+      const more=document.createElement('button'); more.id='pbMore'; more.innerHTML='<i>⋯</i><span class="lbl">More</span>'; more.onclick=()=>{ mp.classList.toggle('open'); more.classList.toggle('on',mp.classList.contains('open')); }; pb.appendChild(more);
+      [$('sync'),document.querySelector('.linknav'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
+      document.addEventListener('click',e=>{ if(mp.classList.contains('open')&&!mp.contains(e.target)&&e.target!==more&&!more.contains(e.target)){ mp.classList.remove('open'); more.classList.remove('on'); } });
+      $('pbNew').onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); };
+      $('btnPhone').onclick=()=>{ phone=!phone; try{ localStorage.setItem(KEY+'-phone',phone?'1':'0'); }catch(e){} renderGrid(); renderColnav(); toast(phone?'Column window: '+colN+' columns at a time':'Column window off'); };
+    }
+    apply(); window.addEventListener('resize',apply);
+  })();
   loadVersionsAsync().then(async all=>{ const p=P(); if(!p||p.enc) return; const today=dayKey(now()); if(!all.some(v=>v.pid===p.id&&dayKey(v.ts)===today)){ lastAuto[p.id]=now(); await saveVersion(p,'auto · first of day',{auto:true}); } });
   $('btnColors').classList.toggle('off',!colorsOn);
   setZoom(zoom,true);

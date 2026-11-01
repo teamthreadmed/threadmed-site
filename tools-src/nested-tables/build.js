@@ -12,6 +12,7 @@ const order=['How to use Nested Tables','Clinical logic: how reasoning works','O
 order.forEach((n,i)=>{ const p=Object.values(o.projects).find(p=>p.name===n); if(p) p.n=i+1; });
 // extra.json: projects carried over from the Claude artifact's cloud store (Tool building, captures)
 const xp=path.join(here,'extra.json'); if(fs.existsSync(xp)){ const x=JSON.parse(fs.readFileSync(xp,'utf8')); let n=Object.keys(o.projects).length; Object.values(x.projects).forEach(p=>{ if(!o.projects[p.id]){ p.n=++n; o.projects[p.id]=p; o.curTable[p.id]=p.root; } }); Object.assign(o.tables,x.tables); }
+const crypto=require('crypto'); Object.values(o.projects).forEach(p=>{ const tabs=Object.values(o.tables).filter(t=>t.p===p.id).sort((a,b)=>a.id<b.id?-1:1).map(t=>({n:t.name,s:t.sub,c:t.cols,r:t.rows})); p.srev=crypto.createHash('sha1').update(JSON.stringify(tabs)).digest('hex').slice(0,10); });
 o.cur=(Object.values(o.projects).find(p=>p.n===1)||Object.values(o.projects)[0]).id; o.fresh=false;
 const libs=['js/jspdf.umd.min.js','js/jspdf.plugin.autotable.min.js','js/jszip.min.js'].map(f=>fs.readFileSync(path.join(here,f),'utf8'));
 const noClose=s=>s.replace(/<\/script/gi,'<\\/script'); const b64e=t=>Buffer.from(t,'utf8').toString('base64');
