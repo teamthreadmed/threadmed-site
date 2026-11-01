@@ -186,10 +186,11 @@
   aside.tree li a.here .via{color:rgba(255,255,255,.75)}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
   .modal.open{display:flex}
-  .modal .box{background:var(--panel);border-radius:12px;padding:18px;max-width:560px;width:100%;box-shadow:var(--shadow);max-height:90vh;display:flex;flex-direction:column}
+  .modal .box{background:var(--panel);border-radius:12px;padding:18px;max-width:560px;width:100%;box-shadow:var(--shadow);max-height:90vh;display:flex;flex-direction:column;overflow:auto}
+  .modal textarea{flex:0 0 auto}
   .modal h3{margin:0 0 8px;font-size:15px}
   .modal p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
-  .modal textarea{width:100%;height:220px;font:12px/1.4 "JetBrains Mono",monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--ink)}
+  .modal textarea{width:100%;height:160px;max-height:30vh;font:12px/1.4 "JetBrains Mono",monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--ink)}
   .modal input.search,.modal input.text{font:inherit;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);margin-bottom:8px}
   .modal .list{overflow:auto;max-height:300px;border:1px solid var(--line);border-radius:8px}
   .modal .list div{padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13.5px}
@@ -324,7 +325,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.7.1';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.8';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1513,7 +1514,7 @@
 
   // ---------- phone mode: column window ----------
   let phone=false, colN=3; const colWin={}; // table id -> first visible column
-  try{ const v=localStorage.getItem(KEY+'-phone'); phone = v==null ? (window.innerWidth<700) : v==='1'; colN=parseInt(localStorage.getItem(KEY+'-coln'))||3; }catch(e){ phone=window.innerWidth<700; }
+  try{ const v=localStorage.getItem(KEY+'-phone'); phone = v==='1'; colN=parseInt(localStorage.getItem(KEY+'-coln'))||3; }catch(e){ phone=false; }
   function winStart(t){ const max=Math.max(0,t.cols.length-colN); const s=Math.min(Math.max(0,colWin[t.id]||0),max); colWin[t.id]=s; return s; }
   function colVisible(t,ci){ if(!phone||t.cols.length<=colN) return true; const s=winStart(t); return ci>=s&&ci<s+colN; }
   function slideCols(d){ const t=T(); const max=Math.max(0,t.cols.length-colN); colWin[t.id]=Math.min(max,Math.max(0,winStart(t)+d)); renderGrid(); renderColnav(); }
@@ -1816,17 +1817,13 @@
   };
   $('btnImport').onclick=()=>{
     M.area.value='';
-    showModal('Import','Paste a JSON backup (replaces everything), or import Markdown / Obsidian notes as a new project: headings become tables, sub-headings become sub-tables, list and checklist items become rows, [[wikilinks]] become links.',true,[
+    showModal('Import','Three ways in. (1) Plain text → a capture: copy a Google Keep note, or on iPhone long-press a photo and use Live Text to copy its words, paste here, tap "Lines → capture": every line becomes a row; blank lines split it into sub-tables. (2) Markdown / Obsidian: headings become tables, list items rows, [[wikilinks]] links. (3) A JSON backup: "Merge" adds the projects you do not have yet and keeps everything else; "Replace all" wipes this browser first.',true,[
       ['Cancel','',closeModal],
+      ['Lines → capture','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }],
+      ['Replace all (JSON)','danger',()=>{ const txt=M.area.value; let d; try{ d=JSON.parse(txt); }catch(e){ return toast('That is not valid JSON'); } closeModal(); confirmBox('Replace everything in this browser?','All current projects here are deleted and replaced by the backup. Versions are kept. Consider "Merge" instead.',()=>{ replaceFromJSON(d); },'Replace'); }],
       ['Markdown files…','',()=>{ const inp=M.extra.querySelector('input[type=file]'); if(inp) inp.click(); }],
       ['Import pasted Markdown','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste Markdown first'); closeModal(); importMarkdownFiles([{name:'Pasted note',text:txt}]); }],
-      ['Import JSON','primary',()=>{ try{
-        const d=JSON.parse(M.area.value); const old=Object.keys(S.tables);
-        if(d.projects&&d.tables){ S={projects:d.projects, tables:d.tables, cur:Object.keys(d.projects)[0], curTable:{}, fresh:false}; }
-        else if(d.tables&&d.root&&d.tables[d.root]){ S={projects:{}, tables:{}, cur:null, curTable:{}, fresh:false}; const p={id:uid(),n:1,name:'Project 1',root:d.root,u:now()}; S.projects[p.id]=p; S.cur=p.id; Object.values(d.tables).forEach(t=>{ t.p=p.id; S.tables[t.id]=t; }); }
-        else throw 0;
-        ensureSane(); old.forEach(id=>{ if(!S.tables[id]) deleted.add(id); }); Object.values(S.tables).forEach(t=>{ t.u=now(); dirty.add(t.id); }); touchMeta(); hist=[]; save(); render(); closeModal(); toast('Imported');
-      }catch(e){ toast('That is not valid JSON — use "Import pasted Markdown" for notes'); } }]
+      ['Merge JSON','primary',()=>{ let d; try{ d=JSON.parse(M.area.value); }catch(e){ return toast('That is not valid JSON — for notes use "Lines → capture" or "Import pasted Markdown"'); } closeModal(); mergeFromJSON(d); }]
     ]);
     const f=document.createElement('input'); f.type='file'; f.accept='.md,.markdown,.txt,text/markdown,text/plain'; f.multiple=true; f.style.display='none';
     f.onchange=async()=>{ const files=[...f.files]; if(!files.length) return; const list=[]; for(const file of files){ list.push({name:file.name, text:await file.text()}); } closeModal(); importMarkdownFiles(list); };
@@ -1851,6 +1848,35 @@
       else cur.items.push({t,note:''});
     }
     return {front,root};
+  }
+  function replaceFromJSON(d){ try{
+      const old=Object.keys(S.tables);
+      if(d.projects&&d.tables){ S={projects:d.projects, tables:d.tables, cur:Object.keys(d.projects)[0], curTable:{}, fresh:false}; }
+      else if(d.tables&&d.root&&d.tables[d.root]){ S={projects:{}, tables:{}, cur:null, curTable:{}, fresh:false}; const p={id:uid(),n:1,name:'Project 1',root:d.root,u:now()}; S.projects[p.id]=p; S.cur=p.id; Object.values(d.tables).forEach(t=>{ t.p=p.id; S.tables[t.id]=t; }); }
+      else throw 0;
+      ensureSane(); old.forEach(id=>{ if(!S.tables[id]) deleted.add(id); }); Object.values(S.tables).forEach(t=>{ t.u=now(); dirty.add(t.id); }); touchMeta(); hist=[]; save(); render(); toast('Replaced from backup');
+    }catch(e){ toast('That backup could not be read'); } }
+  function mergeFromJSON(d){
+    if(!(d.projects&&d.tables)){ if(d.tables&&d.root&&d.tables[d.root]){ d={projects:{x:{id:'x',n:1,name:'Imported project',root:d.root,u:now()}},tables:d.tables}; Object.values(d.tables).forEach(t=>t.p='x'); } else return toast('That is not a Nested Tables backup'); }
+    const have=new Set(live().map(p=>(p.name||'').trim().toLowerCase())); let added=0, skipped=0;
+    Object.values(d.projects).forEach(sp=>{ if(sp.trashed) return; const nm=(sp.name||'').trim().toLowerCase(); if(S.projects[sp.id]||have.has(nm)){ skipped++; return; }
+      const map={}; const srcT=Object.values(d.tables).filter(t=>t.p===sp.id); srcT.forEach(t=>map[t.id]=S.tables[t.id]?uid():t.id);
+      const np={id:S.projects[sp.id]?uid():sp.id, n:nextProjNo(), name:sp.name||'Untitled', root:map[sp.root]||sp.root, u:now()}; if(sp.kind) np.kind=sp.kind; if(sp.enc) np.enc=sp.enc;
+      srcT.forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); c.id=map[t.id]; c.p=np.id; c.u=now(); if(c.parent&&map[c.parent.tableId]) c.parent.tableId=map[c.parent.tableId]; (c.rows||[]).forEach(r=>r.forEach(cell=>{ if(cell.link&&map[cell.link]) cell.link=map[cell.link]; })); S.tables[c.id]=c; dirty.add(c.id); });
+      S.projects[np.id]=np; S.curTable[np.id]=np.root; added++; });
+    if(added){ touchMeta(); save(); render(); }
+    toast(added+' project'+(added===1?'':'s')+' added'+(skipped?', '+skipped+' already here (same name) skipped':''));
+  }
+  function importLinesAsCapture(txt){
+    const blocks=txt.replace(/\r/g,'').split(/\n\s*\n+/).map(b=>b.split('\n').map(l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim()).filter(Boolean)).filter(b=>b.length);
+    if(!blocks.length) return toast('Nothing to import');
+    const p={id:uid(), n:nextProjNo(), kind:'capture', name:'Capture: pasted · '+new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}), root:null, u:now()}; S.projects[p.id]=p;
+    const mk=(name,parent,sub,lines)=>{ const t=newTable(p.id,name,parent); t.cols=['Line','Notes','Route to']; t.sub=sub||''; t.rows=lines.map(l=>[cell(l),cell(''),cell('')]); S.tables[t.id]=t; dirty.add(t.id); return t; };
+    let root;
+    if(blocks.length===1){ root=mk(blocks[0][0].slice(0,60),null,'Pasted text, one row per line. Type .. on any line to expand it, or → link it into a natural-language project.',blocks[0]); }
+    else { root=newTable(p.id,p.name,null); root.cols=['Block','Lines','Routed to']; root.sub='Pasted text with blank lines between blocks: one sub-table per block, one row per line.'; root.rows=[]; S.tables[root.id]=root; dirty.add(root.id);
+      blocks.forEach((b,i)=>{ const c=cell(b[0].slice(0,60)); const row=[c,cell(b.length+' lines'),cell('')]; root.rows.push(row); const k=mk(b[0].slice(0,60),{tableId:root.id,r:i,c:0},'Block '+(i+1)+' of the pasted text.',b); c.link=k.id; c.ref=false; }); }
+    p.root=root.id; S.cur=p.id; S.curTable[p.id]=root.id; hist=[]; touchMeta(); save(); render(); toast('Capture created: '+blocks.reduce((n,b)=>n+b.length,0)+' lines');
   }
   function importMarkdownFiles(files){
     const multi=files.length>1; const pname=multi?('Import: '+files.length+' notes · '+stamp()):files[0].name.replace(/\.(md|markdown|txt)$/i,'');
@@ -2073,7 +2099,7 @@
     const i=src.indexOf('<body>')+6; src=src.slice(0,i)+inject+src.slice(i);
     return new Blob([src],{type:'text/html'});
   }
-  async function saveStandalone(){ closeModal(); toast('Building the file…'); try{ const blob=await buildStandalone(); const name='Nested Tables '+stamp()+'.html'; if(caps.downloads){ await saveBlob(name,blob); } else { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); toast('Saved '+name); } }catch(e){ console.warn(e); toast(e.message||'Failed'); } }
+  async function saveStandalone(){ closeModal(); toast('Building the file…'); try{ const blob=await buildStandalone(); const name='Nested Tables '+stamp()+'.html'; if(caps.downloads){ await saveBlob(name,blob); } else if(!(await shareOrDownload(name,blob))){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); toast('Saved '+name); } }catch(e){ console.warn(e); toast(e.message||'Failed'); } }
   async function standaloneToDrive(){ closeModal(); if(!caps.mcp) return toast('Google Drive is not connected here'); toast('Saving the app to Drive…'); try{ const blob=await buildStandalone(); const html=await blob.text(); if(!driveFolder){ const r=await driveCall({title:'Nested Tables Backups', contentMimeType:'application/vnd.google-apps.folder'}); driveFolder=pickId(r); if(driveFolder){ try{ localStorage.setItem(KEY+'-drive',driveFolder); }catch(e){} } } await driveCall(Object.assign({title:'Nested Tables '+stamp()+'.html', contentMimeType:'text/html', textContent:html, disableConversionToGoogleType:true}, driveFolder?{parentId:driveFolder}:{})); toast('Saved to Drive (Nested Tables Backups)'); }catch(e){ console.warn(e); toast('Drive failed: '+(e&&e.code||e&&e.message||'unknown')); } }
 
   // ---------- PDF export (one section per table, nested order) ----------
@@ -2129,9 +2155,14 @@
     return files;
   }
   async function buildZip(pid){ await ensureZip(); const zip=new JSZip(); bundleFiles(pid).forEach(f=>zip.file(f.path,f.content)); return zip.generateAsync({type:'blob'}); }
+  async function shareOrDownload(filename,blob){
+    try{ const f=new File([blob],filename,{type:blob.type||'application/octet-stream'}); if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:filename}); toast('Shared '+filename); return true; } }catch(e){ if(e&&e.name==='AbortError') return true; }
+    return false;
+  }
   async function saveBlob(filename,blob){
     if(!caps.downloads){
       if(window.claude&&window.claude.use) return toast('Downloads are only available in the published app view');
+      if(await shareOrDownload(filename,blob)) return;
       const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); a.remove(); return toast('Saved '+filename);
     }
     try{ await caps.downloads.save({filename,data:blob}); toast('Saved '+filename); }catch(e){ toast('Download declined'); }
