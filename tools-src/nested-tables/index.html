@@ -370,7 +370,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.30';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.31';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1657,7 +1657,7 @@
         const mk=(label,title,fn)=>{ const b=document.createElement('span'); b.className='cbtn'; b.textContent=label; b.title=title; b.onclick=fn; tools.appendChild(b); };
         mk('A−','Smaller text in this cell',()=>{ c.fs=Math.round(Math.max(.7,(c.fs||1)-.1)*10)/10; ta.style.fontSize=(15*c.fs)+'px'; autosize(ta); touch(t); save(); });
         mk('A+','Larger text in this cell',()=>{ c.fs=Math.round(Math.min(2.5,(c.fs||1)+.1)*10)/10; ta.style.fontSize=(15*c.fs)+'px'; autosize(ta); touch(t); save(); });
-        mk(c.chk===undefined||c.chk===null?'☐ box':'☐ remove',c.chk===undefined||c.chk===null?'Add a checkbox to this cell (a logic gate)':'Remove the checkbox',()=>{ if(c.chk===undefined||c.chk===null) c.chk=false; else delete c.chk; touch(t); save(); render(); });
+        mk(c.chk===undefined||c.chk===null?'☐ box':'☐ remove',c.chk===undefined||c.chk===null?'Add a checkbox to this cell (check / state)':'Remove the checkbox',()=>{ if(c.chk===undefined||c.chk===null) c.chk=false; else delete c.chk; touch(t); save(); render(); });
         mk('☐ col','Checkbox on every cell in this column (again to remove)',()=>toggleColBoxes(ci)); mk('☐ row','Checkbox on every cell in this row (again to remove)',()=>toggleRowBoxes(ri));
         mk('🎨','Cycle this cell\'s colour (tap repeatedly; clears after the last)',()=>{ td.classList.remove('c'+(c.col||0)); c.col=((c.col||0)+1)%9; if(c.col) td.classList.add('c'+c.col); touch(t); save(); });
         const inv=document.createElement('span'); inv.className='invbtn'; inv.textContent='◐'; inv.title=c.inv?'Restore this cell':'Invert this cell (night mode for one cell)';
@@ -1833,7 +1833,7 @@
   }
 
   // ---------- export formats ----------
-  function exportJSON(){ const q=persistable(); return JSON.stringify({projects:q.projects, tables:q.tables, exported:new Date().toISOString()},null,2); }
+  function exportJSON(){ const q=persistable(); return JSON.stringify({projects:q.projects, tables:q.tables, pad:q.pad||'', exported:new Date().toISOString()},null,2); }
   function esc(s){ return String(s).replace(/\|/g,'\\|').replace(/\r?\n/g,'<br>'); }
   function exportMarkdown(){
     const L=['# Nested Tables','','Exported '+new Date().toLocaleString(),''];
@@ -1874,7 +1874,7 @@
 
   $('btnSave').onclick=()=>{
     const btns=[['Close','',closeModal]];
-    btns.push(['Master file → save','primary',async()=>{ closeModal(); const blob=new Blob([exportJSON()],{type:'application/json'}); await saveBlob('Nested Tables MASTER.json',blob); }]);
+    btns.push(['Master file → save','primary',async()=>{ closeModal(); live().forEach(p=>{ p.syncAt=now(); }); touchMeta(); save(); const blob=new Blob([exportJSON()],{type:'application/json'}); await saveBlob('Nested Tables MASTER.json',blob); }]);
     btns.push(['Copy JSON','',()=>copyText(exportJSON())]);
     btns.push(['Copy Markdown','',()=>copyText(exportMarkdown())]);
     if(caps.downloads){ btns.push(['Download JSON','',()=>downloadFile('nested-tables '+stamp()+'.json',exportJSON())]); btns.push(['Download Markdown','',()=>downloadFile('nested-tables '+stamp()+'.md',exportMarkdown())]); }
@@ -1887,7 +1887,7 @@
   };
   $('btnImport').onclick=()=>{
     M.area.value='';
-    showModal('Import','Load a file: a Master file, "Pick Personal.json" or any Nested Tables backup. Projects you do not have are added; a project edited more recently in the file replaces the copy here (a version is saved first); nothing is deleted. Or paste text below: lines → a capture, or Markdown.',true,[
+    showModal('Import','Load a file: a Master file, "Pick Personal.json" or any Nested Tables backup. Projects you do not have are added; existing projects merge table by table (newer side wins; a table changed on both sides asks you; a version is saved first); nothing is deleted. Or paste text below: lines → a capture, or Markdown.',true,[
       ['Cancel','',closeModal],
       ['Master file → load','primary',()=>{ const inp=M.extra.querySelector('input[data-json]'); if(inp) inp.click(); }],
       ['Lines → capture','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }],
@@ -1930,23 +1930,37 @@
       else throw 0;
       ensureSane(); old.forEach(id=>{ if(!S.tables[id]) deleted.add(id); }); Object.values(S.tables).forEach(t=>{ t.u=now(); dirty.add(t.id); }); touchMeta(); hist=[]; save(); render(); toast('Replaced from backup');
     }catch(e){ toast('That backup could not be read'); } }
-  function mergeFromJSON(d){ if(d&&typeof d.pad==='string'&&d.pad.trim()&&!padGet().trim()) padSet(d.pad);
+  // Merge, table by table (v1.31). Same table changed on both sides since the last sync → ask; otherwise the newer side wins per table; tables only one side has are kept; nothing is deleted.
+  function tableSig(t){ return JSON.stringify({n:t.name,s:t.sub||'',c:t.cols,r:t.rows,p:t.parent||null}); }
+  function askConflict(lp,loc,inc){ return new Promise(res=>{ const f=u=>new Date(u||0).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); showModal('Merge conflict · '+(lp.name||'')+' › '+(loc.name||inc.name||'table'),'This table changed on both sides since the last sync. This device: '+f(loc.u)+' · Master file: '+f(inc.u)+'. "Keep both" keeps this device\'s copy and adds the master version as a new table under the project\'s Home (row "⚠ from master").',false,[['Keep this device','',()=>{ closeModal(); res('local'); }],['Keep master','',()=>{ closeModal(); res('master'); }],['Keep both','primary',()=>{ closeModal(); res('both'); }]]); }); }
+  async function mergeFromJSON(d){ if(d&&typeof d.pad==='string'&&d.pad.trim()&&!padGet().trim()) padSet(d.pad);
     if(!(d.projects&&d.tables)){ if(d.tables&&d.root&&d.tables[d.root]){ d={projects:{x:{id:'x',n:1,name:'Imported project',root:d.root,u:now()}},tables:d.tables}; Object.values(d.tables).forEach(t=>t.p='x'); } else return toast('That is not a Nested Tables backup'); }
-    const have=new Set(live().map(p=>(p.name||'').trim().toLowerCase())); let added=0, skipped=0, updated=0;
-    const newest=(pid,tabs)=>Math.max(0,...Object.values(tabs).filter(t=>t.p===pid&&!t.trashed).map(t=>t.u||0));
-    Object.values(d.projects).forEach(sp=>{ if(sp.trashed) return; const nm=(sp.name||'').trim().toLowerCase();
+    const have=new Set(live().map(p=>(p.name||'').trim().toLowerCase())); let added=0, skipped=0, updated=0, conflicts=0;
+    for(const sp of Object.values(d.projects)){ if(sp.trashed) continue; const nm=(sp.name||'').trim().toLowerCase();
       const lp=S.projects[sp.id];
-      if(lp&&!lp.enc&&!sp.enc){ // same project in both: keep whichever was edited last
-        const inc=Math.max(sp.u||0,newest(sp.id,d.tables)), loc=Math.max(lp.u||0,newest(lp.id,S.tables));
-        if(inc>loc+1000){ saveVersion(lp,'before update from master',{auto:true}); removeTables(tablesOf(lp.id).map(t=>t.id)); Object.values(d.tables).filter(t=>t.p===sp.id&&!t.trashed).forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); S.tables[c.id]=c; dirty.add(c.id); }); lp.root=sp.root; lp.name=sp.name; lp.u=inc; if(!S.tables[S.curTable[lp.id]]) S.curTable[lp.id]=lp.root; updated++; } else skipped++;
-        return; }
-      if(lp||have.has(nm)){ skipped++; return; }
+      if(lp&&!lp.enc&&!sp.enc){
+        const since=lp.syncAt||0; let changed=0, versioned=false; const ver=()=>{ if(!versioned){ versioned=true; saveVersion(lp,'before merge from master',{auto:true}); } };
+        const copyIn=(t)=>{ const c=JSON.parse(JSON.stringify(t)); S.tables[c.id]=c; dirty.add(c.id); changed++; };
+        for(const t of Object.values(d.tables).filter(t=>t.p===sp.id&&!t.trashed)){
+          const L=S.tables[t.id];
+          if(!L){ ver(); copyIn(t); continue; }
+          if(L.trashed){ if((t.u||0)>(L.u||0)+1000){ ver(); copyIn(t); } continue; }
+          if(tableSig(L)===tableSig(t)) continue;
+          const locChanged=(L.u||0)>since+1000, incChanged=(t.u||0)>since+1000;
+          if(since&&locChanged&&incChanged){ conflicts++; const pick=await askConflict(lp,L,t); if(pick==='master'){ ver(); copyIn(t); } else if(pick==='both'){ ver(); const c=JSON.parse(JSON.stringify(t)); c.id=uid(); c.n=nextPageNo(lp.id); c.name=(t.name||'table')+' (master '+new Date(t.u||0).toLocaleDateString()+')'; const root=S.tables[lp.root]; const ri=root.rows.length; const r=[]; for(let i=0;i<root.cols.length;i++) r.push(cell(i===0?'⚠ from master: '+(t.name||''):'')); r[0].link=c.id; root.rows.push(r); c.parent={tableId:root.id,r:ri,c:0}; c.u=now(); S.tables[c.id]=c; dirty.add(c.id); touch(root); changed++; } continue; }
+          if(since? incChanged&&!locChanged : (t.u||0)>(L.u||0)+1000){ ver(); copyIn(t); }
+        }
+        if((sp.u||0)>(lp.u||0)+1000&&sp.name&&sp.name!==lp.name){ lp.name=sp.name; changed++; }
+        if(!S.tables[lp.root]&&S.tables[sp.root]) lp.root=sp.root; if(!S.tables[S.curTable[lp.id]]) S.curTable[lp.id]=lp.root;
+        lp.syncAt=now(); if(changed){ lp.u=Math.max(lp.u||0,sp.u||0,now()); updated++; } else skipped++;
+        continue; }
+      if(lp||have.has(nm)){ skipped++; continue; }
       const map={}; const srcT=Object.values(d.tables).filter(t=>t.p===sp.id); srcT.forEach(t=>map[t.id]=S.tables[t.id]?uid():t.id);
-      const np={id:S.projects[sp.id]?uid():sp.id, n:nextProjNo(), name:sp.name||'Untitled', root:map[sp.root]||sp.root, u:now()}; if(sp.kind) np.kind=sp.kind; if(sp.enc) np.enc=sp.enc;
+      const np={id:S.projects[sp.id]?uid():sp.id, n:nextProjNo(), name:sp.name||'Untitled', root:map[sp.root]||sp.root, u:now(), syncAt:now()}; if(sp.kind) np.kind=sp.kind; if(sp.enc) np.enc=sp.enc;
       srcT.forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); c.id=map[t.id]; c.p=np.id; c.u=now(); if(c.parent&&map[c.parent.tableId]) c.parent.tableId=map[c.parent.tableId]; (c.rows||[]).forEach(r=>r.forEach(cell=>{ if(cell.link&&map[cell.link]) cell.link=map[cell.link]; })); S.tables[c.id]=c; dirty.add(c.id); });
-      S.projects[np.id]=np; S.curTable[np.id]=np.root; added++; });
-    if(added||updated){ touchMeta(); hist=[]; save(); render(); }
-    toast((added?added+' added':'')+(added&&updated?', ':'')+(updated?updated+' updated from master':'')+((added||updated)?'':'Nothing newer than what is here')+(skipped?' · '+skipped+' unchanged':''));
+      S.projects[np.id]=np; S.curTable[np.id]=np.root; added++; }
+    touchMeta(); if(added||updated){ hist=[]; } save(); render();
+    toast((added?added+' added':'')+(added&&updated?', ':'')+(updated?updated+' updated from master':'')+((added||updated)?'':'Nothing newer than what is here')+(conflicts?' · '+conflicts+' conflict'+(conflicts>1?'s':'')+' resolved':'')+(skipped?' · '+skipped+' unchanged':''));
   }
   function importLinesAsCapture(txt){
     const blocks=txt.replace(/\r/g,'').split(/\n\s*\n+/).map(b=>b.split('\n').map(l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim()).filter(Boolean)).filter(b=>b.length);
@@ -2151,7 +2165,7 @@
       [['A− A+',''],'Smaller / larger text in this cell (0.7×–2.5×).','Per cell'],
       [['🎨',''],'Cycle this cell through eight soft colours; a ninth tap clears.','Per cell; shows in Snapshot and PDF'],
       [['◐',''],'Flip this one cell: dark on a light page, light on a dark page.','Per cell'],
-      [['☐ box',''],'Adds a checkbox to the cell — a logic gate you tick as you work through a table. Checked cells tint green; the banner counts ☑ done/total; exports show ☐/☑.','Imported Obsidian checklists arrive as boxes'],
+      [['☐ box',''],'Adds a checkbox to the cell — a check / state marker you tick as you work through a table (it records state; it does not execute logic). Checked cells tint green; the banner counts ☑ done/total; exports show ☐/☑.','Imported Obsidian checklists arrive as boxes'],
       [['☐ col · ☐ row',''],'Checkbox on every cell of a column (a list, one under another) or a row (across). Also on the column letter / row number: tap it for the tools. Tap again to remove.','A cell that owns a sub-table with boxes shows its progress, e.g. ☑3/7'],
       [['Enter / Tab','keys'],'Enter = new line inside the cell. Tab = next cell (Shift+Tab back).','Hidden columns come into view on their own']]},
     {h:'Moving around',lead:'Think of the project as a spreadsheet of tables.',cols:['Icon','Does','Keyboard'],rows:[
@@ -2166,7 +2180,7 @@
       [['Linked from',''],'Every cell that points at the current table; tap to go there.','Under the title']]},
     {h:'Table and layer',lead:'Each table has a title, a subtitle and its own size.',cols:['Control','Does','Notes'],rows:[
       [['Title / subtitle',''],'Edit above the grid. The subtitle is where the principle of a layer lives.','A−/A+ beside the title resize both'],
-      [['Master file',''],'💾 Master file → save makes "Nested Tables MASTER.json"; 📥 Master file → load merges it in (newer side wins per project, automatic version first, nothing deleted). One file in Drive keeps Safari, Chrome, the Home Screen app and the Claude app in step.','Do it at the end of a session in one browser and the start in another'],
+      [['Master file',''],'💾 Master file → save makes "Nested Tables MASTER.json"; 📥 Master file → load merges it in table by table (a table changed on both sides since the last sync asks you; otherwise the newer side wins; nothing deleted; a version is saved first). One file in Drive keeps Safari, Chrome, the Home Screen app and the Claude app in step.','Do it at the end of a session in one browser and the start in another'],
       [['🕒 Save version',''],'Saves a numbered, dated copy of the current project (v1, v2…). Auto versions are also taken while you work: the first and last of each day are kept for 30 days. Tap the project chip → Versions to restore one or open it as a copy.','Kept in this browser (IndexedDB); Download JSON to keep one elsewhere'],
       [['Rows −/+ · Columns −/+',''],'Grow or shrink the table; − removes the last row or column.','Asks first if sub-tables would be lost'],
       [['Header hover',''],'Insert a row/column here, or delete this one.','Hover a row number or column letter'],
@@ -2178,7 +2192,7 @@
       [['⌄ All projects',''],'Drops the project row down as a list (and back to one line). ▲ at a project\'s Home does the same.','First chip on the left'],
       [['📋 Capture',''],'Paste a Keep note or Live Text from a photo; each line becomes a row in a new 📷 capture project.','Front row of the toolbar'],
       [['⊕ Samples',''],'Add a prebuilt map: the guided tour, osteoporosis history, hypertension evaluation.','Guideline-level; review before clinical use'],
-      [['🔒 / 🔓',''],'Password-protected project (AES-256-GCM, key from your password). Locked = not in memory. Unlock on any device with the password.','No recovery if forgotten'],
+      [['🔒 / 🔓',''],'Password-protected project (AES-256-GCM, key from your password). Locked = not in memory. Unlock on any device with the password. Encryption is not HIPAA compliance: this is a personal thinking tool, not a clinical record — no patient-identifiable information.','No recovery if forgotten'],
       [['🗑 Trash (n)',''],'Deleted projects and tables; Restore or Delete forever. Auto-removed after 30 days.','Appears only when something is in it']]},
     {h:'View',lead:'Same data, shaped for the screen.',cols:['Icon','Does','Notes'],rows:[
       [['− 100% +',''],'Zoom. Pinch on a phone; Ctrl/⌘ + − 0, Ctrl+scroll or trackpad pinch on a computer.','Remembered'],
