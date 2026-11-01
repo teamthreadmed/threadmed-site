@@ -324,7 +324,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.6';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.7';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -448,6 +448,7 @@
     const chip=p=>{ const c=document.createElement('span'); c.className='chip'+(p.id===S.cur?' here':'')+(p.kind==='capture'?' capture':''); c.innerHTML='<b></b><span></span>';
       c.firstChild.textContent=(p.kind==='capture'?'📷 ':'')+'P'+p.n; c.lastChild.textContent=(p.enc?(isLocked(p)?'🔒 ':'🔓 '):'')+(p.name||'Untitled'); c.title=p.id===S.cur?'Rename, protect or delete this project':(isLocked(p)?'Locked — tap to unlock':'Open project '+p.n);
       c.onclick=()=>p.id===S.cur?projectModal(p):goProject(p.id); bar.appendChild(c); };
+    const lst=document.createElement('span'); lst.className='chip add'; lst.innerHTML='<b>☰</b>Projects'; lst.title='List of projects — tap one to open it'; lst.onclick=projectsMenu; bar.appendChild(lst);
     const add=document.createElement('span'); add.className='chip add'; add.textContent='+ New'; add.title='New project'; add.onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); }; bar.appendChild(add);
     nat.forEach(chip);
     if(cap.length){ const d=document.createElement('span'); d.className='divider'; d.textContent='captures'; bar.appendChild(d); cap.forEach(chip); }
@@ -1929,7 +1930,7 @@
 
   // ---------- zoom ----------
   let zoom=1; try{ zoom=parseFloat(localStorage.getItem(KEY+'-zoom'))||1; }catch(e){}
-  function setZoom(z,quiet){ zoom=Math.round(Math.max(.3,Math.min(3,z))*100)/100; document.documentElement.style.setProperty('--zoom',zoom); $('zoomPct').textContent=Math.round(zoom*100)+'%'; try{ localStorage.setItem(KEY+'-zoom',zoom); }catch(e){} if(!quiet) document.querySelectorAll('#grid textarea').forEach(autosize); }
+  function setZoom(z,quiet){ zoom=Math.round(Math.max(.1,Math.min(1.5,z))*100)/100; document.documentElement.style.setProperty('--zoom',zoom); $('zoomPct').textContent=Math.round(zoom*100)+'%'; try{ localStorage.setItem(KEY+'-zoom',zoom); }catch(e){} if(!quiet) document.querySelectorAll('#grid textarea').forEach(autosize); }
   const snapOpen=()=>$('snap').classList.contains('open');
   const curZoom=()=>snapOpen()?szoom:zoom;
   const applyZoom=(z,quiet)=>snapOpen()?setSnapZoom(z):setZoom(z,quiet);
@@ -2025,6 +2026,7 @@
     {h:'Projects',lead:'The chips under the banner.',cols:['Control','Does','Notes'],rows:[
       [['Chip',''],'Tap to open a project. Tap the current chip to rename it, set a password, mark it as a capture, or delete it.',''],
       [['+ New project',''],'A fresh tree with its own Home.',''],
+      [['☰ Projects',''],'Drop-down list of all projects; tap one to open it. Same list as ▲ at a project\'s Home.','First chip on the left'],
       [['⊕ Samples',''],'Add a prebuilt map: the guided tour, osteoporosis history, hypertension evaluation.','Guideline-level; review before clinical use'],
       [['🔒 / 🔓',''],'Password-protected project (AES-256-GCM, key from your password). Locked = not in memory. Unlock on any device with the password.','No recovery if forgotten'],
       [['🗑 Trash (n)',''],'Deleted projects and tables; Restore or Delete forever. Auto-removed after 30 days.','Appears only when something is in it']]},
