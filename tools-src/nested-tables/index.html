@@ -44,7 +44,13 @@
   button:disabled{opacity:.45;cursor:default}
   button.off{opacity:.6} button.off .lbl{text-decoration:line-through}
   button i{font-style:normal;margin-right:5px} button i:only-child,button i:last-child{margin-right:0}
-  @media(max-width:760px){ header button .lbl{display:none} button i{margin-right:0} .bar{gap:6px;padding:8px 10px} header h1{display:none} #stats{display:none} }
+  #btnMore{display:none}
+  @media(max-width:760px){ header button .lbl{display:none} button i{margin-right:0} .bar{gap:6px;padding:6px 10px} header h1{display:none} #stats{display:none}
+    header .pill{font-size:11px;padding:2px 7px} header .pill.track{max-width:58vw}
+    header .more{display:none} header.showmore .more{display:inline-flex}
+    header .bar.projects{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-top:4px;padding-bottom:6px;scrollbar-width:none} header .bar.projects::-webkit-scrollbar{display:none}
+    header .chip{flex:0 0 auto;max-width:180px;padding:4px 10px;font-size:12.5px}
+    #btnMore{display:inline-flex} }
   button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   button.primary:hover{opacity:.9;color:#fff}
   button.danger:hover{border-color:var(--warn);color:var(--warn)}
@@ -97,7 +103,6 @@
   #celltools{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:12;align-items:center;gap:6px;padding:6px 8px;background:var(--panel);border:1px solid var(--accent);border-radius:10px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
   body.phone main{padding-bottom:90px}
   body.phone header{position:static}
-  body.phone .chip{max-width:200px}
   body.phone .titlebar input{flex:1 1 100%;min-width:0;font-size:19px}
     #phonenav{display:none;position:sticky;top:0;z-index:11;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.08);align-items:center;justify-content:center;gap:8px}
   body.phone #phonenav{display:flex}
@@ -251,16 +256,17 @@
       <button id="linkPrev" title="Previous hyperlink (Alt+[)">↳◀</button><button id="linkNext" title="Next hyperlink (Alt+])">↳▶</button>
     </span>
     <button id="btnBack" title="Back to the previous table"><i>↩</i><span class="lbl">Back</span></button>
-    <button id="btnTree" title="Outline of this project"><i>☰</i><span class="lbl">Outline</span></button>
-    <button id="btnSnap" title="Snapshot: the whole project on one page, zoom and pan"><i>🗺</i><span class="lbl">Snapshot</span></button>
-    <button id="btnGuide" title="Guide: every icon and concept, one per cell"><i>❓</i><span class="lbl">Guide</span></button>
-    <span class="zoom" title="Zoom (Ctrl/⌘ + − 0, Ctrl+scroll, pinch)"><button id="zoomOut" title="Zoom out">−</button><span id="zoomPct" title="Reset zoom">100%</span><button id="zoomIn" title="Zoom in">+</button></span>
-    <button id="btnColors" title="Layer colors: tint each nesting layer"><i>🎨</i><span class="lbl">Colors</span></button>
-    <button id="btnNight" title="Night mode"><i>☾</i><span class="lbl">Night</span></button>
-    <button id="btnPhone" title="Phone mode: a few columns at a time"><i>📱</i><span class="lbl">Phone</span></button>
-    <button id="btnSave" title="Save, export and back up"><i>💾</i><span class="lbl">Save</span></button>
-    <button id="btnImport" title="Import a JSON backup"><i>📥</i><span class="lbl">Import</span></button>
-    <button id="btnReset" class="danger" title="Clear everything"><i>🗑</i><span class="lbl">Reset</span></button>
+    <button id="btnMore" title="More tools"><i>⋯</i></button>
+    <button class="more" id="btnTree" title="Outline of this project"><i>☰</i><span class="lbl">Outline</span></button>
+    <button class="more" id="btnSnap" title="Snapshot: the whole project on one page, zoom and pan"><i>🗺</i><span class="lbl">Snapshot</span></button>
+    <button class="more" id="btnGuide" title="Guide: every icon and concept, one per cell"><i>❓</i><span class="lbl">Guide</span></button>
+    <span class="zoom more" title="Zoom (Ctrl/⌘ + − 0, Ctrl+scroll, pinch)"><button id="zoomOut" title="Zoom out">−</button><span id="zoomPct" title="Reset zoom">100%</span><button id="zoomIn" title="Zoom in">+</button></span>
+    <button class="more" id="btnColors" title="Layer colors: tint each nesting layer"><i>🎨</i><span class="lbl">Colors</span></button>
+    <button class="more" id="btnNight" title="Night mode"><i>☾</i><span class="lbl">Night</span></button>
+    <button class="more" id="btnPhone" title="Phone mode: a few columns at a time"><i>📱</i><span class="lbl">Phone</span></button>
+    <button class="more" id="btnSave" title="Save, export and back up"><i>💾</i><span class="lbl">Save</span></button>
+    <button class="more" id="btnImport" title="Import a JSON backup"><i>📥</i><span class="lbl">Import</span></button>
+    <button class="more" id="btnReset" class="danger" title="Clear everything"><i>🗑</i><span class="lbl">Reset</span></button>
   </div>
   <div class="bar projects" id="projbar"></div>
 </header>
@@ -326,7 +332,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.10.1';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.11';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1509,7 +1515,7 @@
     el.title='Project · Page = table number within the project · Layer = nesting depth · [path] = page:cell followed to get here';
     applyColors(depth);
   }
-  $('btnColors').onclick=()=>{ colorsOn=!colorsOn; try{ localStorage.setItem(KEY+'-colors',colorsOn?'1':'0'); }catch(e){} $('btnColors').className=colorsOn?'':'off'; renderTrack(); toast(colorsOn?'Layer colors on':'Layer colors off'); };
+  $('btnColors').onclick=()=>{ colorsOn=!colorsOn; try{ localStorage.setItem(KEY+'-colors',colorsOn?'1':'0'); }catch(e){} $('btnColors').classList.toggle('off',!colorsOn); renderTrack(); toast(colorsOn?'Layer colors on':'Layer colors off'); };
 
   function autosize(ta){ ta.style.height='auto'; ta.style.height=(ta.scrollHeight)+'px'; }
 
@@ -1520,7 +1526,7 @@
   function colVisible(t,ci){ if(!phone||t.cols.length<=colN) return true; const s=winStart(t); return ci>=s&&ci<s+colN; }
   function slideCols(d){ const t=T(); const max=Math.max(0,t.cols.length-colN); colWin[t.id]=Math.min(max,Math.max(0,winStart(t)+d)); renderGrid(); renderColnav(); }
   function renderColnav(){
-    const t=T(); const bar=$('colnav'); document.body.classList.toggle('phone',phone); $('btnPhone').className=phone?'':'off';
+    const t=T(); const bar=$('colnav'); document.body.classList.toggle('phone',phone); $('btnPhone').classList.toggle('off',!phone);
     if(!phone||t.cols.length<=colN){ bar.style.display='none'; return; }
     bar.style.display='flex'; const s=winStart(t); const e=Math.min(t.cols.length,s+colN);
     $('cnLabel').textContent='Columns '+colLetter(s)+'–'+colLetter(e-1)+' of '+t.cols.length; $('cnN').textContent=colN;
@@ -1971,6 +1977,7 @@
   function applyTheme(){ document.documentElement.setAttribute('data-theme',theme); $('btnNight').innerHTML=theme==='dark'?'<i>☀</i><span class="lbl">Day</span>':'<i>☾</i><span class="lbl">Night</span>'; try{ localStorage.setItem(KEY+'-theme',theme); }catch(e){} }
   $('btnNight').onclick=()=>{ theme=theme==='dark'?'light':'dark'; applyTheme(); renderTrack(); };
   applyTheme();
+  $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   $('btnTree').onclick=()=>{ const L=$('layout'); L.classList.toggle('withtree'); try{ localStorage.setItem(KEY+'-tree',L.classList.contains('withtree')?'1':'0'); }catch(e){} };
   try{ if(localStorage.getItem(KEY+'-tree')==='1') $('layout').classList.add('withtree'); }catch(e){}
 
@@ -2302,7 +2309,7 @@
   load(); if(pruneDefaults()) save();
   placeNav();
   loadVersionsAsync().then(async all=>{ const p=P(); if(!p||p.enc) return; const today=dayKey(now()); if(!all.some(v=>v.pid===p.id&&dayKey(v.ts)===today)){ lastAuto[p.id]=now(); await saveVersion(p,'auto · first of day',{auto:true}); } });
-  $('btnColors').className=colorsOn?'':'off';
+  $('btnColors').classList.toggle('off',!colorsOn);
   setZoom(zoom,true);
   render();
   initCaps();
