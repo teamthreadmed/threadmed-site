@@ -47,5 +47,7 @@ ok('personal chip grouped & styled',await p.evaluate(()=>{const c=[...document.q
 await p.evaluate(()=>{for(let i=0;i<8;i++)document.getElementById('zoomOut').click();});await p.waitForTimeout(300);ok('rows compact at 20%',await p.evaluate(()=>{const td=document.querySelector('#grid td[data-ri="0"][data-ci="1"]');return td&&td.getBoundingClientRect().height<80;}));
 ok('viewport locks browser zoom',await p.evaluate(()=>/user-scalable=no/.test(document.querySelector('meta[name=viewport]').content)));
 await p.evaluate(()=>document.getElementById('zoomPct').click());
+await p.evaluate(()=>document.getElementById('zoomPct').click());await p.waitForTimeout(200);await p.tap('#grid td[data-ri="1"][data-ci="2"]');await p.waitForTimeout(400);ok('tap on cell padding focuses its textarea',await p.evaluate(()=>{const a=document.activeElement;return a&&a.tagName==='TEXTAREA'&&a.closest('td').dataset.ri==='1'&&a.closest('td').dataset.ci==='2';}));
+await p.waitForTimeout(900);ok('no early focus loss toast',!(await p.$eval('#toast',e=>e.textContent)).includes('lost focus'));
 ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
 await b.close();})();

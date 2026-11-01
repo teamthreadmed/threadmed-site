@@ -129,6 +129,7 @@
     header .bar h1{font-size:15px}
     header .bar{padding:4px 8px;min-height:0}
     #btnMore,#btnProjList{display:none!important}
+    .cell .tools{pointer-events:none} td.sel .cell .tools,td:focus-within .cell .tools{pointer-events:auto} td.sel .cbtn,td.sel .ghost,td.sel .invbtn{opacity:1}
     #mArea{max-height:22vh}
     .modal{align-items:flex-start!important;padding:10px!important}
     .modal .box{max-height:80vh;padding:12px}
@@ -369,7 +370,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.24';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.25';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1994,7 +1995,10 @@
 
   // ---------- D-pad navigation ----------
   let lastCell=null; // {ri,ci} of the most recently focused cell in the current table
-  document.addEventListener('focusin',e=>{ const ta=e.target; if(ta.tagName==='TEXTAREA'&&ta.closest('#grid')){ const td=ta.closest('td'); lastCell={ri:+td.dataset.ri,ci:+td.dataset.ci,table:T().id}; document.querySelectorAll('#grid td.sel').forEach(x=>{ if(x!==td) x.classList.remove('sel'); }); td.classList.add('sel'); showCellTools(td); } });
+  let focusAt=0;
+  document.addEventListener('click',e=>{ const td=e.target.closest&&e.target.closest('#grid td'); if(!td||e.target.closest('textarea,button,.jump,.cbtn,.tools,.chk,.mini,input,a')) return; const ta=td.querySelector('textarea'); if(ta&&document.activeElement!==ta){ ta.focus(); const n=ta.value.length; try{ ta.setSelectionRange(n,n); }catch(x){} } });
+  document.addEventListener('focusout',e=>{ const ta=e.target; if(ta.tagName==='TEXTAREA'&&ta.closest('#grid')&&Date.now()-focusAt<700){ const r=e.relatedTarget; toast('Cell lost focus → '+(r?(r.tagName+(r.id?'#'+r.id:'')+(r.className?'.'+String(r.className).split(' ')[0]:'')):'nothing')+' — tell Claude'); } });
+  document.addEventListener('focusin',e=>{ const ta=e.target; if(ta.tagName==='TEXTAREA'&&ta.closest('#grid')){ focusAt=Date.now(); const td=ta.closest('td'); lastCell={ri:+td.dataset.ri,ci:+td.dataset.ci,table:T().id}; document.querySelectorAll('#grid td.sel').forEach(x=>{ if(x!==td) x.classList.remove('sel'); }); td.classList.add('sel'); showCellTools(td); } });
   function showCellTools(td){ const bar=$('celltools'); if(!phone||!td){ bar.classList.remove('on'); return; } const tools=td.querySelector('.cell .tools'); if(!tools) return; bar.innerHTML=''; const l=document.createElement('span'); l.className='lbl'; l.textContent=cellRef(T(),+td.dataset.ri,+td.dataset.ci)+' ▸'; bar.appendChild(l); bar.appendChild(tools); bar.classList.add('on'); }
   function siblings(){ const t=T(); if(!t.parent||!S.tables[t.parent.tableId]) return null; return ownedChildren(t.parent.tableId).map(k=>k.id); }
   function projList(){ return live().map(p=>p.id); }
