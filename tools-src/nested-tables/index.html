@@ -291,7 +291,7 @@
     <button id="btnCapture" title="Capture: paste text (Keep note, Live Text from a photo) → a 📷 capture project"><i>📋</i><span class="lbl">Capture</span></button>
     <button class="more" id="btnLock" title="Password-protect this project (encrypted on this device and in every backup), or lock it now"><i>🔒</i><span class="lbl">Lock</span></button>
     <button id="btnSearch" title="Search every project for a word or words (Ctrl/⌘ K)"><i>🔍</i><span class="lbl">Search</span></button>
-    <button id="btnTodo" title="Scratch pad: quick to-dos in one global To do list; Copy / Share sends them to TickTick or anywhere"><i>✓</i><span class="lbl">To-do</span></button>
+    <button id="btnTodo" title="Pad: a free-text scratch pad that stays; Copy / Share to move it anywhere"><i>✎</i><span class="lbl">Pad</span></button>
     <button id="btnMore" title="More tools"><i>⋯</i></button>
     <button class="more" id="btnTree" title="Outline of this project"><i>☰</i><span class="lbl">Outline</span></button>
     <button class="more" id="btnSnap" title="Snapshot: the whole project on one page, zoom and pan"><i>🗺</i><span class="lbl">Snapshot</span></button>
@@ -370,7 +370,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.27';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.29';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -384,6 +384,7 @@
   function touchMeta(){ S.fresh=false; metaDirty=true; }
 
   function P(){ return S.projects[S.cur]; }
+  function coarse(){ try{ return document.body.classList.contains('phone')||matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } }
   const live=()=>Object.values(S.projects).filter(p=>!p.trashed).sort((a,b)=>a.n-b.n);
   const trashed=()=>Object.values(S.projects).filter(p=>p.trashed).sort((a,b)=>b.trashed-a.trashed);
   function T(){ return S.tables[S.curTable[S.cur]]; }
@@ -1519,7 +1520,7 @@
   async function unlockProject(p,pw){ const key=await deriveKey(pw,unb64(p.enc.salt)); let plain; try{ plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(p.enc.iv)},key,unb64(p.enc.data)); }catch(e){ throw new Error('Wrong password'); } const arr=JSON.parse(new TextDecoder().decode(plain)); vault[p.id]=key; arr.forEach(t=>{ t.p=p.id; S.tables[t.id]=t; }); if(!S.tables[p.root]&&arr[0]) p.root=arr[0].id; }
   function lockProject(p){ if(!p.enc) return; if(encDirty.has(p.id)){ encryptTables(p).then(()=>{ finishLock(p); save(); }); } else finishLock(p); }
   function finishLock(p){ tablesOf(p.id).forEach(t=>{ delete S.tables[t.id]; dirty.delete(t.id); }); delete vault[p.id]; hist=[]; if(S.cur===p.id){ const other=live().find(x=>!isLocked(x)); S.cur=other?other.id:p.id; } try{ localStorage.setItem(KEY,JSON.stringify(persistable())); }catch(e){} render(); toast('Locked'); }
-  function persistable(){ const prot=new Set(Object.values(S.projects).filter(p=>p.enc).map(p=>p.id)); const tables={}; Object.values(S.tables).forEach(t=>{ if(!prot.has(t.p)) tables[t.id]=t; }); return {projects:S.projects, tables, cur:S.cur, curTable:S.curTable, fresh:S.fresh}; }
+  function persistable(){ const prot=new Set(Object.values(S.projects).filter(p=>p.enc).map(p=>p.id)); const tables={}; Object.values(S.tables).forEach(t=>{ if(!prot.has(t.p)) tables[t.id]=t; }); return {projects:S.projects, tables, cur:S.cur, curTable:S.curTable, fresh:S.fresh, pad:padGet()}; }
   function promptUnlock(p,onDone){ passwordModal('Unlock project '+p.n+' · '+p.name,'Enter the password for this project.',false,async pw=>{ await unlockProject(p,pw); if(onDone) onDone(); render(); toast('Unlocked'); }); }
 
   function renderCrumbs(){
@@ -1608,7 +1609,7 @@
       b.innerHTML='<button title="Checkbox on every cell in this column (again to remove)">☐</button><button title="Insert column left">+←</button><button title="Insert column right">→+</button><button title="Delete column">×</button>';
       const [cb,l,r,x]=b.querySelectorAll('button');
       cb.onclick=()=>toggleColBoxes(ci); l.onclick=()=>insertCol(ci); r.onclick=()=>insertCol(ci+1); x.onclick=()=>deleteCol(ci);
-      lt.style.cursor='pointer'; lt.title='Tap for column tools'; lt.onclick=()=>th.classList.toggle('show');
+      lt.style.cursor='pointer'; lt.title='Tap for column tools'; lt.style.cssText+=';display:inline-block;min-width:26px;min-height:26px;line-height:26px;text-align:center;border-radius:6px'; lt.onclick=()=>{ if(coarse()){ const letter=colLetter(ci); const boxed=t.rows.length&&t.rows.every(r=>hasBox(r[ci])); showModal('Column '+letter+(name?' · '+name:''),'Column tools.',false,[['Cancel','',closeModal],[boxed?'☑ Remove checkboxes':'☐ Checkbox every cell','primary',()=>{ closeModal(); toggleColBoxes(ci); }],['Insert left','',()=>{ closeModal(); insertCol(ci); }],['Insert right','',()=>{ closeModal(); insertCol(ci+1); }],['Delete column','',()=>{ closeModal(); deleteCol(ci); }]]); } else th.classList.toggle('show'); };
       th.appendChild(b); hr.appendChild(th);
     });
     thead.appendChild(hr); g.appendChild(thead);
@@ -1621,7 +1622,7 @@
       rb.innerHTML='<button title="Checkbox on every cell in this row (again to remove)">☐</button><button title="Insert row above">+↑</button><button title="Insert row below">↓+</button><button title="Delete row">×</button>';
       const [cb,u,d,x]=rb.querySelectorAll('button');
       cb.onclick=()=>toggleRowBoxes(ri); u.onclick=()=>insertRow(ri); d.onclick=()=>insertRow(ri+1); x.onclick=()=>deleteRow(ri);
-      rh.style.cursor='pointer'; rh.title='Tap for row tools'; rh.onclick=e=>{ if(e.target===rh||e.target.nodeType===3) rh.classList.toggle('show'); };
+      rh.style.cursor='pointer'; rh.title='Tap for row tools'; rh.onclick=e=>{ if(!(e.target===rh||e.target.nodeType===3)) return; if(coarse()){ const boxed=row.every(hasBox); showModal('Row '+(ri+1),'Row tools.',false,[['Cancel','',closeModal],[boxed?'☑ Remove checkboxes':'☐ Checkbox every cell','primary',()=>{ closeModal(); toggleRowBoxes(ri); }],['Insert above','',()=>{ closeModal(); insertRow(ri); }],['Insert below','',()=>{ closeModal(); insertRow(ri+1); }],['Delete row','',()=>{ closeModal(); deleteRow(ri); }]]); } else rh.classList.toggle('show'); };
       rh.appendChild(document.createElement('br')); rh.appendChild(rb); tr.appendChild(rh);
 
       row.forEach((c,ci)=>{
@@ -1929,7 +1930,7 @@
       else throw 0;
       ensureSane(); old.forEach(id=>{ if(!S.tables[id]) deleted.add(id); }); Object.values(S.tables).forEach(t=>{ t.u=now(); dirty.add(t.id); }); touchMeta(); hist=[]; save(); render(); toast('Replaced from backup');
     }catch(e){ toast('That backup could not be read'); } }
-  function mergeFromJSON(d){
+  function mergeFromJSON(d){ if(d&&typeof d.pad==='string'&&d.pad.trim()&&!padGet().trim()) padSet(d.pad);
     if(!(d.projects&&d.tables)){ if(d.tables&&d.root&&d.tables[d.root]){ d={projects:{x:{id:'x',n:1,name:'Imported project',root:d.root,u:now()}},tables:d.tables}; Object.values(d.tables).forEach(t=>t.p='x'); } else return toast('That is not a Nested Tables backup'); }
     const have=new Set(live().map(p=>(p.name||'').trim().toLowerCase())); let added=0, skipped=0, updated=0;
     const newest=(pid,tabs)=>Math.max(0,...Object.values(tabs).filter(t=>t.p===pid&&!t.trashed).map(t=>t.u||0));
@@ -2055,16 +2056,15 @@
   $('btnLock').onclick=()=>{ const p=P(); if(!p) return; if(p.enc&&isLocked(p)){ promptUnlock(p); return; } if(p.enc){ lockProject(p); toast('Locked — tap the project to open'); return; } togglePersonal(p); };
   document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); searchModal(); } });
   // ---------- quick to-do ----------
-  // Scratch pad: one global "To do" list (project "Scratch pad"), reachable from anywhere; Copy / Share send the open items out (TickTick accepts shared text).
-  function scratchPad(){ let p=Object.values(S.projects).find(p=>!p.enc&&!p.trashed&&/^scratch ?pad$/i.test((p.name||'').trim())); if(p&&S.tables[p.root]) return p;
-    p=newProject('Scratch pad'); const root=S.tables[p.root]; root.name='To do'; root.cols=['Item','Notes','Done']; root.rows=[]; root.sub='Quick notes from ✓. Tick Done when finished. Copy / Share in the ✓ dialog send the open items out (TickTick takes shared text).'; touch(root); return p; }
-  function scratchOpen(){ const p=scratchPad(); const t=S.tables[p.root]; return t.rows.filter(r=>r[0].t.trim()&&r[r.length-1].chk!==true).map(r=>r[0].t.trim()+(r[1]&&r[1].t.trim()?' — '+r[1].t.trim():'')); }
+  // Pad: one free-text scratch pad that stays. Stored in its own key (survives everything), rides along in the Master file / JSON export (local text wins unless empty).
+  const PADKEY=KEY+'-pad'; function padGet(){ try{ return localStorage.getItem(PADKEY)||''; }catch(e){ return ''; } } function padSet(v){ try{ localStorage.setItem(PADKEY,v); }catch(e){} }
   async function copyText(txt){ try{ await navigator.clipboard.writeText(txt); return true; }catch(e){ return false; } }
-  $('btnTodo').onclick=()=>{ const p=scratchPad(); const open=scratchOpen(); M.area.value='';
-    const btns=[['Cancel','',closeModal],['Open','',()=>{ closeModal(); go(p.root); }],['Copy','',async()=>{ const txt=scratchOpen().map(x=>'- '+x).join('\n'); if(!txt) return toast('Nothing open to copy'); if(await copyText(txt)) toast('Copied '+scratchOpen().length+' open items'); else { M.area.value=txt; M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
-    if(navigator.share) btns.push(['Share','',async()=>{ const txt=scratchOpen().map(x=>'- '+x).join('\n'); if(!txt) return toast('Nothing open to share'); try{ await navigator.share({title:'To do',text:txt}); }catch(e){} }]);
-    btns.push(['Add','primary',()=>{ const lines=M.area.value.split(/\n/).map(x=>x.trim()).filter(Boolean); if(!lines.length) return toast('Type a task first'); closeModal(); const t=S.tables[p.root]; lines.forEach(l=>{ const r=t.cols.map(()=>cell('')); r[0].t=l; r[t.cols.length-1].chk=false; t.rows.push(r); }); touch(t); save(); render(); toast(lines.length+' added · Scratch pad ('+scratchOpen().length+' open)'); }]);
-    showModal('Scratch pad', (open.length?open.length+' open: '+open.slice(0,3).join(' · ')+(open.length>3?' …':'')+'. ':'Empty. ')+'One item per line. Copy or Share sends the open items out (TickTick takes shared text).','small',btns); setTimeout(()=>M.area.focus(),80); };
+  $('btnTodo').onclick=()=>{ M.area.value=padGet(); let saveT=null; const commit=()=>{ padSet(M.area.value); 0; };
+    M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,300); };
+    const btns=[['Close','primary',()=>{ commit(); M.area.oninput=null; closeModal(); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
+    if(navigator.share) btns.push(['Share','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); try{ await navigator.share({title:'Pad',text:txt}); }catch(e){} }]);
+    btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); toast('Pad cleared'); },'Clear'); }]);
+    showModal('Pad','Free text. It stays until you clear it. Copy or Share to move it anywhere (TickTick, Notes).',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
