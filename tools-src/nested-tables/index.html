@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Nested Tables</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -369,7 +369,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.22';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.23';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1565,7 +1565,10 @@
   }
   $('btnColors').onclick=()=>{ colorsOn=!colorsOn; try{ localStorage.setItem(KEY+'-colors',colorsOn?'1':'0'); }catch(e){} $('btnColors').classList.toggle('off',!colorsOn); renderTrack(); toast(colorsOn?'Layer colors on':'Layer colors off'); };
 
-  function autosize(ta){ ta.style.height='auto'; ta.style.height=(ta.scrollHeight)+'px'; }
+  let zoomFix=1; // scrollHeight / true height under the current CSS zoom (1 in Chrome, 1/zoom in some WebKit builds)
+  function measureZoomFix(){ let pr=$('zoomprobe'); if(!pr){ pr=document.createElement('textarea'); pr.id='zoomprobe'; pr.rows=1; pr.value='x'; pr.setAttribute('aria-hidden','true'); pr.tabIndex=-1; pr.style.cssText='position:absolute;left:-9999px;top:0;width:100px;height:10px;padding:0;border:0;font:14px/1.4 Inter,sans-serif;visibility:hidden'; document.querySelector('main').appendChild(pr); }
+    const z=document.documentElement.style.getPropertyValue('--zoom'); document.documentElement.style.setProperty('--zoom','1'); const base=pr.scrollHeight||1; document.documentElement.style.setProperty('--zoom',z||'1'); const nowH=pr.scrollHeight||base; zoomFix=nowH/base||1; if(Math.abs(zoomFix-1)<0.05) zoomFix=1; }
+  function autosize(ta){ ta.style.height='auto'; ta.style.height=Math.ceil(ta.scrollHeight/zoomFix)+'px'; }
 
   // ---------- phone mode: column window ----------
   let phone=false, colN=3; const colWin={}; // table id -> first visible column
@@ -2060,7 +2063,7 @@
 
   // ---------- zoom ----------
   const ZOOM_BASE=window.innerWidth<700?0.7:1; let zoom=ZOOM_BASE; try{ zoom=parseFloat(localStorage.getItem(KEY+'-zoom'))||ZOOM_BASE; }catch(e){}
-  function setZoom(z,quiet){ zoom=Math.round(Math.max(.1,Math.min(1.5,z))*100)/100; document.documentElement.style.setProperty('--zoom',zoom); $('zoomPct').textContent=Math.round(zoom*100)+'%'; try{ localStorage.setItem(KEY+'-zoom',zoom); }catch(e){} if(!quiet) document.querySelectorAll('#grid textarea').forEach(autosize); }
+  function setZoom(z,quiet){ zoom=Math.round(Math.max(.1,Math.min(1.5,z))*100)/100; document.documentElement.style.setProperty('--zoom',zoom); measureZoomFix(); $('zoomPct').textContent=Math.round(zoom*100)+'%'; try{ localStorage.setItem(KEY+'-zoom',zoom); }catch(e){} if(!quiet) document.querySelectorAll('#grid textarea').forEach(autosize); }
   const snapOpen=()=>$('snap').classList.contains('open');
   const curZoom=()=>snapOpen()?szoom:zoom;
   const applyZoom=(z,quiet)=>snapOpen()?setSnapZoom(z):setZoom(z,quiet);
@@ -2071,10 +2074,12 @@
   const dist=ev=>Math.hypot(ev.touches[0].clientX-ev.touches[1].clientX, ev.touches[0].clientY-ev.touches[1].clientY);
   const onControl=t=>!!(t&&t.closest&&t.closest('button,.chip,.dpad,.linknav,.zoom,header,#phonenav,#celltools,.jump,.chk'));
   document.addEventListener('touchstart',e=>{ if(e.touches.length===2&&!onControl(e.touches[0].target)&&!onControl(e.touches[1].target)){ pinch={d:dist(e),z:curZoom(),live:false}; } else pinch=null; },{passive:true});
-  document.addEventListener('touchmove',e=>{ if(pinch&&e.touches.length===2){ const r=dist(e)/pinch.d; if(!pinch.live&&Math.abs(r-1)<0.12) return; pinch.live=true; e.preventDefault(); applyZoom(pinch.z*r,true); } },{passive:false});
+  document.addEventListener('touchmove',e=>{ if(e.touches.length>=2) e.preventDefault(); if(pinch&&e.touches.length===2){ const r=dist(e)/pinch.d; if(!pinch.live&&Math.abs(r-1)<0.12) return; pinch.live=true; applyZoom(pinch.z*r,true); } },{passive:false});
   document.addEventListener('touchend',()=>{ if(pinch){ const was=pinch.live; pinch=null; if(was) applyZoom(Math.round(curZoom()*10)/10); } });
   let gz=null;
   document.addEventListener('gesturestart',e=>{ e.preventDefault(); gz=onControl(e.target)?null:curZoom(); });
+  document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+  document.addEventListener('dblclick',e=>{ if(window.innerWidth<=760&&!e.target.closest('textarea,input')) e.preventDefault(); },{passive:false});
   document.addEventListener('gesturechange',e=>{ e.preventDefault(); if(gz!=null&&Math.abs(e.scale-1)>=0.12) applyZoom(gz*e.scale,true); });
   document.addEventListener('gestureend',e=>{ e.preventDefault(); gz=null; applyZoom(Math.round(curZoom()*10)/10); });
 

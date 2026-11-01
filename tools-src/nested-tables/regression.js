@@ -43,5 +43,9 @@ await p.reload();await p.waitForTimeout(1500);await p.evaluate(()=>[...document.
 ok('unlock after reload: edit survived',await p.evaluate(()=>!!document.querySelector('#grid td[data-ri="0"][data-ci="1"] textarea')&&document.querySelector('#grid td[data-ri="0"][data-ci="1"] textarea').value==='SECRETWORD'));
 ok('bottom bar: More visible, 8 buttons',await p.evaluate(()=>{const r=document.getElementById('pbMore').getBoundingClientRect();return r.width>30&&r.bottom<=window.innerHeight&&document.querySelectorAll('#phonebar>button').length===8;}));
 ok('personal chip grouped & styled',await p.evaluate(()=>{const c=[...document.querySelectorAll('#projbar .chip.personal')];const d=[...document.querySelectorAll('#projbar .divider')].some(x=>x.textContent==='personal');return c.length===1&&d;}));
+// cell heights stay sane at 20% (WebKit zoom/scrollHeight) and the page cannot be browser-zoomed
+await p.evaluate(()=>{for(let i=0;i<8;i++)document.getElementById('zoomOut').click();});await p.waitForTimeout(300);ok('rows compact at 20%',await p.evaluate(()=>{const td=document.querySelector('#grid td[data-ri="0"][data-ci="1"]');return td&&td.getBoundingClientRect().height<80;}));
+ok('viewport locks browser zoom',await p.evaluate(()=>/user-scalable=no/.test(document.querySelector('meta[name=viewport]').content)));
+await p.evaluate(()=>document.getElementById('zoomPct').click());
 ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
 await b.close();})();
