@@ -359,7 +359,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.16';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.17';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -490,7 +490,7 @@
     const chip=p=>{ const c=document.createElement('span'); c.className='chip'+(p.id===S.cur?' here':'')+(p.kind==='capture'?' capture':''); c.innerHTML='<b></b><span></span>';
       c.firstChild.textContent=(p.kind==='capture'?'📷 ':'')+'P'+p.n; c.lastChild.textContent=(p.enc?(isLocked(p)?'🔒 ':'🔓 '):'')+(p.name||'Untitled'); c.title=p.id===S.cur?'Rename, protect or delete this project':(isLocked(p)?'Locked — tap to unlock':'Open project '+p.n);
       c.onclick=()=>p.id===S.cur?projectModal(p):goProject(p.id); bar.appendChild(c); };
-    const open=bar.classList.contains('open'); const lst=document.createElement('span'); lst.className='chip add pin'; lst.innerHTML='<b>'+(open?'⌃':'⌄')+'</b>'+(open?'One line':'All projects'); lst.title=open?'Back to one line':'Drop the projects down as a list'; lst.onclick=toggleProjectList; bar.appendChild(lst);
+    const open=bar.classList.contains('open'); const lst=document.createElement('span'); lst.className='chip add pin'; lst.innerHTML='<b>'+(open?'⌃':'⌄')+'</b>'+(open?'One line':'All projects'); lst.title=open?'Back to one line':'Drop the projects down as a list'; lst.onclick=()=>toggleProjectList(); bar.appendChild(lst);
     const add=document.createElement('span'); add.className='chip add'; add.textContent='+ New'; add.title='New project'; add.onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); }; bar.appendChild(add);
     nat.forEach(chip);
     if(cap.length){ const d=document.createElement('span'); d.className='divider'; d.textContent='captures'; bar.appendChild(d); cap.forEach(chip); }
@@ -1979,7 +1979,7 @@
   function showCellTools(td){ const bar=$('celltools'); if(!phone||!td){ bar.classList.remove('on'); return; } const tools=td.querySelector('.cell .tools'); if(!tools) return; bar.innerHTML=''; const l=document.createElement('span'); l.className='lbl'; l.textContent=cellRef(T(),+td.dataset.ri,+td.dataset.ci)+' ▸'; bar.appendChild(l); bar.appendChild(tools); bar.classList.add('on'); }
   function siblings(){ const t=T(); if(!t.parent||!S.tables[t.parent.tableId]) return null; return ownedChildren(t.parent.tableId).map(k=>k.id); }
   function projList(){ return live().map(p=>p.id); }
-  function toggleProjectList(force){ const bar=$('projbar'); const want=force===undefined?!bar.classList.contains('open'):!!force; bar.classList.toggle('open',want); $('btnProjList').innerHTML='<i>'+(want?'⌃':'⌄')+'</i><span class="lbl">Projects</span>'; try{ localStorage.setItem(KEY+'-projlist',want?'1':'0'); }catch(e){} renderProjects(); if(want){ const here=bar.querySelector('.chip.here'); if(here) here.scrollIntoView({block:'nearest'}); } }
+  function toggleProjectList(force){ const bar=$('projbar'); const want=typeof force==='boolean'?force:!bar.classList.contains('open'); bar.classList.toggle('open',want); $('btnProjList').innerHTML='<i>'+(want?'⌃':'⌄')+'</i><span class="lbl">Projects</span>'; try{ localStorage.setItem(KEY+'-projlist',want?'1':'0'); }catch(e){} renderProjects(); if(want){ const here=bar.querySelector('.chip.here'); if(here) here.scrollIntoView({block:'nearest'}); } }
   try{ if(localStorage.getItem(KEY+'-projlist')==='1') $('projbar').classList.add('open'); }catch(e){}
   function projectsMenu(){ const items=live().map(p=>({id:p.id,name:'P'+p.n+' · '+(p.name||'Untitled'),path:tablesOf(p.id).length+' tables'+(p.id===S.cur?' · here':'')})); listModal('Projects','Home of each project is Layer 0; this list is the level above. Tap one to open it.',items,id=>goProject(id)); }
   function navUp(){ const p=T().parent; if(p&&S.tables[p.tableId]){ lastCell={ri:p.r,ci:p.c,table:p.tableId}; go(p.tableId); } else { toggleProjectList(); window.scrollTo({top:0,behavior:'smooth'}); } }

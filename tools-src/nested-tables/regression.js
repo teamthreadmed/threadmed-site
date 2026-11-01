@@ -1,7 +1,7 @@
 // regression sweep: run before every publish
 const {chromium,devices}=require('playwright');const fs=require('fs');
 (async()=>{const b=await chromium.launch();const f=fs.readdirSync('.').filter(x=>/^Nested Tables v.*\.html$/.test(x)).sort((a,b)=>fs.statSync(b).mtimeMs-fs.statSync(a).mtimeMs)[0];
-const ctx=await b.newContext({...devices['iPhone 13']});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+const ctx=await b.newContext({...devices['iPhone 13'],hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto('file:///home/claude/nt/'+f);await p.waitForTimeout(1500);
 const T=()=>p.$eval('.titlebar input',e=>e.value);const ok=(n,c)=>console.log((c?'ok  ':'FAIL')+' '+n);
 ok('pill shows version',(await p.$eval('#sync',e=>e.textContent)).includes('v'));
@@ -29,5 +29,6 @@ ok('bottom bar fixed & visible',await p.evaluate(()=>{const r=document.getElemen
 ok('nav row on top under header',await p.evaluate(()=>{const n=document.getElementById('phonenav').getBoundingClientRect();const h=document.querySelector('header').getBoundingClientRect();return n.top>=h.bottom-1&&n.height>20;}));
 ok('zoom steps land on 10s',await p.evaluate(async()=>{for(let i=0;i<4;i++)document.getElementById('zoomIn').click();return /^[0-9]+0%$/.test(document.getElementById('zoomPct').textContent);}));
 ok('+ New at bottom makes project',await p.evaluate(()=>{const n=document.querySelectorAll('#projbar .chip:not(.add)').length;document.getElementById('pbNew').click();return document.querySelectorAll('#projbar .chip:not(.add)').length===n+1&&Object.keys(JSON.parse(localStorage.getItem('nested-tables-v3')).projects).length>0;}));
+await p.waitForTimeout(400);await p.evaluate(()=>document.getElementById('modal').classList.remove('open'));await p.evaluate(()=>window.scrollTo(0,0));await p.tap('#projbar .chip.pin');await p.waitForTimeout(200);const o1=await p.$eval('#projbar',e=>e.classList.contains('open'));await p.tap('#projbar .chip.pin');await p.waitForTimeout(200);ok('⌄ chip opens AND closes the list',o1&&!(await p.$eval('#projbar',e=>e.classList.contains('open'))));
 ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
 await b.close();})();
