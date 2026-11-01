@@ -112,13 +112,15 @@
   body.phone .jump{width:28px;height:28px;font-size:18px;bottom:4px;right:4px}
   body.phone .cell textarea{font-size:16px;padding:10px 8px 6px}
   body.phone .cell textarea{font-size:15px}
-  .tablewrap{overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  #layout>*{min-width:0}
+  .tablewrap{overflow:auto;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:480px}
   th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;padding:0;min-width:150px}
   th{background:var(--lhead,var(--bg));font-weight:500;font-size:12px;color:var(--muted);text-align:left;padding:6px 10px;white-space:nowrap}
   th.rowhead{width:36px;min-width:36px;text-align:center}
   th .colbtns,th .rowbtns{display:none;margin-left:6px}
-  th:hover .colbtns,th:hover .rowbtns{display:inline}
+  th:hover .colbtns,th:hover .rowbtns,th.show .colbtns,th.show .rowbtns{display:inline}
+  th.show .rowbtns{display:block}
   th .colbtns button,th .rowbtns button{padding:0 5px;font-size:11px;border-radius:4px;margin-left:2px}
   tr:last-child td{border-bottom:none}
   td:last-child,th:last-child{border-right:none}
@@ -325,7 +327,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.8';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.9';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -410,7 +412,7 @@
     clearTimeout(saveTimer);
     saveTimer=setTimeout(async()=>{
       for(const pid of [...encDirty]){ const p=S.projects[pid]; if(p&&p.enc&&vault[pid]){ try{ await encryptTables(p); }catch(e){ console.warn('encrypt',e); } } }
-      try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){}
+      try{ localStorage.setItem(KEY, JSON.stringify(persistable())); if(window.__standalone) setSync('v'+APP_VERSION+' · saved '+new Date().toTimeString().slice(0,5)+' · '+live().length+' projects'); }catch(e){ toast('Could not save: browser storage is full or blocked'); setSync('v'+APP_VERSION+' · NOT SAVED','warn'); }
       scheduleFlush(); scheduleAuto();
     },150);
   }
@@ -1544,9 +1546,10 @@
       inp.onchange=()=>{ t.cols[ci]=inp.value; touch(t); save(); };
       th.appendChild(inp);
       const b=document.createElement('span'); b.className='colbtns';
-      b.innerHTML='<button title="Insert column left">+←</button><button title="Insert column right">→+</button><button title="Delete column">×</button>';
-      const [l,r,x]=b.querySelectorAll('button');
-      l.onclick=()=>insertCol(ci); r.onclick=()=>insertCol(ci+1); x.onclick=()=>deleteCol(ci);
+      b.innerHTML='<button title="Checkbox on every cell in this column (again to remove)">☐</button><button title="Insert column left">+←</button><button title="Insert column right">→+</button><button title="Delete column">×</button>';
+      const [cb,l,r,x]=b.querySelectorAll('button');
+      cb.onclick=()=>toggleColBoxes(ci); l.onclick=()=>insertCol(ci); r.onclick=()=>insertCol(ci+1); x.onclick=()=>deleteCol(ci);
+      lt.style.cursor='pointer'; lt.title='Tap for column tools'; lt.onclick=()=>th.classList.toggle('show');
       th.appendChild(b); hr.appendChild(th);
     });
     thead.appendChild(hr); g.appendChild(thead);
@@ -1556,9 +1559,10 @@
       const tr=document.createElement('tr');
       const rh=document.createElement('th'); rh.className='rowhead'; rh.textContent=ri+1;
       const rb=document.createElement('span'); rb.className='rowbtns';
-      rb.innerHTML='<button title="Insert row above">+↑</button><button title="Insert row below">↓+</button><button title="Delete row">×</button>';
-      const [u,d,x]=rb.querySelectorAll('button');
-      u.onclick=()=>insertRow(ri); d.onclick=()=>insertRow(ri+1); x.onclick=()=>deleteRow(ri);
+      rb.innerHTML='<button title="Checkbox on every cell in this row (again to remove)">☐</button><button title="Insert row above">+↑</button><button title="Insert row below">↓+</button><button title="Delete row">×</button>';
+      const [cb,u,d,x]=rb.querySelectorAll('button');
+      cb.onclick=()=>toggleRowBoxes(ri); u.onclick=()=>insertRow(ri); d.onclick=()=>insertRow(ri+1); x.onclick=()=>deleteRow(ri);
+      rh.style.cursor='pointer'; rh.title='Tap for row tools'; rh.onclick=e=>{ if(e.target===rh||e.target.nodeType===3) rh.classList.toggle('show'); };
       rh.appendChild(document.createElement('br')); rh.appendChild(rb); tr.appendChild(rh);
 
       row.forEach((c,ci)=>{
@@ -1594,6 +1598,7 @@
         mk('A−','Smaller text in this cell',()=>{ c.fs=Math.round(Math.max(.7,(c.fs||1)-.1)*10)/10; ta.style.fontSize=(15*c.fs)+'px'; autosize(ta); touch(t); save(); });
         mk('A+','Larger text in this cell',()=>{ c.fs=Math.round(Math.min(2.5,(c.fs||1)+.1)*10)/10; ta.style.fontSize=(15*c.fs)+'px'; autosize(ta); touch(t); save(); });
         mk(c.chk===undefined||c.chk===null?'☐ box':'☐ remove',c.chk===undefined||c.chk===null?'Add a checkbox to this cell (a logic gate)':'Remove the checkbox',()=>{ if(c.chk===undefined||c.chk===null) c.chk=false; else delete c.chk; touch(t); save(); render(); });
+        mk('☐ col','Checkbox on every cell in this column (again to remove)',()=>toggleColBoxes(ci)); mk('☐ row','Checkbox on every cell in this row (again to remove)',()=>toggleRowBoxes(ri));
         mk('🎨','Cycle this cell\'s colour (tap repeatedly; clears after the last)',()=>{ td.classList.remove('c'+(c.col||0)); c.col=((c.col||0)+1)%9; if(c.col) td.classList.add('c'+c.col); touch(t); save(); });
         const inv=document.createElement('span'); inv.className='invbtn'; inv.textContent='◐'; inv.title=c.inv?'Restore this cell':'Invert this cell (night mode for one cell)';
         inv.onclick=()=>{ c.inv=!c.inv; td.classList.toggle('inv',!!c.inv); inv.title=c.inv?'Restore this cell':'Invert this cell'; touch(t); save(); };
@@ -1602,7 +1607,7 @@
           const a=document.createElement('a'); a.className='child'+(owner?'':' ref');
           const n=owner?descendants(target.id).length:0;
           a.innerHTML='<span>'+(owner?'↳':'→')+'</span><span class="name"></span>'+(n?'<span class="count">+'+n+'</span>':'');
-          a.querySelector('.name').textContent=target.name||'Untitled';
+          a.querySelector('.name').textContent=target.name||'Untitled'; { const bp=boxProgress(target.id); if(bp){ const pg=document.createElement('span'); pg.className='count'; pg.textContent='☑'+bp.d+'/'+bp.n; pg.title=bp.d+' of '+bp.n+' boxes checked in '+(target.name||'the sub-table'); a.appendChild(pg); } }
           a.title=owner?'Open sub-table':'Open linked table'; a.onclick=()=>go(target.id);
           tools.appendChild(a);
           if(owner){ const em=document.createElement('span'); em.className='ghost'; em.textContent=c.embed?'▦ hide':'▦ embed'; em.title='Show the sub-table inside this cell'; em.onclick=()=>{ c.embed=!c.embed; touch(t); save(); render(); }; tools.appendChild(em); }
@@ -1749,6 +1754,10 @@
   function relink(t){ t.rows.forEach((row,ri)=>row.forEach((c,ci)=>{ const k=c.link&&S.tables[c.link]; if(k&&!c.ref&&k.parent&&k.parent.tableId===t.id&&(k.parent.r!==ri||k.parent.c!==ci)){ k.parent={tableId:t.id,r:ri,c:ci}; touch(k); } })); }
   function nextColName(t){ let i=t.cols.length; let n; do{ n=String.fromCharCode(65+(i%26))+(i>=26?Math.floor(i/26):''); i++; }while(t.cols.includes(n)); return n; }
   function insertRow(at){ const t=T(); t.rows.splice(at,0,t.cols.map(()=>cell())); relink(t); touch(t); save(); render(); }
+  function hasBox(c){ return c.chk!==undefined&&c.chk!==null; }
+  function toggleColBoxes(ci){ const t=T(); const all=t.rows.every(r=>hasBox(r[ci])); t.rows.forEach(r=>{ if(all) delete r[ci].chk; else if(!hasBox(r[ci])) r[ci].chk=false; }); touch(t); save(); render(); toast(all?'Checkboxes removed from column '+colLetter(ci):'Checkbox on every cell of column '+colLetter(ci)); }
+  function toggleRowBoxes(ri){ const t=T(); const r=t.rows[ri]; const all=r.every(hasBox); r.forEach(c=>{ if(all) delete c.chk; else if(!hasBox(c)) c.chk=false; }); touch(t); save(); render(); toast(all?'Checkboxes removed from row '+(ri+1):'Checkbox on every cell of row '+(ri+1)); }
+  function boxProgress(tid){ const t=S.tables[tid]; if(!t) return null; let n=0,d=0; t.rows.forEach(r=>r.forEach(c=>{ if(hasBox(c)){ n++; if(c.chk) d++; } })); return n?{n,d}:null; }
   function insertCol(at){ const t=T(); t.cols.splice(at,0,nextColName(t)); t.rows.forEach(r=>r.splice(at,0,cell())); relink(t); touch(t); save(); if(phone&&t.cols.length>colN){ colWin[t.id]=Math.max(0,at-colN+1); } render(); toast('Column '+colLetter(at)+' added'+(phone&&t.cols.length>colN?' — ◀ ▶ below the table slide between columns':'')); }
   function deleteRow(at){
     const t=T(); if(t.rows.length<=1) return toast('Keep at least one row');
@@ -2031,6 +2040,7 @@
       [['🎨',''],'Cycle this cell through eight soft colours; a ninth tap clears.','Per cell; shows in Snapshot and PDF'],
       [['◐',''],'Flip this one cell: dark on a light page, light on a dark page.','Per cell'],
       [['☐ box',''],'Adds a checkbox to the cell — a logic gate you tick as you work through a table. Checked cells tint green; the banner counts ☑ done/total; exports show ☐/☑.','Imported Obsidian checklists arrive as boxes'],
+      [['☐ col · ☐ row',''],'Checkbox on every cell of a column (a list, one under another) or a row (across). Also on the column letter / row number: tap it for the tools. Tap again to remove.','A cell that owns a sub-table with boxes shows its progress, e.g. ☑3/7'],
       [['Enter / Tab','keys'],'Enter = new line inside the cell. Tab = next cell (Shift+Tab back).','Hidden columns come into view on their own']]},
     {h:'Moving around',lead:'Think of the project as a spreadsheet of tables.',cols:['Icon','Does','Keyboard'],rows:[
       [['▲',''],'Up to the parent table.','Alt+↑'],
@@ -2270,7 +2280,7 @@
     }catch(e){ console.warn('drive',e); toast('Drive backup failed: '+(e&&e.code||e&&e.message||'unknown')); }
   }
   async function initCaps(){
-    if(window.__standalone){ setSync('v'+APP_VERSION+' · standalone · autosaves here'); return; }
+    if(window.__standalone){ setSync('v'+APP_VERSION+' · standalone · '+live().length+' projects'); return; }
     if(!window.claude||!window.claude.use) return;
     initDb();
     try{ caps.downloads=await window.claude.use('downloads'); }catch(e){}
