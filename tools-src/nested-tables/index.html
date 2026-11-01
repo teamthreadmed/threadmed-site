@@ -324,7 +324,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.5';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.6';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -410,7 +410,7 @@
     saveTimer=setTimeout(async()=>{
       for(const pid of [...encDirty]){ const p=S.projects[pid]; if(p&&p.enc&&vault[pid]){ try{ await encryptTables(p); }catch(e){ console.warn('encrypt',e); } } }
       try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){}
-      scheduleFlush();
+      scheduleFlush(); scheduleAuto();
     },150);
   }
   function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200); }
@@ -1366,23 +1366,43 @@
   }
   // ---------- versions: numbered, dated snapshots of one project ----------
   const VKEY=KEY+'-versions';
-  function loadVersions(){ try{ return JSON.parse(localStorage.getItem(VKEY)||'[]'); }catch(e){ return []; } }
-  function storeVersions(v){ try{ localStorage.setItem(VKEY,JSON.stringify(v)); return true; }catch(e){ toast('Not enough browser storage for another version — delete old ones'); return false; } }
+  let vcache=null; // in-memory copy of all versions; IndexedDB is the store
+  const idb=(()=>{ let dbp=null; const open=()=>{ if(dbp) return dbp; dbp=new Promise((res,rej)=>{ try{ const r=indexedDB.open('nested-tables',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('versions',{keyPath:'id'}); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); return dbp; };
+    const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('versions',mode); const st=t.objectStore('versions'); const out=fn(st); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); }); };
+    return { all:()=>tx('readonly',st=>st.getAll()), put:v=>tx('readwrite',st=>{ st.put(v); }), del:id=>tx('readwrite',st=>{ st.delete(id); }) }; })();
+  async function loadVersionsAsync(){ if(vcache) return vcache; let arr=[]; try{ arr=await idb.all()||[]; }catch(e){ arr=[]; }
+    try{ const old=JSON.parse(localStorage.getItem(VKEY)||'[]'); if(old.length){ for(const v of old){ if(!arr.find(x=>x.id===v.id)){ arr.push(v); try{ await idb.put(v); }catch(e){} } } localStorage.removeItem(VKEY); } }catch(e){}
+    vcache=arr; return arr; }
+  function loadVersions(){ return vcache||[]; }
+  async function putVersion(v){ const all=await loadVersionsAsync(); const i=all.findIndex(x=>x.id===v.id); if(i>=0) all[i]=v; else all.push(v); try{ await idb.put(v); return true; }catch(e){ toast('Could not store the version ('+(e&&e.message||'storage')+')'); return false; } }
+  async function delVersion(id){ const all=await loadVersionsAsync(); const i=all.findIndex(x=>x.id===id); if(i>=0) all.splice(i,1); try{ await idb.del(id); }catch(e){} }
+  loadVersionsAsync().then(()=>{ try{ renderSizebar(); }catch(e){} });
   const vstamp=ts=>{ const d=new Date(ts); const z=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); };
   function versionsOf(pid){ return loadVersions().filter(v=>v.pid===pid).sort((a,b)=>b.v-a.v); }
-  function saveVersion(p,note){
-    if(p.enc) return toast('Protected projects are not versioned (they stay encrypted)');
-    const all=loadVersions(); const mine=all.filter(v=>v.pid===p.id); const v=(mine.length?Math.max(...mine.map(x=>x.v)):0)+1;
-    const snap={id:uid(), pid:p.id, pname:p.name||'Untitled', pn:p.n, v, ts:now(), note:note||'', root:p.root, tables:JSON.parse(JSON.stringify(tablesOf(p.id)))};
-    all.push(snap);
-    const keep=all.filter(x=>x.pid===p.id).sort((a,b)=>b.v-a.v).slice(0,25).map(x=>x.id); // 25 per project
-    const trimmed=all.filter(x=>x.pid!==p.id||keep.includes(x.id));
-    if(storeVersions(trimmed)) toast('P'+p.n+' saved as v'+v+' · '+vstamp(snap.ts));
+  const dayKey=ts=>vstamp(ts).slice(0,10);
+  async function saveVersion(p,note,opts){
+    if(p.enc){ if(!opts||!opts.auto) toast('Protected projects are not versioned (they stay encrypted)'); return; }
+    const all=await loadVersionsAsync(); const mine=all.filter(v=>v.pid===p.id); const v=(mine.length?Math.max(...mine.map(x=>x.v)):0)+1;
+    const snap={id:uid(), pid:p.id, pname:p.name||'Untitled', pn:p.n, v, ts:now(), note:note||'', auto:!!(opts&&opts.auto), root:p.root, tables:JSON.parse(JSON.stringify(tablesOf(p.id)))};
+    if(await putVersion(snap)){ if(!snap.auto) toast('P'+p.n+' saved as v'+v+' · '+vstamp(snap.ts)); await pruneVersions(p.id); }
+    return snap;
   }
-  function restoreVersion(snap,mode){
+  // Keep: every manual version (newest 30); for auto versions, the first and the last of each day, for the last 30 days
+  async function pruneVersions(pid){
+    const all=await loadVersionsAsync(); const mine=all.filter(x=>x.pid===pid);
+    const manual=mine.filter(x=>!x.auto).sort((a,b)=>b.ts-a.ts); const dropM=manual.slice(30);
+    const autos=mine.filter(x=>x.auto); const byDay={}; autos.forEach(x=>{ (byDay[dayKey(x.ts)]=byDay[dayKey(x.ts)]||[]).push(x); });
+    const dropA=[]; const cutoff=now()-30*86400000;
+    Object.values(byDay).forEach(arr=>{ arr.sort((a,b)=>a.ts-b.ts); arr.forEach((x,i)=>{ const keep=(i===0||i===arr.length-1)&&x.ts>=cutoff; if(!keep) dropA.push(x); }); });
+    for(const x of [...dropM,...dropA]) await delVersion(x.id);
+  }
+  // Auto-version: after edits settle, snapshot the current project at most every 10 minutes; pruning keeps first + last of each day
+  let autoTimer=null; const AUTO_MIN=10*60*1000; const lastAuto={};
+  function scheduleAuto(){ clearTimeout(autoTimer); autoTimer=setTimeout(async()=>{ const p=P(); if(!p||p.enc||p.trashed) return; const key=p.id; const changed=(p.u||0)>(lastAuto[key]||0)||tablesOf(p.id).some(t=>(t.u||0)>(lastAuto[key]||0)); if(!changed) return; if(now()-(lastAuto[key]||0)<AUTO_MIN) return; lastAuto[key]=now(); await saveVersion(p,'auto',{auto:true}); },20000); }
+  async function restoreVersion(snap,mode){
     const p=S.projects[snap.pid];
     if(mode==='replace'&&p){
-      saveVersion(p,'auto, before restoring v'+snap.v);
+      await saveVersion(p,'before restoring v'+snap.v,{auto:true});
       removeTables(tablesOf(p.id).map(t=>t.id));
       snap.tables.forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); c.u=now(); S.tables[c.id]=c; dirty.add(c.id); });
       p.root=snap.root; p.u=now(); S.cur=p.id; S.curTable[p.id]=p.root; hist=[]; touchMeta(); save(); render(); toast('P'+p.n+' restored to v'+snap.v);
@@ -1393,14 +1413,14 @@
       np.root=map[snap.root]||Object.keys(map)[0]; S.cur=np.id; S.curTable[np.id]=np.root; hist=[]; touchMeta(); save(); render(); toast('Opened v'+snap.v+' as P'+np.n);
     }
   }
-  function versionsModal(p){
-    const vs=versionsOf(p.id); if(!vs.length) return toast('No versions yet — tap "Save version" first');
-    listModal('P'+p.n+' · versions','Each version is a complete copy of this project at that moment. Restore replaces the current tables (an automatic version is saved first); Open as copy makes a new project next to it.',
-      vs.map(v=>({id:v.id, name:'v'+v.v+' · '+vstamp(v.ts), path:v.tables.length+' tables'+(v.note?' · '+v.note:'')})),
+  async function versionsModal(p){
+    await loadVersionsAsync(); const vs=versionsOf(p.id); if(!vs.length) return toast('No versions yet — tap 🕒 Save version first');
+    listModal('P'+p.n+' · versions','Each version is a complete copy of this project at that moment. Auto versions are taken as you work; the first and last of each day are kept for 30 days, manual ones (🕒) are kept for good. Restore replaces the current tables (an automatic version is saved first); Open as copy makes a new project next to it.',
+      vs.map(v=>({id:v.id, name:'v'+v.v+' · '+vstamp(v.ts)+(v.auto?' · auto':''), path:v.tables.length+' tables'+(v.note&&v.note!=='auto'?' · '+v.note:'')})),
       id=>{ const snap=loadVersions().find(x=>x.id===id); if(!snap) return;
         showModal('v'+snap.v+' · '+vstamp(snap.ts),'"'+snap.pname+'" · '+snap.tables.length+' tables'+(snap.note?' · '+snap.note:''),false,[
           ['Cancel','',closeModal],
-          ['Delete this version','danger',()=>{ closeModal(); storeVersions(loadVersions().filter(x=>x.id!==id)); toast('Version deleted'); }],
+          ['Delete this version','danger',async()=>{ closeModal(); await delVersion(id); toast('Version deleted'); }],
           ['Download JSON','',()=>{ closeModal(); const blob=new Blob([JSON.stringify({projects:{[snap.pid]:{id:snap.pid,n:snap.pn,name:snap.pname,root:snap.root,u:snap.ts}},tables:Object.fromEntries(snap.tables.map(t=>[t.id,t])),exported:new Date(snap.ts).toISOString(),version:snap.v},null,2)],{type:'application/json'}); saveBlob(safeName('P'+snap.pn+' '+snap.pname)+' v'+snap.v+' '+vstamp(snap.ts).replace(/[: ]/g,'-')+'.json',blob); }],
           ['Open as copy','',()=>{ closeModal(); restoreVersion(snap,'copy'); }],
           ['Restore (replace current)','primary',()=>{ closeModal(); restoreVersion(snap,'replace'); }]
@@ -1997,7 +2017,7 @@
       [['Linked from',''],'Every cell that points at the current table; tap to go there.','Under the title']]},
     {h:'Table and layer',lead:'Each table has a title, a subtitle and its own size.',cols:['Control','Does','Notes'],rows:[
       [['Title / subtitle',''],'Edit above the grid. The subtitle is where the principle of a layer lives.','A−/A+ beside the title resize both'],
-      [['🕒 Save version',''],'Saves a numbered, dated copy of the current project (v1, v2…). Tap the project chip → Versions to restore one or open it as a copy.','Up to 25 per project, kept in this browser; Download JSON to keep one elsewhere'],
+      [['🕒 Save version',''],'Saves a numbered, dated copy of the current project (v1, v2…). Auto versions are also taken while you work: the first and last of each day are kept for 30 days. Tap the project chip → Versions to restore one or open it as a copy.','Kept in this browser (IndexedDB); Download JSON to keep one elsewhere'],
       [['Rows −/+ · Columns −/+',''],'Grow or shrink the table; − removes the last row or column.','Asks first if sub-tables would be lost'],
       [['Header hover',''],'Insert a row/column here, or delete this one.','Hover a row number or column letter'],
       [['⬆',''],'Up to the parent table.',''],
@@ -2226,6 +2246,7 @@
 
   load(); if(pruneDefaults()) save();
   placeNav();
+  loadVersionsAsync().then(async all=>{ const p=P(); if(!p||p.enc) return; const today=dayKey(now()); if(!all.some(v=>v.pid===p.id&&dayKey(v.ts)===today)){ lastAuto[p.id]=now(); await saveVersion(p,'auto · first of day',{auto:true}); } });
   $('btnColors').className=colorsOn?'':'off';
   setZoom(zoom,true);
   render();

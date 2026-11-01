@@ -1,0 +1,2175 @@
+{
+ "projects": {
+  "iouqaefe": {
+   "id": "iouqaefe",
+   "n": 1,
+   "name": "Tool building",
+   "root": "1j6jh4dt",
+   "u": 1793523600000
+  },
+  "y3dmv8o7": {
+   "id": "y3dmv8o7",
+   "kind": "capture",
+   "n": 4,
+   "name": "Capture: sticky notes · Nov 1 2026",
+   "root": "3uvgs5ec",
+   "u": 1793520945113
+  },
+  "gsm19vbg": {
+   "id": "gsm19vbg",
+   "kind": "capture",
+   "n": 5,
+   "name": "Capture: Google Keep · Nov 1 2026",
+   "root": "f7fwb5z9",
+   "u": 1793520945113
+  }
+ },
+ "tables": {
+  "1j6jh4dt": {
+   "id": "1j6jh4dt",
+   "p": "iouqaefe",
+   "n": 1,
+   "name": "Tool building: backlog",
+   "sub": "Dump ideas for the app here, one per row; .. into a row to spell it out. Claude reads this table at the start of each session, builds, and moves rows to Done with the version. Clinical logic lives in its own nodes; captures stay in 📷 projects.",
+   "cols": [
+    "Idea",
+    "Status",
+    "Notes"
+   ],
+   "rows": [
+    [
+     {
+      "t": "— QUEUED —",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "Add below; order = priority",
+      "link": null,
+      "ref": false,
+      "inv": true
+     }
+    ],
+    [
+     {
+      "t": "Clickable URLs / DOIs in cells (reference layer)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Queued",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "BTM references table holds DOIs as text; render http(s) links as tappable, open in new tab. Then a 'Sources' table per node links out.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Clinical vs Ideas mode per project",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Queued",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Clinical: default 4-column spine (Item · Ask/Test · Logic · If positive), subtitle as principle, Evidence column. Ideas: loose.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Cross-project links → Universal logic layer",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Queued",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Shared gates (secondary-cause triggers, ARR prep, denosumab exit, BTM response gate) referenced by disease nodes instead of copied.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Image cells for captures",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Queued",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Photo is the note; optional transcription; route by → link.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "From image → sub-table (Claude in-app OCR)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Queued",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Screenshot of Keep/email → rows. Uses the platform's Claude capability.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Search across all cells / \"where does X appear\"",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Queued",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Needed once nodes grow; depth without search is a filing cabinet.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Weiner context logic layer",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Needs definition",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Anthony to define what this refers to.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Behaviour-change logic layer",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Needs definition",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Which model (COM-B, TTM, motivational interviewing)? Link to Behavior Change Planner artifact.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Cell-level AI: expand / check against guideline",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Idea",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Anthony supplies sentences; Claude supplies capture, routing, cross-links, consistency checks.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Next disease nodes",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Idea",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Thyroid, DAMD/dysglycemia, obesity/AOM already exist as artifacts — port into nodes.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "— DONE —",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "Nov 1 2026, master prototype v1 and after",
+      "link": null,
+      "ref": false,
+      "inv": true
+     }
+    ],
+    [
+     {
+      "t": "Mirror live osteoporosis build into the ⊕ Samples spec",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done (v1.5, Nov 1 2026)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Gate → differential → workup links and the BTM node are now in the sample and in the repo source.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Project versions: numbered, dated snapshots; restore / open as copy / JSON; daily auto-versions",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done (v1.5–1.6)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "🕒 button; project chip → Versions",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Standalone at www.threadmed.org/private/nested-tables/; source in threadmed-site/tools-src",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done (v1.1–1.4)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Iterate: edit → build → push",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Osteoporosis: secondary-cause gate ↔ differential ↔ workup chain; BTM node with references",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done (live store, Nov 1 2026)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Gate test rows → (purple) differential row ↳ workup table (celiac, bariatric, thyroid, Cushing, osteomalacia, hypercalciuria, myeloma, mastocytosis, iron). BTM row ↳ BTM node ↳ references with DOIs.",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Tables in tables (..), ↳ hyperlink per cell, references (→ link)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Owned (green) vs reference (purple); Linked-from on every table",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Navigation: ▲▼◀▶ pad, ↳◀↳▶ link hop, ↩ back, breadcrumbs, outline, tracking code",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Alt+arrows, Alt+[ ]",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Projects, captures (📷), password protection, trash with restore",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "AES-256-GCM; 30-day trash for projects and tables",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Views: phone mode, zoom, night, layer colours, per-cell A−/A+/🎨/◐, title+subtitle",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Exports: JSON, Markdown, PDF, Obsidian bundle, Drive backup, standalone HTML",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Imports: Markdown/Obsidian (headings → tables, [[links]] → refs); Keep + sticky-note captures",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Clinical nodes: osteoporosis history, hypertension evaluation, lipidology; guided tour; Guide",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Done",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "⊕ Samples",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "— EXPERIMENTS —",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "Your earlier test cells, kept",
+      "link": null,
+      "ref": false,
+      "inv": true
+     }
+    ],
+    [
+     {
+      "t": "Click a cell to type",
+      "link": "phrrtmph",
+      "ref": false
+     },
+     {
+      "t": "Test",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "This is becoming an idea capture engine",
+      "link": "dsbhladc",
+      "ref": false
+     },
+     {
+      "t": "Test",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": null,
+   "u": 1793525700000
+  },
+  "phrrtmph": {
+   "id": "phrrtmph",
+   "p": "iouqaefe",
+   "n": 2,
+   "name": "Click a cell to type",
+   "sub": "",
+   "cols": [
+    "A",
+    "B",
+    "C"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Trying this out",
+      "link": null,
+      "ref": false,
+      "col": 1
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "1j6jh4dt",
+    "r": 24,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "dsbhladc": {
+   "id": "dsbhladc",
+   "p": "iouqaefe",
+   "n": 37,
+   "name": "This is becoming an idea capture engine ",
+   "sub": "",
+   "cols": [
+    "A",
+    "B",
+    "C"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Trying again",
+      "link": "rfkuiqv6",
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "1j6jh4dt",
+    "r": 25,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "rfkuiqv6": {
+   "id": "rfkuiqv6",
+   "p": "iouqaefe",
+   "n": 38,
+   "name": "Trying again",
+   "sub": "",
+   "cols": [
+    "A",
+    "B",
+    "C"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Not sure this is navigating like I had in mind",
+      "link": "isae6rs5",
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "dsbhladc",
+    "r": 0,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "isae6rs5": {
+   "id": "isae6rs5",
+   "p": "iouqaefe",
+   "n": 39,
+   "name": "Not sure this is navigating like I had in mind",
+   "sub": "",
+   "cols": [
+    "A",
+    "B",
+    "C"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Enter idea",
+      "link": "hxgnpm7z",
+      "ref": false,
+      "fs": 1.1
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "rfkuiqv6",
+    "r": 0,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "hxgnpm7z": {
+   "id": "hxgnpm7z",
+   "p": "iouqaefe",
+   "n": 40,
+   "name": "Enter idea",
+   "sub": "",
+   "cols": [
+    "A",
+    "B",
+    "C"
+   ],
+   "rows": [
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false,
+      "inv": true
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "isae6rs5",
+    "r": 0,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "3uvgs5ec": {
+   "id": "3uvgs5ec",
+   "p": "y3dmv8o7",
+   "n": 1,
+   "name": "Capture: sticky notes · Nov 1 2026",
+   "sub": "Raw capture from a photo (overlapping notes ignored). One sub-table per sticky, one row per line. Sort by routing lines into natural-language projects; this capture stays as the record.",
+   "cols": [
+    "Sticky",
+    "Size / source",
+    "Routed to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Diabetes annual-care checklist",
+      "link": "xh6uv77f",
+      "ref": false
+     },
+     {
+      "t": "9 lines · Blue sticky",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Lipid questions",
+      "link": "nkpd8nid",
+      "ref": false
+     },
+     {
+      "t": "8 lines · Blue lined note",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Geriatric / bone",
+      "link": "di39yrfp",
+      "ref": false
+     },
+     {
+      "t": "6 lines · Yellow sticky",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Systems / reading",
+      "link": "rm8dwgbe",
+      "ref": false
+     },
+     {
+      "t": "3 lines · Yellow sticky",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "To-do",
+      "link": "r5c5a4a4",
+      "ref": false
+     },
+     {
+      "t": "6 lines · Yellow sticky",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Single question",
+      "link": "nd2jjljm",
+      "ref": false
+     },
+     {
+      "t": "1 line · Yellow sticky",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": null,
+   "u": 1793520945113
+  },
+  "xh6uv77f": {
+   "id": "xh6uv77f",
+   "p": "y3dmv8o7",
+   "n": 2,
+   "name": "Diabetes annual-care checklist",
+   "sub": "Captured from a photo of sticky notes, Nov 1 2026 (Blue sticky). Raw lines; type .. on any line to expand it, or → link it into a natural-language project.",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Vaccines",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Eye exam",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Foot exam",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Depression screen",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Distress",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Dexterity",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Vision",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Numeracy",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Dental",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "3uvgs5ec",
+    "r": 0,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "nkpd8nid": {
+   "id": "nkpd8nid",
+   "p": "y3dmv8o7",
+   "n": 3,
+   "name": "Lipid questions",
+   "sub": "Captured from a photo of sticky notes, Nov 1 2026 (Blue lined note). Raw lines; type .. on any line to expand it, or → link it into a natural-language project.",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Fatty liver and lipids and CV risk",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Severe high TG best diet",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "High TG chylomicrons versus VLDL",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "EPA when TG improves?",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "IV dextrose and insulin and potassium",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Actos and lipids",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Family screening",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "What to measure?",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "3uvgs5ec",
+    "r": 1,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "di39yrfp": {
+   "id": "di39yrfp",
+   "p": "y3dmv8o7",
+   "n": 4,
+   "name": "Geriatric / bone",
+   "sub": "Captured from a photo of sticky notes, Nov 1 2026 (Yellow sticky). Raw lines; type .. on any line to expand it, or → link it into a natural-language project.",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Polypharmacy",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Cognitive status",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Home safety",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Calcium malabsorption",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "? Evenity",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Avoid TSH suppression",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "3uvgs5ec",
+    "r": 2,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "rm8dwgbe": {
+   "id": "rm8dwgbe",
+   "p": "y3dmv8o7",
+   "n": 5,
+   "name": "Systems / reading",
+   "sub": "Captured from a photo of sticky notes, Nov 1 2026 (Yellow sticky). Raw lines; type .. on any line to expand it, or → link it into a natural-language project.",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "NHANES data ≈ systems failure",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Game changer",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Cambridge Analytica",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "3uvgs5ec",
+    "r": 3,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "r5c5a4a4": {
+   "id": "r5c5a4a4",
+   "p": "y3dmv8o7",
+   "n": 6,
+   "name": "To-do",
+   "sub": "Captured from a photo of sticky notes, Nov 1 2026 (Yellow sticky). Raw lines; type .. on any line to expand it, or → link it into a natural-language project.",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Emergence",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Barriers and solutions",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "NEJM Catalyst",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "SOAP note HOPE",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Return bookshelves",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "REAL ID",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "3uvgs5ec",
+    "r": 4,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "nd2jjljm": {
+   "id": "nd2jjljm",
+   "p": "y3dmv8o7",
+   "n": 7,
+   "name": "Single question",
+   "sub": "Captured from a photo of sticky notes, Nov 1 2026 (Yellow sticky). Raw lines; type .. on any line to expand it, or → link it into a natural-language project.",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "GLP1 and cell mass regulation?",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "3uvgs5ec",
+    "r": 5,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "f7fwb5z9": {
+   "id": "f7fwb5z9",
+   "p": "gsm19vbg",
+   "n": 1,
+   "name": "Capture: Google Keep · Nov 1 2026",
+   "sub": "Raw capture from a Keep screenshot. Credentials and visit records were deliberately not transcribed.",
+   "cols": [
+    "Note",
+    "Size / source",
+    "Routed to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Read DXA / Fix glasses (pinned)",
+      "link": "uis22h5b",
+      "ref": false
+     },
+     {
+      "t": "5 lines · Red pinned note",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "To Do",
+      "link": "2v6treji",
+      "ref": false
+     },
+     {
+      "t": "7 lines · Checklist note",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Organize",
+      "link": "49qjvyav",
+      "ref": false
+     },
+     {
+      "t": "5 lines · Teal note",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "To Do July 2026 · Goals",
+      "link": "0rt2uxo7",
+      "ref": false
+     },
+     {
+      "t": "1 line · Yellow note (cut off)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Not captured: Data / logins note",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Contains an Athena username and password. Deliberately left out — this store syncs to the cloud. Move the password to a password manager and remove it from Keep.",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Not captured: Nutrition follow-up notes (06-26 and 07-20-2026)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "Visit record with anthropometrics; left out of this capture.",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": null,
+   "u": 1793520945113
+  },
+  "uis22h5b": {
+   "id": "uis22h5b",
+   "p": "gsm19vbg",
+   "n": 2,
+   "name": "Read DXA / Fix glasses (pinned)",
+   "sub": "Captured from a Google Keep screenshot, Nov 1 2026 (Red pinned note).",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Read DXA",
+      "link": null,
+      "ref": false,
+      "col": 1
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Fix glasses…",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Ketchup",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Smokies",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Tuna",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "f7fwb5z9",
+    "r": 0,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "2v6treji": {
+   "id": "2v6treji",
+   "p": "gsm19vbg",
+   "n": 3,
+   "name": "To Do",
+   "sub": "Captured from a Google Keep screenshot, Nov 1 2026 (Checklist note).",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Dentist",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Return Meta",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Bri business plan",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Lab reporting",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Legal review",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Jeremy identity protection",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "… (list continues below the fold)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "f7fwb5z9",
+    "r": 1,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "49qjvyav": {
+   "id": "49qjvyav",
+   "p": "gsm19vbg",
+   "n": 4,
+   "name": "Organize",
+   "sub": "Captured from a Google Keep screenshot, Nov 1 2026 (Teal note).",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Personal",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Professional",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Family",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Finances",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ],
+    [
+     {
+      "t": "Lifestyle",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "f7fwb5z9",
+    "r": 2,
+    "c": 0
+   },
+   "u": 1793520945113
+  },
+  "0rt2uxo7": {
+   "id": "0rt2uxo7",
+   "p": "gsm19vbg",
+   "n": 5,
+   "name": "To Do July 2026 · Goals",
+   "sub": "Captured from a Google Keep screenshot, Nov 1 2026 (Yellow note, cut off).",
+   "cols": [
+    "Line",
+    "Notes",
+    "Route to"
+   ],
+   "rows": [
+    [
+     {
+      "t": "Goals (heading only visible)",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     },
+     {
+      "t": "",
+      "link": null,
+      "ref": false
+     }
+    ]
+   ],
+   "parent": {
+    "tableId": "f7fwb5z9",
+    "r": 3,
+    "c": 0
+   },
+   "u": 1793520945113
+  }
+ }
+}

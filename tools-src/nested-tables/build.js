@@ -1,14 +1,17 @@
 // Builds the standalone Nested Tables page from this folder:
 //   node build.js            -> ../../private/nested-tables/index.html (the live page at www.threadmed.org/private/nested-tables/)
+//   node build.js master     -> ../../private/nested-tables/master/index.html (the frozen known-good copy; promote only on request)
 //   node build.js out.html   -> a dated copy anywhere
 // Inputs: index.html (app source), js/* (libraries), seed.json (the five sample projects, pre-loaded on first run and merged into existing data by name).
 const fs=require('fs'),path=require('path');
-const here=__dirname; const out=process.argv[2]||path.join(here,'..','..','private','nested-tables','index.html');
+const here=__dirname; const arg=process.argv[2]; const out=arg==='master'?path.join(here,'..','..','private','nested-tables','master','index.html'):(arg||path.join(here,'..','..','private','nested-tables','index.html'));
 let src=fs.readFileSync(path.join(here,'index.html'),'utf8');
 const o=JSON.parse(fs.readFileSync(path.join(here,'seed.json'),'utf8'));
 for(const [id,p] of Object.entries(o.projects)){ if(p.name==='Project 1'){ for(const [tid,t] of Object.entries(o.tables)) if(t.p===id) delete o.tables[tid]; delete o.projects[id]; delete o.curTable[id]; } }
 const order=['How to use Nested Tables','Clinical logic: how reasoning works','Osteoporosis: clinical history','Hypertension: evaluation','Lipidology: decision support'];
 order.forEach((n,i)=>{ const p=Object.values(o.projects).find(p=>p.name===n); if(p) p.n=i+1; });
+// extra.json: projects carried over from the Claude artifact's cloud store (Tool building, captures)
+const xp=path.join(here,'extra.json'); if(fs.existsSync(xp)){ const x=JSON.parse(fs.readFileSync(xp,'utf8')); let n=Object.keys(o.projects).length; Object.values(x.projects).forEach(p=>{ if(!o.projects[p.id]){ p.n=++n; o.projects[p.id]=p; o.curTable[p.id]=p.root; } }); Object.assign(o.tables,x.tables); }
 o.cur=(Object.values(o.projects).find(p=>p.n===1)||Object.values(o.projects)[0]).id; o.fresh=false;
 const libs=['js/jspdf.umd.min.js','js/jspdf.plugin.autotable.min.js','js/jszip.min.js'].map(f=>fs.readFileSync(path.join(here,f),'utf8'));
 const noClose=s=>s.replace(/<\/script/gi,'<\\/script'); const b64e=t=>Buffer.from(t,'utf8').toString('base64');
