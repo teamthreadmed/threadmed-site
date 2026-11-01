@@ -116,6 +116,7 @@
     #phonenav{display:flex!important;flex-wrap:nowrap;gap:6px;padding:6px}
     #phonenav .zoom{margin-left:auto}
     body{padding-bottom:70px}
+    .toast{bottom:calc(84px + env(safe-area-inset-bottom))!important}
     #phonebar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);justify-content:space-around;gap:4px}
     #phonebar>button,#phonebar>.zoom{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;font-size:11px;border:0;background:transparent}
     #phonebar>button i{font-size:19px;font-style:normal}
@@ -281,6 +282,8 @@
     <button id="btnBack" title="Back to the previous table"><i>↩</i><span class="lbl">Back</span></button>
     <button id="btnProjList" title="Drop the projects down as a list / back to one line"><i>⌄</i><span class="lbl">Projects</span></button>
     <button id="btnCapture" title="Capture: paste text (Keep note, Live Text from a photo) → a 📷 capture project"><i>📋</i><span class="lbl">Capture</span></button>
+    <button id="btnSearch" title="Search every project for a word or words (Ctrl/⌘ K)"><i>🔍</i><span class="lbl">Search</span></button>
+    <button id="btnTodo" title="Quick to-do: one line → a row in this project's To do table"><i>✓</i><span class="lbl">To-do</span></button>
     <button id="btnMore" title="More tools"><i>⋯</i></button>
     <button class="more" id="btnTree" title="Outline of this project"><i>☰</i><span class="lbl">Outline</span></button>
     <button class="more" id="btnSnap" title="Snapshot: the whole project on one page, zoom and pan"><i>🗺</i><span class="lbl">Snapshot</span></button>
@@ -359,7 +362,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.17';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.18';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -463,7 +466,7 @@
   function descendants(id, seen=new Set()){ const out=[]; ownedChildren(id).forEach(k=>{ if(seen.has(k.id)) return; seen.add(k.id); out.push(k.id); out.push(...descendants(k.id,seen)); }); return out; }
   function incoming(id){ const out=[]; Object.values(S.tables).forEach(t=>!t.trashed&&t.rows.forEach((r,ri)=>r.forEach((c,ci)=>{ if(c.link===id) out.push({t,ri,ci,owner:isOwnerCell(t,ri,ci)}); }))); return out; }
   function go(id, push=true){ const t=S.tables[id]; if(!t) return; if(t.p!==S.cur){ S.cur=t.p; hist=[]; } else if(push && id!==S.curTable[S.cur]) hist.push(S.curTable[S.cur]); S.curTable[S.cur]=id; try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} render(); }
-  function goProject(pid){ if(!S.projects[pid]||pid===S.cur) return; if(isLocked(S.projects[pid])) return promptUnlock(S.projects[pid],()=>goProject(pid)); S.cur=pid; hist=[]; if(!S.tables[S.curTable[pid]]) S.curTable[pid]=S.projects[pid].root; try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} render(); }
+  function goProject(pid){ if(window.innerWidth<=760&&$('projbar').classList.contains('open')) toggleProjectList(false); if(!S.projects[pid]||pid===S.cur) return; if(isLocked(S.projects[pid])) return promptUnlock(S.projects[pid],()=>goProject(pid)); S.cur=pid; hist=[]; if(!S.tables[S.curTable[pid]]) S.curTable[pid]=S.projects[pid].root; try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} render(); }
 
   // ---------- rendering ----------
   function render(){
@@ -2014,6 +2017,23 @@
   $('btnNight').onclick=()=>{ theme=theme==='dark'?'light':'dark'; applyTheme(); renderTrack(); };
   applyTheme();
   $('btnProjList').onclick=()=>toggleProjectList();
+  // ---------- global search ----------
+  function searchAll(q){ const words=q.toLowerCase().split(/\s+/).filter(Boolean); if(!words.length) return []; const out=[];
+    live().forEach(p=>{ if(p.enc&&isLocked(p)) return; tablesOf(p.id).forEach(t=>{ if(t.trashed) return;
+      const hit=(txt,where,ri,ci)=>{ const lo=(txt||'').toLowerCase(); if(words.every(w=>lo.includes(w))) out.push({p,t,ri,ci,where,txt}); };
+      hit(t.name,'title'); hit(t.sub,'subtitle'); t.rows.forEach((r,ri)=>r.forEach((c,ci)=>hit(c.t,colLetter(ci)+(ri+1),ri,ci))); }); });
+    return out; }
+  function searchModal(){ showModal('Search','Every project, every layer, every cell. Several words = all of them must appear.',false,[['Close','',closeModal]]);
+    M.search.style.display='block'; M.list.style.display='block'; M.search.value=''; M.search.placeholder='word or words…';
+    const draw=()=>{ const q=M.search.value; M.list.innerHTML=''; const res=searchAll(q).slice(0,60); res.forEach(h=>{ const d=document.createElement('div'); d.innerHTML='<span></span><small></small>'; d.firstChild.textContent=(h.txt||'').slice(0,90); d.lastChild.textContent='P'+h.p.n+' '+h.p.name+' › '+h.t.name+' › '+h.where; d.onclick=()=>{ closeModal(); go(h.t.id); if(h.ri!==undefined){ lastCell={ri:h.ri,ci:h.ci,table:h.t.id}; setTimeout(()=>{ const ta=cellTa(h.ri,h.ci); if(ta){ ta.focus({preventScroll:true}); ta.closest('td').scrollIntoView({block:'center'}); } },150); } }; M.list.appendChild(d); }); if(q.trim()&&!res.length) M.list.innerHTML='<div><small>Nothing matches</small></div>'; };
+    M.search.oninput=draw; draw(); setTimeout(()=>M.search.focus(),80); }
+  $('btnSearch').onclick=searchModal;
+  document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); searchModal(); } });
+  // ---------- quick to-do ----------
+  function todoTable(p){ let t=tablesOf(p.id).find(t=>!t.trashed&&/^to[- ]?do/i.test((t.name||'').trim())); if(t) return t;
+    const root=S.tables[p.root]; const ri=root.rows.length; const r=[]; for(let i=0;i<root.cols.length;i++) r.push(cell(i===0?'To do':'')); root.rows.push(r);
+    t=newTable(p.id,'To do',{tableId:root.id,r:ri,c:0}); t.cols=['Task','Notes','Done']; t.rows=[]; t.sub='Quick-added from ✓ To-do.'; S.tables[t.id]=t; r[0].link=t.id; touch(root); dirty.add(t.id); return t; }
+  $('btnTodo').onclick=()=>{ const p=P(); if(!p) return toast('Open a project first'); M.area.value=''; showModal('Quick to-do','One task per line → rows in "'+p.name+'" › To do (made if missing), with a checkbox.',true,[['Cancel','',closeModal],['Add','primary',()=>{ const lines=M.area.value.split(/\n/).map(x=>x.trim()).filter(Boolean); if(!lines.length) return toast('Type a task first'); closeModal(); const t=todoTable(p); lines.forEach(l=>{ const r=t.cols.map(()=>cell('')); r[0].t=l; r[t.cols.length-1].chk=false; t.rows.push(r); }); touch(t); save(); render(); toast(lines.length+' added to To do'); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
@@ -2349,15 +2369,15 @@
   }
 
   load(); if(pruneDefaults()) save();
-  placeNav();
+  placeNav(); window.__nt={mergeFromJSON};
   (function narrowLayout(){
     const narrow=()=>window.innerWidth<=760; let done=false;
     function apply(){ if(!narrow()||done) return; done=true;
       const pn=$('phonenav'), pb=$('phonebar'), mp=$('morepanel');
       [document.querySelector('.dpad[title^="Move"]'),$('btnBack'),document.querySelector('header .zoom')].forEach(e=>e&&pn.appendChild(e));
-      [$('btnCapture'),$('btnVer'),$('btnSave')].forEach(e=>e&&pb.appendChild(e));
+      [$('btnCapture'),$('btnSearch'),$('btnTodo'),$('btnSave')].forEach(e=>e&&pb.appendChild(e));
       const more=document.createElement('button'); more.id='pbMore'; more.innerHTML='<i>⋯</i><span class="lbl">More</span>'; more.onclick=()=>{ mp.classList.toggle('open'); more.classList.toggle('on',mp.classList.contains('open')); }; pb.appendChild(more);
-      [$('sync'),document.querySelector('.linknav'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
+      [$('sync'),document.querySelector('.linknav'),$('btnVer'),$('btnTree'),$('btnSnap'),$('btnGuide'),$('btnColors'),$('btnNight'),$('btnPhone'),$('btnImport'),$('btnReset'),$('btnDelete')].forEach(e=>{ if(e){ e.classList.remove('more'); mp.appendChild(e); } });
       document.addEventListener('click',e=>{ if(mp.classList.contains('open')&&!mp.contains(e.target)&&e.target!==more&&!more.contains(e.target)){ mp.classList.remove('open'); more.classList.remove('on'); } });
       $('pbNew').onclick=()=>{ const p=newProject(); S.cur=p.id; hist=[]; save(); render(); setTimeout(()=>projectModal(p),100); };
       $('btnPhone').onclick=()=>{ phone=!phone; try{ localStorage.setItem(KEY+'-phone',phone?'1':'0'); }catch(e){} renderGrid(); renderColnav(); toast(phone?'Column window: '+colN+' columns at a time':'Column window off'); };
