@@ -43,6 +43,7 @@
   button:hover{border-color:var(--accent);color:var(--accent)}
   button:disabled{opacity:.45;cursor:default}
   button.off{opacity:.6} button.off .lbl{text-decoration:line-through}
+  button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
   button i{font-style:normal;margin-right:5px} button i:only-child,button i:last-child{margin-right:0}
   #btnMore{display:none}
   @media(max-width:760px){ header button .lbl{display:none} button i{margin-right:0} .bar{gap:6px;padding:6px 10px} header h1{display:none} #stats{display:none}
@@ -124,6 +125,7 @@
   .tablewrap{overflow:auto;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
   table{border-collapse:separate;border-spacing:0;width:100%;min-width:480px}
   th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;padding:0;min-width:150px}
+  @media(max-width:760px){ table{min-width:0;table-layout:fixed} th,td{min-width:0} th.rowhead{width:32px} }
   th{background:var(--lhead,var(--bg));font-weight:500;font-size:12px;color:var(--muted);text-align:left;padding:6px 10px;white-space:nowrap}
   th.rowhead{width:36px;min-width:36px;text-align:center}
   th .colbtns,th .rowbtns{display:none;margin-left:6px}
@@ -339,7 +341,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.13';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.14';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1547,7 +1549,7 @@
   function revealCol(ci){ const t=T(); if(colVisible(t,ci)) return false; const s=winStart(t); colWin[t.id]= ci<s ? ci : ci-colN+1; renderGrid(); renderColnav(); return true; }
 
   function renderGrid(){
-    const t=T(); const g=$('grid'); g.innerHTML='';
+    const t=T(); const g=$('grid'); g.innerHTML=''; g.style.minWidth=(window.innerWidth<760)?(32+t.cols.length*115)+'px':'';
     const thead=document.createElement('thead'); const hr=document.createElement('tr');
     const corner=document.createElement('th'); corner.className='rowhead'; corner.textContent='#'; hr.appendChild(corner);
     t.cols.forEach((name,ci)=>{
@@ -1989,8 +1991,11 @@
   $('btnProjList').onclick=()=>toggleProjectList();
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
-  $('btnTree').onclick=()=>{ const L=$('layout'); L.classList.toggle('withtree'); try{ localStorage.setItem(KEY+'-tree',L.classList.contains('withtree')?'1':'0'); }catch(e){} };
-  try{ if(localStorage.getItem(KEY+'-tree')==='1') $('layout').classList.add('withtree'); }catch(e){}
+  function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
+  $('btnTree').onclick=()=>{ const L=$('layout'); L.classList.toggle('withtree'); syncTreeBtn(); if(!(window.innerWidth<760)){ try{ localStorage.setItem(KEY+'-tree',L.classList.contains('withtree')?'1':'0'); }catch(e){} } };
+  // Open clean: on phones the outline is never remembered; on desktops it is
+  try{ if((window.innerWidth<760)){ localStorage.removeItem(KEY+'-tree'); } else if(localStorage.getItem(KEY+'-tree')==='1') $('layout').classList.add('withtree'); }catch(e){}
+  syncTreeBtn();
 
   // ---------- zoom ----------
   const ZOOM_BASE=window.innerWidth<700?0.7:1; let zoom=ZOOM_BASE; try{ zoom=parseFloat(localStorage.getItem(KEY+'-zoom'))||ZOOM_BASE; }catch(e){}
