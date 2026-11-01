@@ -369,7 +369,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.23';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.24';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -1495,13 +1495,14 @@
     M.extra.appendChild(list); M.extra.style.display='block';
   }
   function passwordModal(title,text,confirm,onOk,allowEmpty){
-    showModal(title,text,false,[['Cancel','',closeModal],['OK','primary',async()=>{ const a=M.extra.querySelectorAll('input[type=password]'); const pw=a[0].value; if(!pw&&!allowEmpty) return toast('Enter a password'); if(confirm&&pw&&a[1]&&a[1].value!==pw) return toast('Passwords do not match'); closeModal(); try{ await onOk(pw); }catch(e){ toast(e&&e.message||'Failed'); } }]]);
+    showModal(title,text,false,[['Cancel','',closeModal],['OK','primary',async()=>{ const a=M.extra.querySelectorAll('input[name=password]'); const pw=a[0].value; if(!pw&&!allowEmpty) return toast('Enter a password'); closeModal(); try{ await onOk(pw); }catch(e){ toast(e&&e.message||'Failed'); } }]]);
     const f=document.createElement('form'); f.onsubmit=e=>{ e.preventDefault(); M.btns.querySelector('.primary').click(); }; M.extra.appendChild(f);
     const u=document.createElement('input'); u.type='text'; u.autocomplete='username'; u.name='username'; u.value='Nested Tables · '+title.replace(/^(Unlock|Protect|Change password for) project /,''); u.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;opacity:0'; u.tabIndex=-1; f.appendChild(u);
     const i1=document.createElement('input'); i1.className='text'; i1.type='password'; i1.name='password'; i1.placeholder='Password'; i1.autocomplete=confirm?'new-password':'current-password'; f.appendChild(i1);
-    if(confirm){ const i2=document.createElement('input'); i2.className='text'; i2.type='password'; i2.name='password2'; i2.placeholder='Repeat password'; i2.autocomplete='new-password'; f.appendChild(i2); }
+    if(confirm){ i1.type='text'; i1.autocomplete='off'; i1.setAttribute('autocapitalize','off'); i1.setAttribute('autocorrect','off'); i1.spellcheck=false; }
+    const sh=document.createElement('label'); sh.style.cssText='display:flex;gap:6px;align-items:center;font-size:13px;margin:6px 0;color:var(--muted)'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!confirm; cb.onchange=()=>{ i1.type=cb.checked?'text':'password'; }; sh.appendChild(cb); sh.appendChild(document.createTextNode('Show password')); f.appendChild(sh);
     const sub=document.createElement('button'); sub.type='submit'; sub.style.display='none'; f.appendChild(sub);
-    M.extra.querySelectorAll('input[type=password]').forEach(i=>i.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); M.btns.querySelector('.primary').click(); } });
+    M.extra.querySelectorAll('input[name=password]').forEach(i=>i.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); M.btns.querySelector('.primary').click(); } });
     M.extra.style.display='block'; setTimeout(()=>i1.focus(),50);
   }
 
@@ -1512,12 +1513,13 @@
   const b64=u8=>btoa(String.fromCharCode(...u8)); const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
   async function deriveKey(pw,salt){ const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']); }
   async function encryptTables(p){ const key=vault[p.id]; if(!key) return; const iv=crypto.getRandomValues(new Uint8Array(12)); const plain=new TextEncoder().encode(JSON.stringify(tablesOf(p.id))); const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain)); p.enc={salt:p.enc.salt, iv:b64(iv), data:b64(ct), n:tablesOf(p.id).length}; p.u=now(); encDirty.delete(p.id); metaDirty=true; }
-  async function protectProject(p,pw){ const salt=crypto.getRandomValues(new Uint8Array(16)); vault[p.id]=await deriveKey(pw,salt); p.enc={salt:b64(salt),iv:'',data:'',n:0}; await encryptTables(p); tablesOf(p.id).forEach(t=>{ dirty.add(t.id); }); touchMeta(); save(); }
+  async function protectProject(p,pw){ const salt=crypto.getRandomValues(new Uint8Array(16)); vault[p.id]=await deriveKey(pw,salt); p.enc={salt:b64(salt),iv:'',data:'',n:0}; await encryptTables(p); tablesOf(p.id).forEach(t=>{ dirty.add(t.id); }); touchMeta(); save();
+    try{ const k=await deriveKey(pw,unb64(p.enc.salt)); await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(p.enc.iv)},k,unb64(p.enc.data)); }catch(e){ delete p.enc; delete vault[p.id]; tablesOf(p.id).forEach(t=>touch(t)); touchMeta(); save(); throw new Error('Encryption self-test failed on this browser — project left unprotected'); } }
   async function unlockProject(p,pw){ const key=await deriveKey(pw,unb64(p.enc.salt)); let plain; try{ plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(p.enc.iv)},key,unb64(p.enc.data)); }catch(e){ throw new Error('Wrong password'); } const arr=JSON.parse(new TextDecoder().decode(plain)); vault[p.id]=key; arr.forEach(t=>{ t.p=p.id; S.tables[t.id]=t; }); if(!S.tables[p.root]&&arr[0]) p.root=arr[0].id; }
   function lockProject(p){ if(!p.enc) return; if(encDirty.has(p.id)){ encryptTables(p).then(()=>{ finishLock(p); save(); }); } else finishLock(p); }
   function finishLock(p){ tablesOf(p.id).forEach(t=>{ delete S.tables[t.id]; dirty.delete(t.id); }); delete vault[p.id]; hist=[]; if(S.cur===p.id){ const other=live().find(x=>!isLocked(x)); S.cur=other?other.id:p.id; } try{ localStorage.setItem(KEY,JSON.stringify(persistable())); }catch(e){} render(); toast('Locked'); }
   function persistable(){ const prot=new Set(Object.values(S.projects).filter(p=>p.enc).map(p=>p.id)); const tables={}; Object.values(S.tables).forEach(t=>{ if(!prot.has(t.p)) tables[t.id]=t; }); return {projects:S.projects, tables, cur:S.cur, curTable:S.curTable, fresh:S.fresh}; }
-  function promptUnlock(p,onDone){ passwordModal('Unlock project '+p.n+' · '+p.name,'Enter the password for this project.',false,async pw=>{ await unlockProject(p,pw); if(onDone) onDone(); render(); }); }
+  function promptUnlock(p,onDone){ passwordModal('Unlock project '+p.n+' · '+p.name,'Enter the password for this project.',false,async pw=>{ await unlockProject(p,pw); if(onDone) onDone(); render(); toast('Unlocked'); }); }
 
   function renderCrumbs(){
     const nav=$('crumbs'); nav.innerHTML='';
