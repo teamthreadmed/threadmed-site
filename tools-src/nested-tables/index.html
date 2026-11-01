@@ -324,7 +324,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.7';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.7.1';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -2239,7 +2239,7 @@
     }catch(e){ console.warn('drive',e); toast('Drive backup failed: '+(e&&e.code||e&&e.message||'unknown')); }
   }
   async function initCaps(){
-    if(window.__standalone){ setSync('v1.4 · standalone · autosaves here'); return; }
+    if(window.__standalone){ setSync('v'+APP_VERSION+' · standalone · autosaves here'); return; }
     if(!window.claude||!window.claude.use) return;
     initDb();
     try{ caps.downloads=await window.claude.use('downloads'); }catch(e){}
