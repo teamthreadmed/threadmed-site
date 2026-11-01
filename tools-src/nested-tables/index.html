@@ -370,7 +370,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='2.3';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='2.4';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -391,6 +391,8 @@
   function tablesOf(pid){ return Object.values(S.tables).filter(t=>t.p===pid&&!t.trashed); }
   function trashedBatches(){ const b={}; Object.values(S.tables).forEach(t=>{ if(t.trashed){ (b[t.trashBatch]=b[t.trashBatch]||[]).push(t); } }); return Object.values(b).sort((x,y)=>y[0].trashed-x[0].trashed); }
   function nextPageNo(pid){ let m=0; tablesOf(pid).forEach(t=>{ if(t.n>m) m=t.n; }); return m+1; }
+  function fixProjNos(){ const seen=new Set(); Object.values(S.projects).sort((a,b)=>(a.n||0)-(b.n||0)||(a.u||0)-(b.u||0)).forEach(p=>{ if(!p.n||seen.has(p.n)){ let n=1; while(seen.has(n)) n++; p.n=n; } seen.add(p.n); }); }
+  function where(){ try{ return (navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'app':'tab'; }catch(e){ return 'tab'; } }
   function nextProjNo(){ let m=0; Object.values(S.projects).forEach(p=>{ if(p.n>m) m=p.n; }); return m+1; }
   function newTable(pid, name, parent){
     return {id:uid(), p:pid, n:nextPageNo(pid), name, parent:parent||null, cols:['A','B','C'], rows:[[cell(),cell(),cell()],[cell(),cell(),cell()]], u:now()};
@@ -432,7 +434,7 @@
     }catch(e){ return false; }
   }
   function load(){
-    try{ const raw=localStorage.getItem(KEY); if(raw){ S=JSON.parse(raw); if(S.projects&&S.tables&&S.projects[S.cur]) { ensureSane(); mergeSeed(); return; } } }catch(e){}
+    try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); if(d&&d.projects&&d.tables&&Object.keys(d.projects).length){ S=d; if(!S.curTable) S.curTable={}; if(!S.projects[S.cur]){ const first=Object.values(S.projects).find(p=>!p.trashed)||Object.values(S.projects)[0]; S.cur=first.id; } ensureSane(); fixProjNos(); try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} mergeSeed(); return; } } }catch(e){}
     if(window.__seed&&window.__seed.projects){ S=JSON.parse(JSON.stringify(window.__seed)); Object.values(S.projects).forEach(p=>{ p.importedAt=now(); }); S.fresh=false; ensureSane(); return; }
     if(migrateV2()) return;
     freshState();
@@ -463,7 +465,7 @@
     clearTimeout(saveTimer);
     saveTimer=setTimeout(async()=>{
       for(const pid of [...encDirty]){ const p=S.projects[pid]; if(p&&p.enc&&vault[pid]){ try{ await encryptTables(p); }catch(e){ console.warn('encrypt',e); } } }
-      try{ localStorage.setItem(KEY, JSON.stringify(persistable())); if(window.__standalone) setSync('v'+APP_VERSION+' · saved '+new Date().toTimeString().slice(0,5)+' · '+live().length+' projects'); }catch(e){ toast('Could not save: browser storage is full or blocked'); setSync('v'+APP_VERSION+' · NOT SAVED','warn'); }
+      try{ localStorage.setItem(KEY, JSON.stringify(persistable())); if(window.__standalone) setSync('v'+APP_VERSION+' · saved '+new Date().toTimeString().slice(0,5)+' · '+live().length+' projects · '+(where()==='app'?'Home Screen app':'browser tab')); }catch(e){ toast('Could not save: browser storage is full or blocked'); setSync('v'+APP_VERSION+' · NOT SAVED','warn'); }
       scheduleFlush(); scheduleAuto();
     },150);
   }
@@ -1426,7 +1428,7 @@
   const idb=(()=>{ let dbp=null; const open=()=>{ if(dbp) return dbp; dbp=new Promise((res,rej)=>{ try{ const r=indexedDB.open('nested-tables',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('versions',{keyPath:'id'}); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); return dbp; };
     const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('versions',mode); const st=t.objectStore('versions'); const out=fn(st); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); }); };
     return { all:()=>tx('readonly',st=>st.getAll()), put:v=>tx('readwrite',st=>{ st.put(v); }), del:id=>tx('readwrite',st=>{ st.delete(id); }) }; })();
-  async function loadVersionsAsync(){ if(vcache) return vcache; let arr=[]; try{ arr=await idb.all()||[]; }catch(e){ arr=[]; }
+  async function loadVersionsAsync(){ if(vcache) return vcache; let arr=[]; try{ arr=(await idb.all()||[]).filter(v=>v&&v.pid); }catch(e){ arr=[]; }
     try{ const old=JSON.parse(localStorage.getItem(VKEY)||'[]'); if(old.length){ for(const v of old){ if(!arr.find(x=>x.id===v.id)){ arr.push(v); try{ await idb.put(v); }catch(e){} } } localStorage.removeItem(VKEY); } }catch(e){}
     vcache=arr; return arr; }
   function loadVersions(){ return vcache||[]; }
@@ -1892,6 +1894,7 @@
       ['Master file → load','primary',()=>{ const inp=M.extra.querySelector('input[data-json]'); if(inp) inp.click(); }],
       ['Lines → capture','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }],
       ['Replace all (JSON)','danger',()=>{ const txt=M.area.value; let d; try{ d=JSON.parse(txt); }catch(e){ return toast('That is not valid JSON'); } closeModal(); confirmBox('Replace everything in this browser?','All current projects here are deleted and replaced by the backup. Versions are kept. Consider "Merge" instead.',()=>{ replaceFromJSON(d); },'Replace'); }],
+      ['Recover lost project','',async()=>{ closeModal(); const all=await loadVersionsAsync(); const orphans={}; all.filter(v=>!S.projects[v.pid]).forEach(v=>{ if(!orphans[v.pid]||v.ts>orphans[v.pid].ts) orphans[v.pid]=v; }); const list=Object.values(orphans).sort((a,b)=>b.ts-a.ts); if(!list.length) return toast('No lost projects: every saved version belongs to a project that is still here'); listModal('Recover a lost project','Versions saved in this browser for projects that are no longer listed. Pick one to bring it back (latest version of each).',list.map(v=>({id:v.pid,name:v.pname+' · v'+v.v,path:new Date(v.ts).toLocaleString()+' · '+v.tables.length+' tables'})),async pid=>{ const v=orphans[pid]; const np={id:v.pid, n:nextProjNo(), name:v.pname, root:v.root, u:now()}; S.projects[np.id]=np; v.tables.forEach(t=>{ const c=JSON.parse(JSON.stringify(t)); c.u=now(); S.tables[c.id]=c; dirty.add(c.id); }); if(!S.tables[np.root]) np.root=(v.tables[0]||{}).id; S.cur=np.id; S.curTable[np.id]=np.root; hist=[]; touchMeta(); save(); render(); toast('Recovered "'+v.pname+'" as P'+np.n); }); }],
       ['Markdown files…','',()=>{ const inp=M.extra.querySelector('input[type=file]'); if(inp) inp.click(); }],
       ['Import pasted Markdown','',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste Markdown first'); closeModal(); importMarkdownFiles([{name:'Pasted note',text:txt}]); }],
       ['Merge pasted JSON','',()=>{ let d; try{ d=JSON.parse(M.area.value); }catch(e){ return toast('That is not valid JSON — for notes use "Lines → capture" or "Import pasted Markdown"'); } closeModal(); mergeFromJSON(d); }]
@@ -2070,15 +2073,33 @@
   $('btnLock').onclick=()=>{ const p=P(); if(!p) return; if(p.enc&&isLocked(p)){ promptUnlock(p); return; } if(p.enc){ lockProject(p); toast('Locked — tap the project to open'); return; } togglePersonal(p); };
   document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); searchModal(); } });
   // ---------- quick to-do ----------
-  // Pad: one free-text scratch pad that stays. Stored in its own key (survives everything), rides along in the Master file / JSON export (local text wins unless empty).
-  const PADKEY=KEY+'-pad'; function padGet(){ try{ return localStorage.getItem(PADKEY)||''; }catch(e){ return ''; } } function padSet(v){ try{ localStorage.setItem(PADKEY,v); }catch(e){} }
+  // Pad: one free-text scratch pad that stays. Stored in localStorage AND mirrored in IndexedDB (id '__pad'); the newer wins on open. Rides along in the Master file / JSON export (local text wins unless empty).
+  const PADKEY=KEY+'-pad'; let padMem=null;
+  function padGet(){ if(padMem!==null) return padMem; try{ padMem=localStorage.getItem(PADKEY)||''; }catch(e){ padMem=''; } return padMem; }
+  function padSet(v){ padMem=v; try{ localStorage.setItem(PADKEY,v); localStorage.setItem(PADKEY+'-ts',String(now())); }catch(e){} try{ idb.put({id:'__pad',text:v,ts:now()}); }catch(e){} }
+  (async()=>{ try{ const all=await idb.all(); const r=(all||[]).find(x=>x.id==='__pad'); if(r&&typeof r.text==='string'){ const lts=+(localStorage.getItem(PADKEY+'-ts')||0); const lv=padGet(); if((r.ts||0)>lts&&r.text.trim()&&r.text!==lv){ padMem=r.text; try{ localStorage.setItem(PADKEY,r.text); localStorage.setItem(PADKEY+'-ts',String(r.ts)); }catch(e){} } else if(!lv.trim()&&r.text.trim()){ padMem=r.text; try{ localStorage.setItem(PADKEY,r.text); }catch(e){} } } }catch(e){} })();
   async function copyText(txt){ try{ await navigator.clipboard.writeText(txt); return true; }catch(e){ return false; } }
-  $('btnTodo').onclick=()=>{ M.area.value=padGet(); let saveT=null; const commit=()=>{ padSet(M.area.value); 0; };
-    M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,300); };
-    const btns=[['Close','primary',()=>{ commit(); M.area.oninput=null; closeModal(); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
+  let padCommit=null; window.addEventListener('pagehide',()=>{ if(padCommit) padCommit(); }); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&padCommit) padCommit(); });
+  function projectFromLines(txt){
+    const blocks=txt.replace(/\r/g,'').split(/\n\s*\n+/).map(b=>b.split('\n').map(l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim()).filter(Boolean)).filter(b=>b.length);
+    if(!blocks.length) return toast('Nothing to build from');
+    const title=blocks[0][0].slice(0,60); blocks[0]=blocks[0].slice(1);
+    const p={id:uid(), n:nextProjNo(), name:title, root:null, u:now()}; S.projects[p.id]=p;
+    const rowOf=l=>{ const r=[cell(l),cell(''),cell('')]; r[2].chk=false; return r; };
+    const mkT=(name,parent,lines)=>{ const t=newTable(p.id,name,parent); t.cols=['Item','Notes','Done']; t.sub=''; t.rows=lines.map(rowOf); S.tables[t.id]=t; dirty.add(t.id); return t; };
+    const first=blocks[0], rest=blocks.slice(1);
+    const root=newTable(p.id,title,null); root.cols=['Item','Notes','Done']; root.sub=rest.length?'Built from the Pad: lines under the title are rows here; each later block (after a blank line) is a layer named by its first line.':'Built from the Pad. One row per line; .. on any row to open a layer beneath it.'; root.rows=first.map(rowOf); S.tables[root.id]=root; dirty.add(root.id);
+    rest.forEach(bk=>{ const nm=bk[0].slice(0,60); const lines=bk.length>1?bk.slice(1):['']; const row=rowOf(nm); root.rows.push(row); const k=mkT(nm,{tableId:root.id,r:root.rows.length-1,c:0},lines); row[0].link=k.id; });
+    if(!root.rows.length) root.rows.push(rowOf(''));
+    p.root=root.id; S.cur=p.id; S.curTable[p.id]=root.id; hist=[]; touchMeta(); save(); render(); toast('P'+p.n+' "'+title+'" built from the Pad');
+  }
+  $('btnTodo').onclick=()=>{ M.area.value=padGet(); let saveT=null; const commit=()=>{ clearTimeout(saveT); if(M.area.value!==padGet()) padSet(M.area.value); }; padCommit=commit;
+    M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,250); }; M.area.onblur=commit;
+    const done=()=>{ commit(); M.area.oninput=null; M.area.onblur=null; padCommit=null; closeModal(); };
+    const btns=[['Close','primary',done],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
     if(navigator.share) btns.push(['Share','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); try{ await navigator.share({title:'Pad',text:txt}); }catch(e){} }]);
     btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); toast('Pad cleared'); },'Clear'); }]);
-    showModal('Pad','Free text. It stays until you clear it. Copy or Share to move it anywhere (TickTick, Notes).',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
+    showModal('Pad','Free text that stays. "→ Project" turns it into a project: first line = name; one row per line; a blank line starts a new layer whose first line is its name.',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
