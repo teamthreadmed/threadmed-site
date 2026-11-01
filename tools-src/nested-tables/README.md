@@ -6,7 +6,8 @@ Same code is published as the Claude artifact "Nested Tables" (cloud-synced vari
 ## Iterate
 1. Edit `index.html` (bump `APP_VERSION` near the top of the script; it shows in the status pill).
 2. `node build.js` — writes `private/nested-tables/index.html`.
-3. Commit and push `main`. GitHub Pages updates the URL in 1–3 minutes. Reload the page; the version pill confirms the build.
+3. `node regression.js` (needs Playwright) — 15 checks on an iPhone viewport; every line must say ok before publishing.
+4. Commit and push `main`. GitHub Pages updates the URL in 1–3 minutes. Reload the page; the version pill confirms the build.
 
 User data never lives in these files: it autosaves in each browser's storage. A new build merges any sample project the browser does not have yet (matched by name) and leaves everything else alone. Backups: 💾 Save → JSON in the app; restore with 📥 Import.
 

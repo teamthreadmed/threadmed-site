@@ -1,0 +1,23 @@
+// regression sweep: run before every publish
+const {chromium,devices}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch();const f=fs.readdirSync('.').filter(x=>/^Nested Tables v.*\.html$/.test(x)).sort((a,b)=>fs.statSync(b).mtimeMs-fs.statSync(a).mtimeMs)[0];
+const ctx=await b.newContext({...devices['iPhone 13']});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+require('path').resolve(f));await p.waitForTimeout(1500);
+const T=()=>p.$eval('.titlebar input',e=>e.value);const ok=(n,c)=>console.log((c?'ok  ':'FAIL')+' '+n);
+ok('pill shows version',(await p.$eval('#sync',e=>e.textContent)).includes('v'));
+ok('chips wrap (list) with phone mode off',await p.$eval('#projbar',e=>e.scrollWidth<=e.clientWidth+1&&e.getBoundingClientRect().height>60));
+await p.click('#btnPhone');await p.waitForTimeout(300);ok('chips wrap with phone mode on',await p.$eval('#projbar',e=>e.scrollWidth<=e.clientWidth+1&&e.getBoundingClientRect().height>60));await p.click('#btnPhone');await p.waitForTimeout(300);
+await p.click('#navD');await p.waitForTimeout(300);ok('▼ enters sub-table',(await T())==='The idea');
+await p.click('#navU');await p.waitForTimeout(300);ok('▲ returns',(await T())==='How to use Nested Tables');
+await p.click('#navU');await p.waitForTimeout(300);ok('▲ at Home → Projects',(await p.$eval('#mTitle',e=>e.textContent))==='Projects');await p.click('#mBtns button');
+await p.click('#navR');await p.waitForTimeout(300);ok('▶ next project',(await T())!=='How to use Nested Tables');await p.click('#navL');await p.waitForTimeout(300);
+await p.click('.chip:has-text("Projects")');await p.waitForTimeout(300);ok('☰ Projects list',(await p.$$eval('#mList div',e=>e.length))>=8);await p.click('#mBtns button');
+await p.click('.chip:has-text("+ New")');await p.waitForTimeout(300);await p.fill('#mExtra input','Regression test');await p.evaluate(()=>[...document.querySelectorAll('#mBtns button')].find(x=>x.textContent==='Save').click());await p.waitForTimeout(300);
+await p.click('#grid textarea');await p.keyboard.type('cell text..');await p.waitForTimeout(1200);ok('.. makes sub-table',(await T())==='cell text');
+await p.click('#navU');await p.waitForTimeout(300);await p.reload();await p.waitForTimeout(1500);ok('new project persists',(await p.$$eval('.chip',e=>e.map(x=>x.textContent))).some(x=>x.includes('Regression test')));
+await p.click('#btnImport');await p.waitForTimeout(300);await p.fill('#mArea','a\nb\n\nc');await p.evaluate(()=>[...document.querySelectorAll('#mBtns button')].find(x=>x.textContent.includes('Lines')).click());await p.waitForTimeout(500);ok('Lines → capture',(await p.$$eval('.chip.capture',e=>e.length))>=3);
+await p.click('#btnVer');await p.waitForTimeout(300);ok('save version',(await p.$eval('#toast',e=>e.textContent)).includes('saved as v'));
+await p.click('#grid thead th:nth-child(2) span');await p.click('#grid thead th:nth-child(2) .colbtns button:first-child');await p.waitForTimeout(300);ok('column checkboxes',(await p.$$eval('#grid td.haschk',e=>e.length))>0);
+ok('no page overflow',await p.evaluate(()=>document.body.scrollWidth<=innerWidth));
+ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
+await b.close();})();

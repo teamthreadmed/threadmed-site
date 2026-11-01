@@ -97,8 +97,7 @@
   #celltools{display:none;position:fixed;left:8px;right:8px;bottom:8px;z-index:12;align-items:center;gap:6px;padding:6px 8px;background:var(--panel);border:1px solid var(--accent);border-radius:10px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow)}
   body.phone main{padding-bottom:90px}
   body.phone header{position:static}
-  body.phone .bar.projects{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
-  body.phone .chip{flex:0 0 auto;max-width:170px}
+  body.phone .chip{max-width:200px}
   body.phone .titlebar input{flex:1 1 100%;min-width:0;font-size:19px}
     #phonenav{display:none;position:sticky;top:0;z-index:11;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.08);align-items:center;justify-content:center;gap:8px}
   body.phone #phonenav{display:flex}
@@ -327,7 +326,7 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='1.10';
+  const KEY = 'nested-tables-v3'; const APP_VERSION='1.10.1';
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
