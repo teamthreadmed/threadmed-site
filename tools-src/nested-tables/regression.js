@@ -21,6 +21,8 @@ await p.click('#navU');await p.waitForTimeout(300);await p.reload();await p.wait
 await more();await p.click('#btnImport');await p.waitForTimeout(300);await p.fill('#mArea','a\nb\n\nc');await p.evaluate(()=>[...document.querySelectorAll('#mBtns button')].find(x=>x.textContent.includes('Lines')).click());await p.waitForTimeout(500);ok('Lines → capture',(await p.$$eval('.chip.capture',e=>e.length))>=3);
 await more();await p.click('#btnVer');await p.waitForTimeout(300);ok('save version',(await p.$eval('#toast',e=>e.textContent)).includes('saved as v'));
 await p.click('#grid thead th:nth-child(2) span');await p.click('#grid thead th:nth-child(2) .colbtns button:first-child');await p.waitForTimeout(300);ok('column checkboxes',(await p.$$eval('#grid td.haschk',e=>e.length))>0);
+await p.click('.chip:has-text("P5")');await p.waitForTimeout(300);ok('⌄ chip still visible after row scrolls',await p.$eval('.chip.pin',e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}));await p.click('.chip:has-text("P1")');await p.waitForTimeout(300);
+await more();await p.click('#btnTree');await p.waitForTimeout(300);await p.evaluate(()=>scrollTo(0,600));await p.waitForTimeout(300);ok('outline does not overlap table',await p.evaluate(()=>{const a=document.querySelector('aside.tree').getBoundingClientRect(),g=document.getElementById('grid').getBoundingClientRect();return a.bottom<=g.top+1||a.top>=g.bottom-1;}));await p.click('#btnTree');await more();await p.evaluate(()=>scrollTo(0,0));
 ok('no page overflow',await p.evaluate(()=>document.body.scrollWidth<=innerWidth));
 ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
 await b.close();})();
