@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Nested Tables</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nested Tables">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -370,7 +373,21 @@
 
 <script>
 (function(){
-  const KEY = 'nested-tables-v3'; const APP_VERSION='2.4';
+  // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
+  const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5';
+  const MASTER_FILE='Nested Tables MASTER'+(SPACE?' ('+SPACE+')':'')+'.json';
+  // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
+  const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
+  let persistTimer=null, persistPending=false, persistBusy=false;
+  async function idbPersist(){ if(persistBusy){ persistPending=true; return; } persistBusy=true; try{ await idb.putState(persistable()); store.idb=true; }catch(e){ store.idb=false; store.lastErr=(e&&e.message)||'IndexedDB'; } persistBusy=false; if(persistPending){ persistPending=false; idbPersist(); } }
+  function persistNow(){ // synchronous mirror to localStorage, then IndexedDB (async, coalesced)
+    try{ localStorage.setItem(KEY, JSON.stringify(persistable())); store.ls=true; }catch(e){ store.ls=false; }
+    clearTimeout(persistTimer); persistTimer=setTimeout(idbPersist,60);
+  }
+  function stateStamp(d){ let m=0; try{ Object.values(d.projects||{}).forEach(p=>{ if((p.u||0)>m) m=p.u; }); Object.values(d.tables||{}).forEach(t=>{ if((t.u||0)>m) m=t.u; }); }catch(e){} return m; }
+  function validState(d){ return !!(d&&d.projects&&d.tables&&Object.keys(d.projects).length); }
+  function storageLine(){ const bytes=(()=>{ try{ return JSON.stringify(persistable()).length; }catch(e){ return 0; } })(); const mb=(bytes/1048576).toFixed(bytes>1048576?1:2)+' MB'; const home=store.idb?'browser database (IndexedDB)':store.idb===false?'⚠ database write failed':'browser database'; const mirror=store.ls===false?' · localStorage mirror skipped (over its 5 MB cap — that is fine)':''; return home+' · '+mb+' · '+live().length+' projects · '+(where()==='app'?'Home Screen app':'browser tab')+(SPACE?' · space: '+SPACE_LABEL:'')+mirror; }
   const uid = () => Math.random().toString(36).slice(2,10);
   const now = () => Date.now();
   const cell = (t='') => ({t, link:null, ref:false});
@@ -433,8 +450,13 @@
       S.curTable[p.id]=o.tables[o.current]?o.current:o.root; touchMeta(); return true;
     }catch(e){ return false; }
   }
-  function load(){
-    try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); if(d&&d.projects&&d.tables&&Object.keys(d.projects).length){ S=d; if(!S.curTable) S.curTable={}; if(!S.projects[S.cur]){ const first=Object.values(S.projects).find(p=>!p.trashed)||Object.values(S.projects)[0]; S.cur=first.id; } ensureSane(); fixProjNos(); try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} mergeSeed(); return; } } }catch(e){}
+  async function load(){
+    // Primary: IndexedDB "state". Fallback: the localStorage copy (the only store before v2.5). If both exist, the one with the latest edit wins.
+    let fromDb=null, fromLs=null;
+    try{ fromDb=await idb.getState(); if(!validState(fromDb)) fromDb=null; }catch(e){ fromDb=null; store.lastErr=(e&&e.message)||'IndexedDB'; }
+    try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); if(validState(d)) fromLs=d; } }catch(e){}
+    const d=(fromDb&&fromLs)?(stateStamp(fromLs)>stateStamp(fromDb)?fromLs:fromDb):(fromDb||fromLs);
+    if(d){ S=d; if(!S.curTable) S.curTable={}; if(!S.projects[S.cur]){ const first=Object.values(S.projects).find(p=>!p.trashed)||Object.values(S.projects)[0]; S.cur=first.id; } ensureSane(); fixProjNos(); persistNow(); mergeSeed(); return; }
     if(window.__seed&&window.__seed.projects){ S=JSON.parse(JSON.stringify(window.__seed)); Object.values(S.projects).forEach(p=>{ p.importedAt=now(); }); S.fresh=false; ensureSane(); return; }
     if(migrateV2()) return;
     freshState();
@@ -448,7 +470,7 @@
       const touched=tablesOf(lp.id).some(t=>(t.u||0)>(lp.importedAt||0)+5000);
       if(!touched){ saveVersion(lp,'before update from build '+APP_VERSION,{auto:true}); removeTables(tablesOf(lp.id).map(t=>t.id)); const np=copyIn(sp,lp.name); np.n=lp.n; np.id===lp.id||(delete S.projects[lp.id], delete S.curTable[lp.id]); if(S.cur===lp.id) S.cur=np.id; updated++; }
       else { copyIn(sp,sp.name+' · update '+new Date().toLocaleDateString(undefined,{month:'short',day:'numeric'})); copies++; } });
-    if(added||updated||copies){ touchMeta(); try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} setTimeout(()=>toast([added&&added+' new',updated&&updated+' updated',copies&&copies+' arrived as a dated copy (yours was edited)'].filter(Boolean).join(' · ')+' from this build'),600); } }
+    if(added||updated||copies){ touchMeta(); persistNow(); setTimeout(()=>toast([added&&added+' new',updated&&updated+' updated',copies&&copies+' arrived as a dated copy (yours was edited)'].filter(Boolean).join(' · ')+' from this build'),600); } }
   function ensureSane(){
     if(!S.curTable) S.curTable={};
     if(!Object.keys(S.projects).length) newProject('Project 1');
@@ -460,12 +482,16 @@
     Object.values(S.projects).forEach(p=>{ if(isLocked(p)) return; if(!S.tables[p.root]){ const r=tablesOf(p.id).find(t=>!t.parent)||tablesOf(p.id)[0]; if(r) p.root=r.id; else { const nr=newTable(p.id,'Home',null); S.tables[nr.id]=nr; p.root=nr.id; dirty.add(nr.id); } touchMeta(); } if(!S.tables[S.curTable[p.id]]||S.tables[S.curTable[p.id]].p!==p.id) S.curTable[p.id]=p.root; });
     Object.values(S.tables).forEach(t=>{ if(!S.projects[t.p]) { t.p=S.cur; touch(t); } });
   }
-  let saveTimer;
+  let saveTimer, saveFailShown=false;
   function save(){
     clearTimeout(saveTimer);
     saveTimer=setTimeout(async()=>{
       for(const pid of [...encDirty]){ const p=S.projects[pid]; if(p&&p.enc&&vault[pid]){ try{ await encryptTables(p); }catch(e){ console.warn('encrypt',e); } } }
-      try{ localStorage.setItem(KEY, JSON.stringify(persistable())); if(window.__standalone) setSync('v'+APP_VERSION+' · saved '+new Date().toTimeString().slice(0,5)+' · '+live().length+' projects · '+(where()==='app'?'Home Screen app':'browser tab')); }catch(e){ toast('Could not save: browser storage is full or blocked'); setSync('v'+APP_VERSION+' · NOT SAVED','warn'); }
+      let snap=null; try{ snap=persistable(); }catch(e){}
+      let dbOk=false; if(snap){ try{ await idb.putState(snap); dbOk=true; store.idb=true; }catch(e){ store.idb=false; store.lastErr=(e&&e.message)||'IndexedDB'; } }
+      let lsOk=false; if(snap){ try{ localStorage.setItem(KEY, JSON.stringify(snap)); lsOk=true; store.ls=true; }catch(e){ store.ls=false; } }
+      if(dbOk||lsOk){ if(window.__standalone) setSync('v'+APP_VERSION+' · saved '+new Date().toTimeString().slice(0,5)+' · '+live().length+' projects · '+(where()==='app'?'Home Screen app':'browser tab')+(SPACE?' · '+SPACE_LABEL:''),dbOk?'':'warn'); saveFailShown=false; }
+      else { setSync('v'+APP_VERSION+' · NOT SAVED','warn'); toast('Could not save: browser storage is full or blocked'); if(!saveFailShown){ saveFailShown=true; setTimeout(()=>{ try{ confirmBox('Your changes are not being saved','This browser refused to store the data ('+(store.lastErr||'storage full or blocked')+'). Nothing you type now will survive a reload. Use 💾 → Master file → save right away to keep a copy, then free space or try another browser.',()=>{ $('btnSave').onclick(); },'Open Save / Backup'); }catch(e){} },300); } }
       scheduleFlush(); scheduleAuto();
     },150);
   }
@@ -476,8 +502,8 @@
   function ownedChildren(id){ const t=S.tables[id]; const out=[]; if(!t) return out; t.rows.forEach((r,ri)=>r.forEach((c,ci)=>{ if(isOwnerCell(t,ri,ci)) out.push({id:c.link,ri,ci}); })); return out; }
   function descendants(id, seen=new Set()){ const out=[]; ownedChildren(id).forEach(k=>{ if(seen.has(k.id)) return; seen.add(k.id); out.push(k.id); out.push(...descendants(k.id,seen)); }); return out; }
   function incoming(id){ const out=[]; Object.values(S.tables).forEach(t=>!t.trashed&&t.rows.forEach((r,ri)=>r.forEach((c,ci)=>{ if(c.link===id) out.push({t,ri,ci,owner:isOwnerCell(t,ri,ci)}); }))); return out; }
-  function go(id, push=true){ const t=S.tables[id]; if(!t) return; if(t.p!==S.cur){ S.cur=t.p; hist=[]; } else if(push && id!==S.curTable[S.cur]) hist.push(S.curTable[S.cur]); S.curTable[S.cur]=id; try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} render(); }
-  function goProject(pid){ if(window.innerWidth<=760&&$('projbar').classList.contains('open')) toggleProjectList(false); if(!S.projects[pid]||pid===S.cur) return; if(isLocked(S.projects[pid])) return promptUnlock(S.projects[pid],()=>goProject(pid)); S.cur=pid; hist=[]; if(!S.tables[S.curTable[pid]]) S.curTable[pid]=S.projects[pid].root; try{ localStorage.setItem(KEY, JSON.stringify(persistable())); }catch(e){} render(); }
+  function go(id, push=true){ const t=S.tables[id]; if(!t) return; if(t.p!==S.cur){ S.cur=t.p; hist=[]; } else if(push && id!==S.curTable[S.cur]) hist.push(S.curTable[S.cur]); S.curTable[S.cur]=id; persistNow(); render(); }
+  function goProject(pid){ if(window.innerWidth<=760&&$('projbar').classList.contains('open')) toggleProjectList(false); if(!S.projects[pid]||pid===S.cur) return; if(isLocked(S.projects[pid])) return promptUnlock(S.projects[pid],()=>goProject(pid)); S.cur=pid; hist=[]; if(!S.tables[S.curTable[pid]]) S.curTable[pid]=S.projects[pid].root; persistNow(); render(); }
 
   // ---------- rendering ----------
   function render(){
@@ -1425,9 +1451,10 @@
   // ---------- versions: numbered, dated snapshots of one project ----------
   const VKEY=KEY+'-versions';
   let vcache=null; // in-memory copy of all versions; IndexedDB is the store
-  const idb=(()=>{ let dbp=null; const open=()=>{ if(dbp) return dbp; dbp=new Promise((res,rej)=>{ try{ const r=indexedDB.open('nested-tables',1); r.onupgradeneeded=()=>{ r.result.createObjectStore('versions',{keyPath:'id'}); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }); return dbp; };
-    const tx=async(mode,fn)=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction('versions',mode); const st=t.objectStore('versions'); const out=fn(st); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); }); };
-    return { all:()=>tx('readonly',st=>st.getAll()), put:v=>tx('readwrite',st=>{ st.put(v); }), del:id=>tx('readwrite',st=>{ st.delete(id); }) }; })();
+  const idb=(()=>{ let dbp=null; const open=()=>{ if(dbp) return dbp; dbp=new Promise((res,rej)=>{ try{ const r=indexedDB.open(DBNAME,2); r.onupgradeneeded=()=>{ const d=r.result; if(!d.objectStoreNames.contains('versions')) d.createObjectStore('versions',{keyPath:'id'}); if(!d.objectStoreNames.contains('state')) d.createObjectStore('state',{keyPath:'id'}); }; r.onsuccess=()=>{ r.result.onversionchange=()=>{ try{ r.result.close(); }catch(e){} dbp=null; }; res(r.result); }; r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error('database blocked by another tab')); }catch(e){ rej(e); } }); dbp.catch(()=>{ dbp=null; }); return dbp; };
+    const tx=async(mode,fn,name='versions')=>{ const d=await open(); return new Promise((res,rej)=>{ const t=d.transaction(name,mode); const st=t.objectStore(name); const out=fn(st); t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error||new Error('aborted')); }); };
+    return { all:()=>tx('readonly',st=>st.getAll()), put:v=>tx('readwrite',st=>{ st.put(v); }), del:id=>tx('readwrite',st=>{ st.delete(id); }),
+      getState:async()=>{ const r=await tx('readonly',st=>st.get('main'),'state'); return r&&r.data||null; }, putState:data=>tx('readwrite',st=>{ st.put({id:'main',data,ts:Date.now()}); },'state') }; })();
   async function loadVersionsAsync(){ if(vcache) return vcache; let arr=[]; try{ arr=(await idb.all()||[]).filter(v=>v&&v.pid); }catch(e){ arr=[]; }
     try{ const old=JSON.parse(localStorage.getItem(VKEY)||'[]'); if(old.length){ for(const v of old){ if(!arr.find(x=>x.id===v.id)){ arr.push(v); try{ await idb.put(v); }catch(e){} } } localStorage.removeItem(VKEY); } }catch(e){}
     vcache=arr; return arr; }
@@ -1521,7 +1548,7 @@
     try{ const k=await deriveKey(pw,unb64(p.enc.salt)); await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(p.enc.iv)},k,unb64(p.enc.data)); }catch(e){ delete p.enc; delete vault[p.id]; tablesOf(p.id).forEach(t=>touch(t)); touchMeta(); save(); throw new Error('Encryption self-test failed on this browser — project left unprotected'); } }
   async function unlockProject(p,pw){ const key=await deriveKey(pw,unb64(p.enc.salt)); let plain; try{ plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(p.enc.iv)},key,unb64(p.enc.data)); }catch(e){ throw new Error('Wrong password'); } const arr=JSON.parse(new TextDecoder().decode(plain)); vault[p.id]=key; arr.forEach(t=>{ t.p=p.id; S.tables[t.id]=t; }); if(!S.tables[p.root]&&arr[0]) p.root=arr[0].id; }
   function lockProject(p){ if(!p.enc) return; if(encDirty.has(p.id)){ encryptTables(p).then(()=>{ finishLock(p); save(); }); } else finishLock(p); }
-  function finishLock(p){ tablesOf(p.id).forEach(t=>{ delete S.tables[t.id]; dirty.delete(t.id); }); delete vault[p.id]; hist=[]; if(S.cur===p.id){ const other=live().find(x=>!isLocked(x)); S.cur=other?other.id:p.id; } try{ localStorage.setItem(KEY,JSON.stringify(persistable())); }catch(e){} render(); toast('Locked'); }
+  function finishLock(p){ tablesOf(p.id).forEach(t=>{ delete S.tables[t.id]; dirty.delete(t.id); }); delete vault[p.id]; hist=[]; if(S.cur===p.id){ const other=live().find(x=>!isLocked(x)); S.cur=other?other.id:p.id; } persistNow(); render(); toast('Locked'); }
   function persistable(){ const prot=new Set(Object.values(S.projects).filter(p=>p.enc).map(p=>p.id)); const tables={}; Object.values(S.tables).forEach(t=>{ if(!prot.has(t.p)) tables[t.id]=t; }); return {projects:S.projects, tables, cur:S.cur, curTable:S.curTable, fresh:S.fresh, pad:padGet()}; }
   function promptUnlock(p,onDone){ passwordModal('Unlock project '+p.n+' · '+p.name,'Enter the password for this project.',false,async pw=>{ await unlockProject(p,pw); if(onDone) onDone(); render(); toast('Unlocked'); }); }
 
@@ -1876,7 +1903,7 @@
 
   $('btnSave').onclick=()=>{
     const btns=[['Close','',closeModal]];
-    btns.push(['Master file → save','primary',async()=>{ closeModal(); live().forEach(p=>{ p.syncAt=now(); }); touchMeta(); save(); const blob=new Blob([exportJSON()],{type:'application/json'}); await saveBlob('Nested Tables MASTER.json',blob); }]);
+    btns.push(['Master file → save','primary',async()=>{ closeModal(); live().forEach(p=>{ p.syncAt=now(); }); touchMeta(); save(); const blob=new Blob([exportJSON()],{type:'application/json'}); await saveBlob(MASTER_FILE,blob); }]);
     btns.push(['Copy JSON','',()=>copyText(exportJSON())]);
     btns.push(['Copy Markdown','',()=>copyText(exportMarkdown())]);
     if(caps.downloads){ btns.push(['Download JSON','',()=>downloadFile('nested-tables '+stamp()+'.json',exportJSON())]); btns.push(['Download Markdown','',()=>downloadFile('nested-tables '+stamp()+'.md',exportMarkdown())]); }
@@ -1885,7 +1912,7 @@
     if(caps.mcp){ btns.push(['This project → Obsidian notes in Drive','',bundleToDrive]); btns.push(['Back up everything to Google Drive','primary',backupToDrive]); }
     if(canDl) btns.push(['Save the app as HTML (a dated copy with your data inside)','',saveStandalone]); if(caps.mcp&&!window.__standalone) btns.push(['Save the app to Google Drive','',standaloneToDrive]);
     M.area.value='';
-    showModal('Save / Backup','Master file → save writes "Nested Tables MASTER.json" (all projects). Keep it in one place — a Google Drive folder works on every device — and in any other browser use 📥 Master file → load; the two copies merge by last edit. Password-protected projects stay encrypted in the JSON and are left out of the Markdown while locked. "Save the app as HTML" makes a single self-contained file of this tool with a snapshot of your data inside; it runs offline on a computer (iPhone Files and Drive previews do not run apps — add this page to your Home Screen instead). Markdown is a readable outline for Obsidian, Heptabase or Thread Notes.'+(caps.mcp?' The Drive backup saves both files to a "Nested Tables Backups" folder in your Drive.':''),false,btns);
+    showModal('Save / Backup','Stored in: '+storageLine()+'. Master file → save writes "'+MASTER_FILE+'" (all projects). Keep it in one place — a Google Drive folder works on every device — and in any other browser use 📥 Master file → load; the two copies merge by last edit. Password-protected projects stay encrypted in the JSON and are left out of the Markdown while locked. "Save the app as HTML" makes a single self-contained file of this tool with a snapshot of your data inside; it runs offline on a computer (iPhone Files and Drive previews do not run apps — add this page to your Home Screen instead). Markdown is a readable outline for Obsidian, Heptabase or Thread Notes.'+(caps.mcp?' The Drive backup saves both files to a "Nested Tables Backups" folder in your Drive.':''),false,btns);
   };
   $('btnImport').onclick=()=>{
     M.area.value='';
@@ -2201,7 +2228,7 @@
       [['Linked from',''],'Every cell that points at the current table; tap to go there.','Under the title']]},
     {h:'Table and layer',lead:'Each table has a title, a subtitle and its own size.',cols:['Control','Does','Notes'],rows:[
       [['Title / subtitle',''],'Edit above the grid. The subtitle is where the principle of a layer lives.','A−/A+ beside the title resize both'],
-      [['Master file',''],'💾 Master file → save makes "Nested Tables MASTER.json"; 📥 Master file → load merges it in table by table (a table changed on both sides since the last sync asks you; otherwise the newer side wins; nothing deleted; a version is saved first). One file in Drive keeps Safari, Chrome, the Home Screen app and the Claude app in step.','Do it at the end of a session in one browser and the start in another'],
+      [['Master file',''],'💾 Master file → save makes "'+MASTER_FILE+'"; 📥 Master file → load merges it in table by table (a table changed on both sides since the last sync asks you; otherwise the newer side wins; nothing deleted; a version is saved first). One file in Drive keeps Safari, Chrome, the Home Screen app and the Claude app in step.','Do it at the end of a session in one browser and the start in another'],
       [['🕒 Save version',''],'Saves a numbered, dated copy of the current project (v1, v2…). Auto versions are also taken while you work: the first and last of each day are kept for 30 days. Tap the project chip → Versions to restore one or open it as a copy.','Kept in this browser (IndexedDB); Download JSON to keep one elsewhere'],
       [['Rows −/+ · Columns −/+',''],'Grow or shrink the table; − removes the last row or column.','Asks first if sub-tables would be lost'],
       [['Header hover',''],'Insert a row/column here, or delete this one.','Hover a row number or column letter'],
@@ -2398,7 +2425,7 @@
           const remoteP=md&&md.projects?md.projects:{}; if(Object.values(S.projects).some(p=>!remoteP[p.id])) touchMeta();
           if(dirty.size||metaDirty) scheduleFlush();
         }
-        db.doc('meta/main').onSnapshot(m=>{ if(m.metadata.hasPendingWrites) return; const d=m.exists?m.data():null; if(adoptMeta(d)){ ensureSane(); try{ localStorage.setItem(KEY,JSON.stringify(persistable())); }catch(e){} if(typing()) pendingRender=true; else render(); } }, ()=>{});
+        db.doc('meta/main').onSnapshot(m=>{ if(m.metadata.hasPendingWrites) return; const d=m.exists?m.data():null; if(adoptMeta(d)){ ensureSane(); persistNow(); if(typing()) pendingRender=true; else render(); } }, ()=>{});
       } else if(!first){
         snap.docChanges().forEach(ch=>{
           if(ch.type==='removed'){ if(S.tables[ch.doc.id] && !dirty.has(ch.doc.id)){ removeTablesQuiet([ch.doc.id]); changed=true; } }
@@ -2406,7 +2433,7 @@
         });
       }
       if(!snap.metadata.hasPendingWrites) setSync('v'+APP_VERSION+' · synced','ok');
-      if(changed){ ensureSane(); try{ localStorage.setItem(KEY,JSON.stringify(persistable())); }catch(e){} if(typing()) pendingRender=true; else render(); }
+      if(changed){ ensureSane(); persistNow(); if(typing()) pendingRender=true; else render(); }
     }, err=>{ clearTimeout(timer); setSync('cloud off','warn'); caps.db=null; console.warn('db',err); });
     if(dirty.size||deleted.size||metaDirty) scheduleFlush();
   }
@@ -2436,8 +2463,11 @@
     try{ caps.mcp=await window.claude.use('mcp'); }catch(e){}
   }
 
-  load(); if(pruneDefaults()) save();
-  placeNav(); window.__nt={mergeFromJSON};
+  (async function boot(){
+  if(SPACE_LABEL){ document.title='Nested Tables · '+SPACE_LABEL; const h=document.querySelector('header h1'); if(h) h.textContent='Nested Tables · '+SPACE_LABEL; }
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+  await load(); if(pruneDefaults()) save(); else persistNow();
+  placeNav(); window.__nt={mergeFromJSON, storageLine, ready:true};
   (function narrowLayout(){
     const narrow=()=>window.innerWidth<=760; let done=false;
     function apply(){ if(!narrow()||done) return; done=true;
@@ -2458,6 +2488,7 @@
   setZoom(zoom,true);
   render();
   initCaps();
+  })();
 })();
 </script>
 </body>

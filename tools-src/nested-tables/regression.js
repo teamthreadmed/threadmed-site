@@ -1,6 +1,6 @@
 // regression sweep: run before every publish
 const {chromium,devices}=require('playwright');const fs=require('fs');
-(async()=>{const b=await chromium.launch();const f=fs.readdirSync('.').filter(x=>/^Nested Tables v.*\.html$/.test(x)).sort((a,b)=>fs.statSync(b).mtimeMs-fs.statSync(a).mtimeMs)[0];
+(async()=>{const b=await chromium.launch(process.env.CHROME?{executablePath:process.env.CHROME,args:['--no-sandbox']}:{});const f=fs.readdirSync('.').filter(x=>/^Nested Tables v.*\.html$/.test(x)).sort((a,b)=>fs.statSync(b).mtimeMs-fs.statSync(a).mtimeMs)[0];
 const ctx=await b.newContext({...devices['iPhone 13'],hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto('file:///home/claude/nt/'+f);await p.waitForTimeout(1500);
 const T=()=>p.$eval('.titlebar input',e=>e.value);const ok=(n,c)=>console.log((c?'ok  ':'FAIL')+' '+n);
@@ -49,5 +49,10 @@ ok('viewport locks browser zoom',await p.evaluate(()=>/user-scalable=no/.test(do
 await p.evaluate(()=>document.getElementById('zoomPct').click());
 await p.evaluate(()=>document.getElementById('zoomPct').click());await p.waitForTimeout(200);await p.tap('#grid td[data-ri="1"][data-ci="2"]');await p.waitForTimeout(400);ok('tap on cell padding focuses its textarea',await p.evaluate(()=>{const a=document.activeElement;return a&&a.tagName==='TEXTAREA'&&a.closest('td').dataset.ri==='1'&&a.closest('td').dataset.ci==='2';}));
 await p.waitForTimeout(900);ok('no early focus loss toast',!(await p.$eval('#toast',e=>e.textContent)).includes('lost focus'));
+// v2.5: data lives in IndexedDB — a store bigger than localStorage's 5 MB cap must still save and survive a reload
+await p.evaluate(()=>{const d={projects:{},tables:{},curTable:{}};for(let k=0;k<14;k++){const pid='big'+k,tid='bigt'+k;d.projects[pid]={id:pid,n:50+k,name:'Big import '+k,root:tid,u:Date.now()};d.curTable[pid]=tid;const rows=[];for(let i=0;i<1500;i++)rows.push([{t:'Item '+i+' lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor',link:null,ref:false},{t:'Context '+i+' incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud',link:null,ref:false},{t:'',link:null,ref:false}]);d.tables[tid]={id:tid,p:pid,n:1,name:'Home',parent:null,cols:['Item','Context','Keep'],rows,u:Date.now()};}window.__nt.mergeFromJSON(d);});await p.waitForTimeout(1500);
+await p.evaluate(()=>document.getElementById('pbNew').click());await p.waitForTimeout(400);await p.fill('#mExtra input.text:visible','Over-quota project');await p.evaluate(()=>[...document.querySelectorAll('#mBtns button')].find(x=>x.textContent==='Save').click());await p.waitForTimeout(900);
+ok('over 5 MB: pill says saved',(await p.$eval('#sync',e=>e.textContent)).includes('saved'));
+await p.reload();await p.waitForTimeout(2000);ok('over 5 MB: new project survives reload',(await p.$$eval('.chip',e=>e.map(x=>x.textContent))).some(x=>x.includes('Over-quota project')));
 ok('no JS errors',errs.length===0); if(errs.length) console.log(errs);
 await b.close();})();

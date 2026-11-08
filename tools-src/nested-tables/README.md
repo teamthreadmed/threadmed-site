@@ -15,6 +15,14 @@ User data never lives in these files: it autosaves in each browser's storage. A 
 - **Latest**: https://www.threadmed.org/private/nested-tables/ — every build lands here.
 - **Master**: https://www.threadmed.org/private/nested-tables/master/ — a frozen known-good copy. Promote with `node build.js master` only when Anthony says the latest is good. If latest breaks, use master (same browser storage, so data is shared).
 
+- **Personal**: https://www.threadmed.org/private/nested-tables/personal/ — the same app built with `node build.js personal`: its own storage (`nested-tables-v3@personal`, IndexedDB `nested-tables@personal`), its own Master file ("Nested Tables MASTER (personal).json"), no clinical samples (only the how-to project). Add it to the Home Screen as a second icon ("NT Personal"). Spaces are defined in `SPACES` in build.js.
+
+## Storage (v2.5)
+- Data lives in IndexedDB (store `state`, record `main`) — no 5 MB cap. localStorage keeps a mirror only while it fits (older builds read only that). On load, if both exist the one with the latest edit wins.
+- Before v2.5 everything was in localStorage; Safari caps that at ~5 MB (UTF-16, so ~2.5 M characters) and a save past the cap failed with only a pill/toast — new projects then vanished on reload. Now a failed save (both stores) opens a dialog pointing at 💾 Master file → save.
+- 💾 Save / Backup shows the storage line: where the data is, size, project count, Home Screen app vs browser tab, space.
+- Each browser and each Home Screen app has its own storage; the Master file is the bridge between them.
+
 ## Backups
 - Repo history (every build is a commit).
 - Google Drive folder "Nested Tables Backups": the latest and master HTML plus seed.json / extra.json, uploaded at each release.
