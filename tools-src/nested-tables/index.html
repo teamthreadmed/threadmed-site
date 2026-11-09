@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.5';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.6';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2136,7 +2136,7 @@
     while(i<lines.length){ if(!lines[i].trim()){ out.push(lines[i]); i++; continue; }
       let j=i; while(j<lines.length&&lines[j].trim()) j++; const block=lines.slice(i,j);
       const hasT=block.some(l=>TRE.test(l)); const inScope=caretLineIdx===undefined||(caretLineIdx>=i&&caretLineIdx<j);
-      if(hasT&&inScope){ const spec=tablifyBlock(block); if(spec.rows.length&&(spec.rows.length>1||spec.rows[0].some(c=>c.t))){ const {k,p}=placeTable(spec); made.push(k); out.push('✓ '+spec.name+' → P'+p.n+' table '+k.n+' ('+spec.rows.length+' rows)'); } else out.push(...block); }
+      if(hasT&&inScope){ const spec=tablifyBlock(block.filter(l=>!/^\s*✓/.test(l))); if(spec.rows.length&&(spec.rows.length>1||spec.rows[0].some(c=>c.t))){ const {k,p}=placeTable(spec); made.push(k); out.push('✓ '+spec.name+' → P'+p.n+' table '+k.n+' ('+spec.rows.length+' rows)'); } else out.push(...block); }
       else out.push(...block);
       i=j; }
     return {text:out.join('\n'),made};
@@ -2146,7 +2146,7 @@
     const lines=v.replace(/\r/g,'').split('\n'); const pos=M.area.selectionStart||0; let idx=v.slice(0,pos).split('\n').length-1; if(idx>=lines.length) idx=lines.length-1;
     if(!lines[idx]||!lines[idx].trim()){ let k=idx; while(k>0&&!lines[k].trim()) k--; idx=k; }
     let i=idx, j=idx+1; while(i>0&&lines[i-1].trim()) i--; while(j<lines.length&&lines[j].trim()) j++;
-    const block=lines.slice(i,j).filter(l=>l.trim()); if(!block.length) return toast('Put the cursor in the list first');
+    const block=lines.slice(i,j).filter(l=>l.trim()&&!/^\s*✓/.test(l)); if(!block.length) return toast('Put the cursor in a list (not on a ✓ line) first');
     const spec=tablifyBlock(block); const {k,p}=placeTable(spec);
     lines.splice(i,j-i,'✓ '+spec.name+' → P'+p.n+' table '+k.n+' ('+spec.rows.length+' rows)'); const txt=lines.join('\n'); M.area.value=txt; padSet(txt); return k; }
   function runPadTablify(caretLineIdx){ const txt=M.area.value; const r=padTablify(txt,caretLineIdx); if(!r.made.length){ if(caretLineIdx===undefined) toast('No /t block found — put /t on its own line under a list'); return false; }
