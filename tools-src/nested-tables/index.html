@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5.1';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5.2';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -457,7 +457,7 @@
     try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); if(validState(d)) fromLs=d; } }catch(e){}
     const d=(fromDb&&fromLs)?(stateStamp(fromLs)>stateStamp(fromDb)?fromLs:fromDb):(fromDb||fromLs);
     if(d){ S=d; if(!S.curTable) S.curTable={}; if(!S.projects[S.cur]){ const first=Object.values(S.projects).find(p=>!p.trashed)||Object.values(S.projects)[0]; S.cur=first.id; } ensureSane(); fixProjNos(); persistNow(); mergeSeed(); return; }
-    if(window.__seed&&window.__seed.projects){ S=JSON.parse(JSON.stringify(window.__seed)); Object.values(S.projects).forEach(p=>{ p.importedAt=now(); }); S.fresh=false; ensureSane(); return; }
+    if(window.__seed&&window.__seed.projects){ S=JSON.parse(JSON.stringify(window.__seed)); Object.values(S.projects).forEach(p=>{ p.importedAt=now(); }); S.fresh=false; ensureSane(); fixProjNos(); return; }
     if(migrateV2()) return;
     freshState();
   }
@@ -470,7 +470,7 @@
       const touched=tablesOf(lp.id).some(t=>(t.u||0)>(lp.importedAt||0)+5000);
       if(!touched){ saveVersion(lp,'before update from build '+APP_VERSION,{auto:true}); removeTables(tablesOf(lp.id).map(t=>t.id)); const np=copyIn(sp,lp.name); np.n=lp.n; np.id===lp.id||(delete S.projects[lp.id], delete S.curTable[lp.id]); if(S.cur===lp.id) S.cur=np.id; updated++; }
       else { copyIn(sp,sp.name+' · update '+new Date().toLocaleDateString(undefined,{month:'short',day:'numeric'})); copies++; } });
-    if(added||updated||copies){ touchMeta(); persistNow(); setTimeout(()=>toast([added&&added+' new',updated&&updated+' updated',copies&&copies+' arrived as a dated copy (yours was edited)'].filter(Boolean).join(' · ')+' from this build'),600); } }
+    if(added||updated||copies){ fixProjNos(); touchMeta(); persistNow(); setTimeout(()=>toast([added&&added+' new',updated&&updated+' updated',copies&&copies+' arrived as a dated copy (yours was edited)'].filter(Boolean).join(' · ')+' from this build'),600); } }
   function ensureSane(){
     if(!S.curTable) S.curTable={};
     if(!Object.keys(S.projects).length) newProject('Project 1');
