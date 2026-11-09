@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.6.1';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.6.3';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2197,15 +2197,17 @@
       const t=S.tables[id]; if(!t) return ''; if(seen.has(id)) return '<div class="loop">↻ '+esc(t.name)+' (shown above)</div>'; seen.add(id); count++;
       let h='<table class="nt d'+Math.min(depth,6)+'"><caption>'+(depth?'':'<b>')+esc(t.name||'Untitled')+(depth?'':'</b>')+(t.sub&&t.sub.trim()?' <span class="sub">'+esc(t.sub)+'</span>':'')+'</caption><thead><tr><th class="n">#</th>';
       t.cols.forEach(c=>{ h+='<th>'+esc(c)+'</th>'; }); h+='</tr></thead><tbody>';
-      t.rows.forEach((r,ri)=>{ h+='<tr><th class="n">'+(ri+1)+'</th>'; r.forEach((cell,ci)=>{ const k=cell.link&&S.tables[cell.link]; const owner=k&&isOwnerCell(t,ri,ci);
+      t.rows.forEach((r,ri)=>{ const subs=[]; h+='<tr><th class="n">'+(ri+1)+'</th>'; r.forEach((cell,ci)=>{ const k=cell.link&&S.tables[cell.link]; const owner=k&&isOwnerCell(t,ri,ci);
         h+='<td'+(cell.chk!==undefined?' class="chk"':'')+'>'+(cell.chk!==undefined?(cell.chk?'☑ ':'☐ '):'')+esc(cell.t).replace(/\n/g,'<br>');
-        if(k&&owner) h+=table(k.id,depth+1); else if(k) h+='<div class="ref">→ '+esc(k.name||'Untitled')+'</div>';
-        h+='</td>'; }); h+='</tr>'; });
+        if(k&&owner){ subs.push({k,ci}); h+='<div class="own">↳ '+esc(k.name||'Untitled')+' (below)</div>'; } else if(k) h+='<div class="ref">→ '+esc(k.name||'Untitled')+'</div>';
+        h+='</td>'; }); h+='</tr>';
+        // a sub-table gets a full-width row right under the row that owns it, so deep tables keep readable columns
+        subs.forEach(({k,ci})=>{ h+='<tr class="sub"><td colspan="'+(t.cols.length+1)+'"><div class="subwrap"><div class="from">↳ from '+colLetter(ci)+(ri+1)+' · '+esc(r[ci].t.split('\n')[0].slice(0,80))+'</div>'+table(k.id,depth+1)+'</div></td></tr>'; }); });
       return h+'</tbody></table>';
     }
     let body=table(p.root,0);
     tablesOf(pid).sort((a,b)=>a.n-b.n).forEach(t=>{ if(!seen.has(t.id)) body+='<h2>Unattached</h2>'+table(t.id,0); });
-    const css='html{overflow-x:auto}body{min-width:720px;font:14px/1.4 -apple-system,Inter,Segoe UI,sans-serif;color:#1d1c1a;margin:24px;background:#fff}h1{font-size:20px;margin:0 0 4px}.meta{color:#6f6c66;font-size:12px;margin-bottom:16px}table.nt{border-collapse:collapse;width:100%;margin:4px 0;background:#fff}table.nt caption{text-align:left;font-size:13px;padding:2px 0 4px;color:#1f6f5f}table.nt caption .sub{color:#6f6c66;font-weight:400}table.nt th,table.nt td{border:1px solid #cfcbc3;padding:5px 7px;vertical-align:top;text-align:left}table.nt th{background:#eef3f0;font-weight:600;font-size:12px}table.nt th.n{width:1.6em;color:#8a867e;font-weight:400}table.nt table.nt{margin:6px 0 0;width:100%;font-size:94%}table.nt td{min-width:7em}table.nt.d1{background:#f7faf8}table.nt.d2{background:#fbfdfc}table.nt.d3,table.nt.d4,table.nt.d5,table.nt.d6{background:#fff}.ref{color:#6b4fa0;font-size:12px;margin-top:3px}.loop{color:#a3412a;font-size:12px}.chk{white-space:pre-wrap}@media print{body{margin:8mm}table.nt{page-break-inside:auto}tr{page-break-inside:avoid}}';
+    const css='html{overflow-x:auto}body{min-width:720px;font:14px/1.4 -apple-system,Inter,Segoe UI,sans-serif;color:#1d1c1a;margin:24px;background:#fff}h1{font-size:20px;margin:0 0 4px}.meta{color:#6f6c66;font-size:12px;margin-bottom:16px}table.nt{border-collapse:collapse;width:100%;margin:4px 0;background:#fff}table.nt caption{text-align:left;font-size:13px;padding:2px 0 4px;color:#1f6f5f}table.nt caption .sub{color:#6f6c66;font-weight:400}table.nt th,table.nt td{border:1px solid #cfcbc3;padding:5px 7px;vertical-align:top;text-align:left}table.nt th{background:#eef3f0;font-weight:600;font-size:12px}table.nt th.n{width:1.6em;color:#8a867e;font-weight:400}table.nt tr.sub>td{padding:4px 0 8px 14px;background:#fff;border-left:3px solid #cfe3db}table.nt .subwrap{margin:0}table.nt .from{font-size:11px;color:#6f6c66;margin:2px 0 3px}table.nt table.nt{margin:0;width:100%;font-size:96%}.own{color:#1f6f5f;font-size:12px;margin-top:3px}table.nt.d1{background:#f7faf8}table.nt.d2{background:#fbfdfc}table.nt.d3,table.nt.d4,table.nt.d5,table.nt.d6{background:#fff}.ref{color:#6b4fa0;font-size:12px;margin-top:3px}.loop{color:#a3412a;font-size:12px}.chk{white-space:pre-wrap}@page{size:landscape;margin:8mm}@media print{html{overflow:visible}body{margin:0;min-width:0;font-size:10.5px}table.nt{page-break-inside:auto;table-layout:auto}table.nt td{min-width:0;word-break:break-word}table.nt th,table.nt td{padding:3px 5px}tr{page-break-inside:auto}thead{display:table-header-group}}';
     return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(p.name)+' · nested tables</title><style>'+css+'</style></head><body><h1>'+esc(p.name)+'</h1><div class="meta">Nested Tables · Project '+p.n+' · '+count+' tables · exported '+esc(new Date().toLocaleString())+'</div>'+body+'</body></html>';
   }
   function printNestedPDF(){ const p=P(); if(!p||isLocked(p)) return toast('Unlock the project first'); closeModal(); const html=exportNestedHTML(p.id);
