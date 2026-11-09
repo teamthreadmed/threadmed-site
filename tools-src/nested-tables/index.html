@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.6.3';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2107,6 +2107,42 @@
   (async()=>{ try{ const all=await idb.all(); const r=(all||[]).find(x=>x.id==='__pad'); if(r&&typeof r.text==='string'){ const lts=+(localStorage.getItem(PADKEY+'-ts')||0); const lv=padGet(); if((r.ts||0)>lts&&r.text.trim()&&r.text!==lv){ padMem=r.text; try{ localStorage.setItem(PADKEY,r.text); localStorage.setItem(PADKEY+'-ts',String(r.ts)); }catch(e){} } else if(!lv.trim()&&r.text.trim()){ padMem=r.text; try{ localStorage.setItem(PADKEY,r.text); }catch(e){} } } }catch(e){} })();
   async function copyText(txt){ try{ await navigator.clipboard.writeText(txt); return true; }catch(e){ return false; } }
   let padCommit=null; window.addEventListener('pagehide',()=>{ if(padCommit) padCommit(); }); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&padCommit) padCommit(); });
+  // ---------- Pad: /t turns a list into a table ----------
+  // A block = consecutive non-blank lines. A line starting with /t marks the block; "/t Name" names the table (else the block's first line is the name).
+  // Rows = the other lines; a line with " | " or tabs splits into columns; if every row splits, the first row is the header.
+  const TRE=/^\s*\/t\b\s*(.*)$/i;
+  function tablifyBlock(lines){
+    const strip=l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim();
+    let name=''; const body=[]; lines.forEach(l=>{ const m=l.match(TRE); if(m){ if(m[1].trim()) name=m[1].trim(); } else if(l.trim()) body.push(strip(l)); });
+    if(!name){ name=body.shift()||'List'; }
+    const split=l=>l.split(/\s*\|\s*|\t/).map(x=>x.trim());
+    const multi=body.length&&body.every(l=>split(l).length>1);
+    let cols, rows;
+    if(multi){ const parts=body.map(split); const w=Math.max(...parts.map(r=>r.length)); const hdr=parts[0].every(x=>x&&!/^\s*(?:[-*•▪·]|\d+[.)])/.test(x)); cols=hdr?parts[0].map((c,i)=>c||colLetter(i)):Array.from({length:w},(_,i)=>colLetter(i)); const data=hdr?parts.slice(1):parts; rows=data.map(r=>Array.from({length:cols.length},(_,i)=>cell(r[i]||''))); }
+    else { cols=['Item','Notes','Done']; rows=body.map(l=>{ const r=[cell(l),cell(''),cell('')]; r[2].chk=false; return r; }); }
+    if(!rows.length) rows.push(cols.map(()=>cell()));
+    return {name:name.slice(0,60),cols,rows};
+  }
+  function placeTable(spec){ // append a row to the current table whose first cell owns the new table; falls back to a new project
+    let host=T(); let p=P();
+    if(!host||!p||isLocked(p)){ p=newProject(spec.name); S.cur=p.id; hist=[]; host=S.tables[p.root]; host.rows=[]; }
+    const row=host.cols.map(()=>cell()); row[0].t=spec.name; host.rows.push(row);
+    const k=newTable(p.id,spec.name,{tableId:host.id,r:host.rows.length-1,c:0}); k.cols=spec.cols; k.rows=spec.rows; k.sub='Made from the Pad with /t'; S.tables[k.id]=k; dirty.add(k.id);
+    row[0].link=k.id; relink(host); touch(host); touchMeta(); save();
+    return {k,p,host};
+  }
+  function padTablify(txt,caretLineIdx){ // returns {text, made:[...]}; caretLineIdx: only the /t block containing that line, else every /t block
+    const lines=txt.replace(/\r/g,'').split('\n'); const made=[]; const out=[]; let i=0;
+    while(i<lines.length){ if(!lines[i].trim()){ out.push(lines[i]); i++; continue; }
+      let j=i; while(j<lines.length&&lines[j].trim()) j++; const block=lines.slice(i,j);
+      const hasT=block.some(l=>TRE.test(l)); const inScope=caretLineIdx===undefined||(caretLineIdx>=i&&caretLineIdx<j);
+      if(hasT&&inScope){ const spec=tablifyBlock(block); if(spec.rows.length&&(spec.rows.length>1||spec.rows[0].some(c=>c.t))){ const {k,p}=placeTable(spec); made.push(k); out.push('✓ '+spec.name+' → P'+p.n+' table '+k.n+' ('+spec.rows.length+' rows)'); } else out.push(...block); }
+      else out.push(...block);
+      i=j; }
+    return {text:out.join('\n'),made};
+  }
+  function runPadTablify(caretLineIdx){ const txt=M.area.value; const r=padTablify(txt,caretLineIdx); if(!r.made.length){ if(caretLineIdx===undefined) toast('No /t block found — put /t on its own line under a list'); return false; }
+    M.area.value=r.text; padSet(r.text); render(); const k=r.made[r.made.length-1]; toast(r.made.length===1?'Table "'+k.name+'" made ('+k.rows.length+' rows) — tap ▼ on its row to open':r.made.length+' tables made'); return true; }
   function projectFromLines(txt){
     const blocks=txt.replace(/\r/g,'').split(/\n\s*\n+/).map(b=>b.split('\n').map(l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim()).filter(Boolean)).filter(b=>b.length);
     if(!blocks.length) return toast('Nothing to build from');
@@ -2122,11 +2158,12 @@
   }
   $('btnTodo').onclick=()=>{ M.area.value=padGet(); let saveT=null; const commit=()=>{ clearTimeout(saveT); if(M.area.value!==padGet()) padSet(M.area.value); }; padCommit=commit;
     M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,250); }; M.area.onblur=commit;
-    const done=()=>{ commit(); M.area.oninput=null; M.area.onblur=null; padCommit=null; closeModal(); };
-    const btns=[['Close','primary',done],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
+    M.area.onkeydown=e=>{ if(e.key!=='Enter'||e.shiftKey) return; const v=M.area.value, pos=M.area.selectionStart; const ls=v.lastIndexOf('\n',pos-1)+1; const le=v.indexOf('\n',pos); const line=v.slice(ls,le<0?v.length:le); if(!TRE.test(line)) return; e.preventDefault(); const idx=v.slice(0,ls).split('\n').length-1; commit(); if(!runPadTablify(idx)){ M.area.value=v.slice(0,pos)+'\n'+v.slice(pos); } else { const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(x){} } };
+    const done=()=>{ commit(); M.area.oninput=null; M.area.onblur=null; M.area.onkeydown=null; padCommit=null; closeModal(); };
+    const btns=[['Close','primary',done],['/t → tables','',()=>{ commit(); runPadTablify(); }],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
     if(navigator.share) btns.push(['Share','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); try{ await navigator.share({title:'Pad',text:txt}); }catch(e){} }]);
     btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); toast('Pad cleared'); },'Clear'); }]);
-    showModal('Pad','Free text that stays. "→ Project" turns it into a project: first line = name; one row per line; a blank line starts a new layer whose first line is its name.',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
+    showModal('Pad','Free text that stays. Lists → tables: type a list, then /t on the next line (or "/t Name") and press return — the list becomes a table under a new row of the table you are on; "a | b | c" lines make columns. "→ Project" turns the whole pad into a project: first line = name; one row per line; a blank line starts a new layer.',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
