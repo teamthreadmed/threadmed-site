@@ -26,6 +26,6 @@ const SO='<scr'+'ipt>',SC='</scr'+'ipt>';
 const inject='\n'+SO+'window.__standalone=true;'+(space?'window.__space='+JSON.stringify(space)+';':'')+'window.__spaceLabel='+JSON.stringify(label)+';'+'window.__seed='+noClose(JSON.stringify(o))+';'+SC+'\n'+libs.map((l,i)=>'<script id="ntlib'+i+'">'+noClose(l)+SC).join('\n')+'\n<script type="text/plain" id="ntsrc">'+b64e(src)+SC+'\n';
 const i=src.indexOf('<body>')+6; let html=src.slice(0,i)+inject+src.slice(i);
 html=html.replace('<meta charset="utf-8">','<meta charset="utf-8">\n<meta name="robots" content="noindex, nofollow">');
-html=html.replace('<title>Nested Tables</title>','<title>Nested Tables · '+label+'</title>').replace('content="Nested Tables">','content="NT '+label+'">');
+html=html.replace('<title>Nested Tables</title>','<title>Nested Tables · '+label+'</title>').replace('content="Nested Tables">','content="'+(space?'NT '+label:'Nested Tables')+'">');
 fs.mkdirSync(path.dirname(out),{recursive:true}); fs.writeFileSync(out,html);
 const v=(src.match(/APP_VERSION='([^']+)'/)||[])[1]; console.log('built v'+v+(space?' ['+space+']':''),'→',out,(html.length/1024|0)+' KB');
