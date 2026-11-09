@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.3';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.4';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2148,9 +2148,9 @@
     let i=idx, j=idx+1; while(i>0&&lines[i-1].trim()) i--; while(j<lines.length&&lines[j].trim()) j++;
     const block=lines.slice(i,j).filter(l=>l.trim()); if(!block.length) return toast('Put the cursor in the list first');
     const spec=tablifyBlock(block); const {k,p}=placeTable(spec);
-    lines.splice(i,j-i,'✓ '+spec.name+' → P'+p.n+' table '+k.n+' ('+spec.rows.length+' rows)'); const txt=lines.join('\n'); M.area.value=txt; padSet(txt); render(); toast('Table "'+k.name+'" made ('+k.rows.length+' rows) in P'+p.n+' — tap ▼ on its row'); }
+    lines.splice(i,j-i,'✓ '+spec.name+' → P'+p.n+' table '+k.n+' ('+spec.rows.length+' rows)'); const txt=lines.join('\n'); M.area.value=txt; padSet(txt); return k; }
   function runPadTablify(caretLineIdx){ const txt=M.area.value; const r=padTablify(txt,caretLineIdx); if(!r.made.length){ if(caretLineIdx===undefined) toast('No /t block found — put /t on its own line under a list'); return false; }
-    M.area.value=r.text; padSet(r.text); render(); const k=r.made[r.made.length-1]; toast(r.made.length===1?'Table "'+k.name+'" made ('+k.rows.length+' rows) — tap ▼ on its row to open':r.made.length+' tables made'); return true; }
+    M.area.value=r.text; padSet(r.text); return r.made[r.made.length-1]; }
   function projectFromLines(txt){
     const blocks=txt.replace(/\r/g,'').split(/\n\s*\n+/).map(b=>b.split('\n').map(l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim()).filter(Boolean)).filter(b=>b.length);
     if(!blocks.length) return toast('Nothing to build from');
@@ -2165,10 +2165,10 @@
     p.root=root.id; S.cur=p.id; S.curTable[p.id]=root.id; hist=[]; touchMeta(); save(); render(); toast('P'+p.n+' "'+title+'" built from the Pad');
   }
   $('btnTodo').onclick=()=>{ M.area.value=padGet(); let saveT=null; const commit=()=>{ clearTimeout(saveT); if(M.area.value!==padGet()) padSet(M.area.value); }; padCommit=commit;
-    M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,250); }; M.area.onblur=commit;
-    M.area.onkeydown=e=>{ if(e.key!=='Enter'||e.shiftKey) return; const v=M.area.value, pos=M.area.selectionStart; const ls=v.lastIndexOf('\n',pos-1)+1; const le=v.indexOf('\n',pos); const line=v.slice(ls,le<0?v.length:le); if(!TRE.test(line)) return; e.preventDefault(); const idx=v.slice(0,ls).split('\n').length-1; commit(); if(!runPadTablify(idx)){ M.area.value=v.slice(0,pos)+'\n'+v.slice(pos); } else { const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(x){} } };
     const done=()=>{ commit(); M.area.oninput=null; M.area.onblur=null; M.area.onkeydown=null; padCommit=null; closeModal(); };
-    const btns=[['Close','primary',done],['List → table','',()=>{ commit(); padBlockToTable(); }],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
+    M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,250); }; M.area.onblur=commit;
+    M.area.onkeydown=e=>{ if(e.key!=='Enter'||e.shiftKey) return; const v=M.area.value, pos=M.area.selectionStart; const ls=v.lastIndexOf('\n',pos-1)+1; const le=v.indexOf('\n',pos); const line=v.slice(ls,le<0?v.length:le); if(!TRE.test(line)) return; e.preventDefault(); const idx=v.slice(0,ls).split('\n').length-1; commit(); const k=runPadTablify(idx); if(!k){ M.area.value=v.slice(0,pos)+'\n'+v.slice(pos); } else { done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } };
+    const btns=[['Close','primary',done],['List → table','',()=>{ commit(); const k=padBlockToTable(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
     if(navigator.share) btns.push(['Share','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); try{ await navigator.share({title:'Pad',text:txt}); }catch(e){} }]);
     btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); toast('Pad cleared'); },'Clear'); }]);
     showModal('Pad','Free text that stays. "List → table": put the cursor in a list (first line = name, one item per line) and tap it — the list becomes a table under a new row of the table you are on. Lines like "a | b | c" make columns. Typing /t on a line under a list and pressing return does the same. "→ Project" turns the whole pad into a project (blank line = new layer).',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
