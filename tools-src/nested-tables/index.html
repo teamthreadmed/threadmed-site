@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.4';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.5';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2114,7 +2114,7 @@
   function tablifyBlock(lines){
     const strip=l=>l.replace(/^\s*(?:[-*•▪·]|\d+[.)]|\[[ xX]\])\s*/,'').trim();
     let name=''; const body=[]; lines.forEach(l=>{ const m=l.match(TRE); if(m){ if(m[1].trim()) name=m[1].trim(); } else if(l.trim()) body.push(strip(l)); });
-    if(!name){ name=body.shift()||'List'; }
+    if(!name){ if(body.length>1) name=body.shift(); else name=body[0]||'List'; } // a single line is both the name and its one item
     const split=l=>l.split(/\s*\|\s*|\t/).map(x=>x.trim());
     const multi=body.length&&body.every(l=>split(l).length>1);
     let cols, rows;
