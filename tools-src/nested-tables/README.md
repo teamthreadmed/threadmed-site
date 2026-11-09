@@ -12,7 +12,7 @@ Same code is published as the Claude artifact "Nested Tables" (cloud-synced vari
 User data never lives in these files: it autosaves in each browser's storage. A new build merges any sample project the browser does not have yet (matched by name) and leaves everything else alone. Backups: 💾 Save → JSON in the app; restore with 📥 Import.
 
 ## Two URLs
-- **Latest**: https://www.threadmed.org/private/nested-tables/ — every build lands here.
+- **Clinical (latest)**: https://www.threadmed.org/private/nested-tables/ — every build lands here. Labelled "Nested Tables · Clinical" (Home Screen name "NT Clinical", Master file "Nested Tables MASTER (clinical).json"); storage key unchanged, so data from earlier builds is kept.
 - **Master**: https://www.threadmed.org/private/nested-tables/master/ — a frozen known-good copy. Promote with `node build.js master` only when Anthony says the latest is good. If latest breaks, use master (same browser storage, so data is shared).
 
 - **Personal**: https://www.threadmed.org/private/nested-tables/personal/ — the same app built with `node build.js personal`: its own storage (`nested-tables-v3@personal`, IndexedDB `nested-tables@personal`), its own Master file ("Nested Tables MASTER (personal).json"), no clinical samples (only the how-to project). Add it to the Home Screen as a second icon ("NT Personal"). Spaces are defined in `SPACES` in build.js.

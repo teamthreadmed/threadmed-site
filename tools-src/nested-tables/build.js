@@ -6,8 +6,9 @@
 const fs=require('fs'),path=require('path');
 const here=__dirname; const arg=process.argv[2];
 // node build.js personal  -> ../../private/nested-tables/personal/index.html: the same app as a separate tool (own storage, own Master file, no clinical samples)
+// The root copy (and master) is the Clinical tool: labelled 'Clinical' but keeps the original storage key, so existing data is untouched.
 const SPACES={personal:{label:'Personal', keep:['How to use Nested Tables']}};
-const space=SPACES[arg]?arg:'';
+const space=SPACES[arg]?arg:''; const label=space?SPACES[space].label:'Clinical';
 const out=arg==='master'?path.join(here,'..','..','private','nested-tables','master','index.html'):space?path.join(here,'..','..','private','nested-tables',space,'index.html'):(arg||path.join(here,'..','..','private','nested-tables','index.html'));
 let src=fs.readFileSync(path.join(here,'index.html'),'utf8');
 const o=JSON.parse(fs.readFileSync(path.join(here,'seed.json'),'utf8'));
@@ -22,9 +23,9 @@ o.cur=(Object.values(o.projects).find(p=>p.n===1)||Object.values(o.projects)[0])
 const libs=['js/jspdf.umd.min.js','js/jspdf.plugin.autotable.min.js','js/jszip.min.js'].map(f=>fs.readFileSync(path.join(here,f),'utf8'));
 const noClose=s=>s.replace(/<\/script/gi,'<\\/script'); const b64e=t=>Buffer.from(t,'utf8').toString('base64');
 const SO='<scr'+'ipt>',SC='</scr'+'ipt>';
-const inject='\n'+SO+'window.__standalone=true;'+(space?'window.__space='+JSON.stringify(space)+';window.__spaceLabel='+JSON.stringify(SPACES[space].label)+';':'')+'window.__seed='+noClose(JSON.stringify(o))+';'+SC+'\n'+libs.map((l,i)=>'<script id="ntlib'+i+'">'+noClose(l)+SC).join('\n')+'\n<script type="text/plain" id="ntsrc">'+b64e(src)+SC+'\n';
+const inject='\n'+SO+'window.__standalone=true;'+(space?'window.__space='+JSON.stringify(space)+';':'')+'window.__spaceLabel='+JSON.stringify(label)+';'+'window.__seed='+noClose(JSON.stringify(o))+';'+SC+'\n'+libs.map((l,i)=>'<script id="ntlib'+i+'">'+noClose(l)+SC).join('\n')+'\n<script type="text/plain" id="ntsrc">'+b64e(src)+SC+'\n';
 const i=src.indexOf('<body>')+6; let html=src.slice(0,i)+inject+src.slice(i);
 html=html.replace('<meta charset="utf-8">','<meta charset="utf-8">\n<meta name="robots" content="noindex, nofollow">');
-if(space){ html=html.replace('<title>Nested Tables</title>','<title>Nested Tables · '+SPACES[space].label+'</title>').replace('content="Nested Tables">','content="NT '+SPACES[space].label+'">'); }
+html=html.replace('<title>Nested Tables</title>','<title>Nested Tables · '+label+'</title>').replace('content="Nested Tables">','content="NT '+label+'">');
 fs.mkdirSync(path.dirname(out),{recursive:true}); fs.writeFileSync(out,html);
 const v=(src.match(/APP_VERSION='([^']+)'/)||[])[1]; console.log('built v'+v+(space?' ['+space+']':''),'→',out,(html.length/1024|0)+' KB');
