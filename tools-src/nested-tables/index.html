@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5.1';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -509,7 +509,7 @@
   function render(){
     ensureSane();
     if(isLocked(P())){ // every project is locked: show the unlock screen instead of a grid
-      renderProjects(); $('layout').style.display='none'; $('track').textContent='Project '+P().n+' · locked'; $('stats').textContent='';
+      renderProjects(); $('layout').style.display='none'; $('track').textContent=(SPACE_LABEL?SPACE_LABEL+' · ':'')+'Project '+P().n+' · locked'; $('stats').textContent='';
       let L=$('lockedMsg'); if(!L){ L=document.createElement('div'); L.id='lockedMsg'; L.style.cssText='text-align:center;padding:60px 20px;color:var(--muted)'; document.querySelector('main').appendChild(L); }
       L.innerHTML='<div style="font-size:40px">🔒</div><p>This project is locked.</p>'; const b=document.createElement('button'); b.className='primary'; b.textContent='Unlock'; b.onclick=()=>promptUnlock(P()); L.appendChild(b); L.style.display='block';
       ['navU','navD','navL','navR','linkPrev','linkNext','btnBack','btnUp','btnDelete'].forEach(id=>$(id).disabled=true); return;
@@ -1590,7 +1590,7 @@
     const segs=[];
     for(let i=0;i<p.length;i++){ const x=p[i]; const nxt=p[i+1]; segs.push((nxt&&nxt.parent&&nxt.parent.tableId===x.id)?'P'+x.n+':'+cellRef(x,nxt.parent.r,nxt.parent.c):'P'+x.n); }
     const el=$('track'); el.innerHTML='';
-    const b=document.createElement('b'); b.textContent='Project '+P().n+' · Page '+t.n+' · Layer '+depth; el.appendChild(b);
+    const b=document.createElement('b'); b.textContent=(SPACE_LABEL?SPACE_LABEL+' · ':'')+'Project '+P().n+' · Page '+t.n+' · Layer '+depth; el.appendChild(b);
     if(t.parent&&S.tables[t.parent.tableId]){ const pt=S.tables[t.parent.tableId]; const s=document.createElement('span'); s.textContent=' · from cell '+cellRef(pt,t.parent.r,t.parent.c)+' of Page '+pt.n; el.appendChild(s); }
     if(segs.length>1){ const s=document.createElement('span'); s.className='path'; s.textContent='  ['+segs.join(' › ')+']'; el.appendChild(s); }
     el.title='Project · Page = table number within the project · Layer = nesting depth · [path] = page:cell followed to get here';
