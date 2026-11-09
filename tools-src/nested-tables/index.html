@@ -391,7 +391,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8.2';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8.3';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2203,7 +2203,9 @@
     const tools=document.createElement('div'); tools.className='pttools';
     const addCol=document.createElement('button'); addCol.textContent='+ column'; addCol.onclick=()=>{ const last=t.cols.length-1; const hasChk=t.cols[last]==='✓'; t.cols.splice(hasChk?last:t.cols.length,0,'New'); t.rows.forEach(r=>r.splice(hasChk?last:r.length,0,'')); ptSet(t); renderPadTable(); };
     const delCol=document.createElement('button'); delCol.textContent='− column'; delCol.onclick=()=>{ if(t.cols.length<=1) return; const last=t.cols.length-1; const i=t.cols[last]==='✓'&&t.cols.length>1?last-1:last; t.cols.splice(i,1); t.rows.forEach(r=>r.splice(i,1)); ptSet(t); renderPadTable(); };
-    tools.append(addCol,delCol); ex.appendChild(tools);
+    const addRowB=document.createElement('button'); addRowB.textContent='+ row'; addRowB.onclick=()=>{ t.rows.push(t.cols.map((c,i)=>i===t.cols.length-1&&c==='✓'?false:'')); ptSet(t); renderPadTable(); };
+    const delRowB=document.createElement('button'); delRowB.textContent='− row'; delRowB.onclick=()=>{ if(t.rows.length<=1) return; const last=t.rows[t.rows.length-1]; const filled=last.some(c=>c!==''&&c!==false); const doIt=()=>{ t.rows.pop(); ptSet(t); renderPadTable(); }; if(filled) confirmBox('Remove the last row?','"'+String(last.find(c=>c!==''&&c!==false)||'')+'" will be lost.',doIt,'Remove'); else doIt(); };
+    tools.append(addRowB,delRowB,addCol,delCol); ex.appendChild(tools);
     setTimeout(()=>{ ex.querySelectorAll('textarea').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }); },0);
   }
   function padTableToProject(){ const t=ptTrim(ptGet()); if(!t.rows.length) return toast('The table is empty');
