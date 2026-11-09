@@ -273,6 +273,17 @@
   .skids{margin:8px 0 0 18px;padding-left:16px;border-left:2px solid var(--lline,var(--line))}
   .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90vw}
   .toast.show{opacity:1}
+  .padtable{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  .padtable table{border-collapse:collapse;width:100%;min-width:100%}
+  .padtable th,.padtable td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;vertical-align:top}
+  .padtable th{background:var(--accent-soft);font-weight:600;font-size:12px;text-align:left}
+  .padtable th.n{width:2em;color:var(--muted);font-weight:400;text-align:center;padding:8px 0;font-size:11px}
+  .padtable th input{width:100%;border:0;background:transparent;font:inherit;font-weight:600;padding:8px;color:inherit}
+  .padtable td textarea{width:100%;border:0;background:transparent;font:inherit;font-size:15px;line-height:1.35;padding:8px;resize:none;color:inherit;display:block;min-height:40px}
+  .padtable td textarea:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
+  .padtable td:last-child{width:3em;text-align:center}
+  .ptchk{border:0;background:transparent;font-size:22px;padding:6px 10px;color:var(--muted);cursor:pointer}.ptchk.on{color:var(--accent)}
+  .pttools{display:flex;gap:8px;margin-top:8px}.pttools button{font-size:13px;padding:6px 10px}
 </style>
 </head>
 <body>
@@ -375,7 +386,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.7.6';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2164,14 +2175,55 @@
     if(!root.rows.length) root.rows.push(rowOf(''));
     p.root=root.id; S.cur=p.id; S.curTable[p.id]=root.id; hist=[]; touchMeta(); save(); render(); toast('P'+p.n+' "'+title+'" built from the Pad');
   }
-  $('btnTodo').onclick=()=>{ M.area.value=padGet(); let saveT=null; const commit=()=>{ clearTimeout(saveT); if(M.area.value!==padGet()) padSet(M.area.value); }; padCommit=commit;
-    const done=()=>{ commit(); M.area.oninput=null; M.area.onblur=null; M.area.onkeydown=null; padCommit=null; closeModal(); };
+  // ---------- Pad table mode: a preformed grid that fills the Pad; type straight into it ----------
+  const PTKEY=KEY+'-padtable'; let ptMem=null;
+  function ptDefault(){ return {cols:['Item','Notes','✓'],rows:[['','',false],['','',false],['','',false]]}; }
+  function ptGet(){ if(ptMem) return ptMem; try{ const r=JSON.parse(localStorage.getItem(PTKEY)||'null'); ptMem=(r&&r.cols&&r.rows)?r:ptDefault(); }catch(e){ ptMem=ptDefault(); } return ptMem; }
+  function ptSet(v){ ptMem=v; try{ localStorage.setItem(PTKEY,JSON.stringify(v)); }catch(e){} try{ idb.put({id:'__padtable',data:v,ts:now()}); }catch(e){} }
+  (async()=>{ try{ const all=await idb.all(); const r=(all||[]).find(x=>x.id==='__padtable'); if(r&&r.data&&!localStorage.getItem(PTKEY)){ ptMem=r.data; try{ localStorage.setItem(PTKEY,JSON.stringify(r.data)); }catch(e){} } }catch(e){} })();
+  function ptIsEmpty(t){ return t.rows.every(r=>r.every(c=>c===''||c===false)); }
+  function ptTrim(t){ const rows=t.rows.filter(r=>r.some(c=>c!==''&&c!==false)); return {cols:t.cols.slice(),rows}; }
+  function renderPadTable(){
+    const t=ptGet(); const ex=M.extra; ex.innerHTML=''; ex.style.display='block';
+    const wrap=document.createElement('div'); wrap.className='padtable'; const tb=document.createElement('table');
+    const thead=document.createElement('thead'); const hr=document.createElement('tr'); hr.innerHTML='<th class="n">#</th>';
+    t.cols.forEach((c,ci)=>{ const th=document.createElement('th'); const inp=document.createElement('input'); inp.value=c; inp.placeholder='Column'; inp.onchange=()=>{ t.cols[ci]=inp.value; ptSet(t); }; th.appendChild(inp); hr.appendChild(th); }); thead.appendChild(hr); tb.appendChild(thead);
+    const body=document.createElement('tbody');
+    const ensureTail=()=>{ const last=t.rows[t.rows.length-1]; if(!last||last.some(c=>c!==''&&c!==false)){ t.rows.push(t.cols.map((c,i)=>i===t.cols.length-1&&c==='✓'?false:'')); return true; } return false; };
+    const addRow=(r,ri)=>{ const tr=document.createElement('tr'); const th=document.createElement('th'); th.className='n'; th.textContent=ri+1; tr.appendChild(th);
+      r.forEach((v,ci)=>{ const td=document.createElement('td'); if(ci===t.cols.length-1&&t.cols[ci]==='✓'){ const b=document.createElement('button'); b.className='ptchk'+(v?' on':''); b.textContent=v?'☑':'☐'; b.onclick=()=>{ t.rows[ri][ci]=!t.rows[ri][ci]; ptSet(t); renderPadTable(); }; td.appendChild(b); }
+        else { const ta=document.createElement('textarea'); ta.rows=1; ta.value=v===false?'':v; ta.placeholder=ri===0&&ci===0?'Type here…':''; ta.oninput=()=>{ t.rows[ri][ci]=ta.value; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; ptSet(t); if(ensureTail()){ const nr=t.rows[t.rows.length-1]; body.appendChild(addRow(nr,t.rows.length-1)); } }; ta.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); const next=body.querySelector('tr:nth-child('+(ri+2)+') td:nth-child('+(ci+2)+') textarea'); if(next) next.focus(); } }; td.appendChild(ta); }
+        tr.appendChild(td); }); return tr; };
+    ensureTail(); t.rows.forEach((r,ri)=>body.appendChild(addRow(r,ri))); tb.appendChild(body); wrap.appendChild(tb); ex.appendChild(wrap);
+    const tools=document.createElement('div'); tools.className='pttools';
+    const addCol=document.createElement('button'); addCol.textContent='+ column'; addCol.onclick=()=>{ const last=t.cols.length-1; const hasChk=t.cols[last]==='✓'; t.cols.splice(hasChk?last:t.cols.length,0,'New'); t.rows.forEach(r=>r.splice(hasChk?last:r.length,0,'')); ptSet(t); renderPadTable(); };
+    const delCol=document.createElement('button'); delCol.textContent='− column'; delCol.onclick=()=>{ if(t.cols.length<=1) return; const last=t.cols.length-1; const i=t.cols[last]==='✓'&&t.cols.length>1?last-1:last; t.cols.splice(i,1); t.rows.forEach(r=>r.splice(i,1)); ptSet(t); renderPadTable(); };
+    tools.append(addCol,delCol); ex.appendChild(tools);
+    setTimeout(()=>{ ex.querySelectorAll('textarea').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }); },0);
+  }
+  function padTableToProject(){ const t=ptTrim(ptGet()); if(!t.rows.length) return toast('The table is empty');
+    const chkCol=t.cols[t.cols.length-1]==='✓'?t.cols.length-1:-1; const first=t.rows[0]; const titleOnly=t.rows.length>1&&first.every((v,i)=>i===0||v===''||v===false); const name=(String(first[0]||'')).trim()||'Pad table'; if(titleOnly) t.rows.shift();
+    const cols=t.cols.map((c,i)=>i===chkCol?'Done':c||colLetter(i));
+    const rows=t.rows.map(r=>r.map((v,i)=>{ const c=cell(i===chkCol?'':String(v===false?'':v)); if(i===chkCol) c.chk=!!v; return c; }));
+    const {k,p}=placeTable({name:name.slice(0,60),cols,rows}); ptSet(ptDefault()); return k; }
+  let padMode='text'; try{ padMode=localStorage.getItem(KEY+'-padmode')||'text'; }catch(e){}
+  $('btnTodo').onclick=()=>openPad();
+  function openPad(mode){ if(mode){ padMode=mode; try{ localStorage.setItem(KEY+'-padmode',mode); }catch(e){} }
+    let saveT=null; const commit=()=>{ clearTimeout(saveT); if(padMode==='text'&&M.area.value!==padGet()) padSet(M.area.value); }; padCommit=commit;
+    const done=()=>{ commit(); M.area.oninput=null; M.area.onblur=null; M.area.onkeydown=null; padCommit=null; M.extra.innerHTML=''; M.extra.style.display='none'; closeModal(); };
+    if(padMode==='table'){
+      const btns=[['Close','primary',done],['Text','',()=>{ done(); openPad('text'); }],
+        ['→ Project table','',()=>{ const k=padTableToProject(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],
+        ['Clear','',()=>{ if(ptIsEmpty(ptGet())) return; confirmBox('Clear the table?','Send it to the project first if you want to keep it.',()=>{ ptSet(ptDefault()); renderPadTable(); toast('Table cleared'); },'Clear'); }]];
+      showModal('Pad · Table','A grid that stays. Type straight into it; a new row appears as you fill the last one; return moves down a row; tap ☐ to tick. "→ Project table" adds it under a new row of the table you are on, named by the first cell, and clears this grid for the next list.',false,btns);
+      renderPadTable(); setTimeout(()=>{ const ta=M.extra.querySelector('textarea'); if(ta) ta.focus(); },80); return; }
+    M.area.value=padGet();
     M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,250); }; M.area.onblur=commit;
     M.area.onkeydown=e=>{ if(e.key!=='Enter'||e.shiftKey) return; const v=M.area.value, pos=M.area.selectionStart; const ls=v.lastIndexOf('\n',pos-1)+1; const le=v.indexOf('\n',pos); const line=v.slice(ls,le<0?v.length:le); if(!TRE.test(line)) return; e.preventDefault(); const idx=v.slice(0,ls).split('\n').length-1; commit(); const k=runPadTablify(idx); if(!k){ M.area.value=v.slice(0,pos)+'\n'+v.slice(pos); } else { done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } };
-    const btns=[['Close','primary',done],['List → table','',()=>{ commit(); const k=padBlockToTable(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
+    const btns=[['Close','primary',done],['Table','',()=>{ done(); openPad('table'); }],['List → table','',()=>{ commit(); const k=padBlockToTable(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
     if(navigator.share) btns.push(['Share','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); try{ await navigator.share({title:'Pad',text:txt}); }catch(e){} }]);
-    btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); toast('Pad cleared'); },'Clear'); }]);
-    showModal('Pad','Free text that stays. "List → table": put the cursor in a list (first line = name, one item per line) and tap it — the list becomes a table under a new row of the table you are on. Lines like "a | b | c" make columns. Typing /t on a line under a list and pressing return does the same. "→ Project" turns the whole pad into a project (blank line = new layer).',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); };
+    btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); M.area.value=''; toast('Pad cleared'); },'Clear'); }]);
+    showModal('Pad · Text','Free text that stays. "Table" switches to a grid you type straight into. "List → table": put the cursor in a list (first line = name, one item per line) and tap it — it becomes a table under a new row of the table you are on. "→ Project" turns the whole pad into a project (blank line = new layer).',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); }
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
