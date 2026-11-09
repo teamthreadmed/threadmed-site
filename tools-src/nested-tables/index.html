@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.6';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.6.1';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -1908,7 +1908,7 @@
     btns.push(['Copy Markdown','',()=>copyText(exportMarkdown())]);
     if(caps.downloads){ btns.push(['Download JSON','',()=>downloadFile('nested-tables '+stamp()+'.json',exportJSON())]); btns.push(['Download Markdown','',()=>downloadFile('nested-tables '+stamp()+'.md',exportMarkdown())]); }
     const canDl=caps.downloads||!(window.claude&&window.claude.use);
-    if(canDl){ btns.push(['This project → Nested tables (HTML: tables inside cells; opens in Safari, Word, Pages; print to PDF)','primary',saveNestedHTML]); btns.push(['This project → PDF (one table after another)','',()=>$('snapPdf').onclick()]); btns.push(['This project → Obsidian .zip','',()=>$('snapMd').onclick()]); }
+    if(canDl){ btns.push(['This project → Nested tables PDF (tables inside cells)','primary',printNestedPDF]); btns.push(['This project → Nested tables HTML (same, editable in Word / Pages)','',saveNestedHTML]); btns.push(['This project → PDF (one table after another)','',()=>$('snapPdf').onclick()]); btns.push(['This project → Obsidian .zip','',()=>$('snapMd').onclick()]); }
     if(caps.mcp){ btns.push(['This project → Obsidian notes in Drive','',bundleToDrive]); btns.push(['Back up everything to Google Drive','primary',backupToDrive]); }
     if(canDl) btns.push(['Save the app as HTML (a dated copy with your data inside)','',saveStandalone]); if(caps.mcp&&!window.__standalone) btns.push(['Save the app to Google Drive','',standaloneToDrive]);
     M.area.value='';
@@ -2208,6 +2208,12 @@
     const css='html{overflow-x:auto}body{min-width:720px;font:14px/1.4 -apple-system,Inter,Segoe UI,sans-serif;color:#1d1c1a;margin:24px;background:#fff}h1{font-size:20px;margin:0 0 4px}.meta{color:#6f6c66;font-size:12px;margin-bottom:16px}table.nt{border-collapse:collapse;width:100%;margin:4px 0;background:#fff}table.nt caption{text-align:left;font-size:13px;padding:2px 0 4px;color:#1f6f5f}table.nt caption .sub{color:#6f6c66;font-weight:400}table.nt th,table.nt td{border:1px solid #cfcbc3;padding:5px 7px;vertical-align:top;text-align:left}table.nt th{background:#eef3f0;font-weight:600;font-size:12px}table.nt th.n{width:1.6em;color:#8a867e;font-weight:400}table.nt table.nt{margin:6px 0 0;width:100%;font-size:94%}table.nt td{min-width:7em}table.nt.d1{background:#f7faf8}table.nt.d2{background:#fbfdfc}table.nt.d3,table.nt.d4,table.nt.d5,table.nt.d6{background:#fff}.ref{color:#6b4fa0;font-size:12px;margin-top:3px}.loop{color:#a3412a;font-size:12px}.chk{white-space:pre-wrap}@media print{body{margin:8mm}table.nt{page-break-inside:auto}tr{page-break-inside:avoid}}';
     return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(p.name)+' · nested tables</title><style>'+css+'</style></head><body><h1>'+esc(p.name)+'</h1><div class="meta">Nested Tables · Project '+p.n+' · '+count+' tables · exported '+esc(new Date().toLocaleString())+'</div>'+body+'</body></html>';
   }
+  function printNestedPDF(){ const p=P(); if(!p||isLocked(p)) return toast('Unlock the project first'); closeModal(); const html=exportNestedHTML(p.id);
+    if(where()==='app'&&isIOS()){ // Home Screen apps cannot print; hand the page to Safari, whose share sheet has Print → PDF
+      saveBlob(safeName('P'+p.n+' '+p.name)+' nested tables.html',new Blob([html],{type:'text/html'})); return; }
+    const f=document.createElement('iframe'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'; document.body.appendChild(f);
+    f.onload=()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Print blocked — use the HTML export and print from Safari'); } setTimeout(()=>f.remove(),60000); };
+    f.srcdoc=html; toast('Choose "Save as PDF" in the print dialog'); }
   async function saveNestedHTML(){ const p=P(); if(!p||isLocked(p)) return toast('Unlock the project first'); closeModal(); const html=exportNestedHTML(p.id); await saveBlob(safeName('P'+p.n+' '+p.name)+' nested tables.html',new Blob([html],{type:'text/html'})); }
   function openSnap(){ if(isLocked(P())) return; renderSnapshot(); setSnapZoom(szoom); $('snap').classList.add('open'); }
   function closeSnap(){ $('snap').classList.remove('open'); }
