@@ -375,7 +375,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5.2';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.5.3';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2341,9 +2341,22 @@
     return files;
   }
   async function buildZip(pid){ await ensureZip(); const zip=new JSZip(); bundleFiles(pid).forEach(f=>zip.file(f.path,f.content)); return zip.generateAsync({type:'blob'}); }
+  const isIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   async function shareOrDownload(filename,blob){
-    try{ const f=new File([blob],filename,{type:blob.type||'application/octet-stream'}); if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:filename}); toast('Shared '+filename); return true; } }catch(e){ if(e&&e.name==='AbortError') return true; }
-    return false;
+    let why='';
+    try{ const f=new File([blob],filename,{type:blob.type||'application/octet-stream'}); if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:filename}); toast('Shared '+filename); return true; } why='this browser cannot hand files to the share sheet'; }
+    catch(e){ if(e&&e.name==='AbortError') return true; why=(e&&(e.message||e.name))||'share failed'; }
+    if(!(isIOS()||where()==='app')) return false; // desktop: the plain download link works
+    // iPhone / Home Screen app: a download link does nothing visible, so offer routes that do work
+    let text=''; try{ text=await blob.text(); }catch(e){}
+    M.area.value=text;
+    showModal('Get "'+filename+'" off this device','The file share did not go through ('+why+'). Any of these work: copy it and paste into a note or Drive file; share it as text to Notes, Drive or Mail; or open it in Safari and use Safari\'s own share. The text is below as well.','small',[
+      ['Close','',closeModal],
+      ['Open in Safari','',()=>{ try{ const u=URL.createObjectURL(blob); window.open(u,'_blank'); }catch(e){ toast('Could not open'); } }],
+      ['Share as text','',async()=>{ try{ await navigator.share({title:filename,text}); toast('Shared'); closeModal(); }catch(e){ if(!(e&&e.name==='AbortError')) toast('Share failed: '+((e&&(e.message||e.name))||'unknown')); } }],
+      ['Copy to clipboard','primary',async()=>{ if(await copyText(text)){ toast('Copied — paste into Notes, Drive or Mail'); closeModal(); } else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]
+    ]);
+    return true;
   }
   async function saveBlob(filename,blob){
     if(!caps.downloads){
