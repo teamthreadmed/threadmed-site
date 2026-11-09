@@ -391,7 +391,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8.3';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8.4';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -2182,10 +2182,11 @@
   }
   // ---------- Pad table mode: a preformed grid that fills the Pad; type straight into it ----------
   const PTKEY=KEY+'-padtable'; let ptMem=null;
-  function ptDefault(){ return {cols:['Item','Notes','✓'],rows:[['','',false],['','',false],['','',false]]}; }
-  function ptGet(){ if(ptMem) return ptMem; try{ const r=JSON.parse(localStorage.getItem(PTKEY)||'null'); ptMem=(r&&r.cols&&r.rows)?r:ptDefault(); }catch(e){ ptMem=ptDefault(); } return ptMem; }
+  function ptDefault(){ return {cols:['Item','Notes'],rows:[['',''],['',''],['','']]}; }
+  function ptStripChk(r){ const i=r.cols.indexOf('✓'); if(i<0) return r; r.cols.splice(i,1); r.rows.forEach(row=>row.splice(i,1)); return r; } // v2.8.4: no checkbox column in the Pad table
+  function ptGet(){ if(ptMem) return ptMem; try{ const r=JSON.parse(localStorage.getItem(PTKEY)||'null'); ptMem=(r&&r.cols&&r.rows)?ptStripChk(r):ptDefault(); }catch(e){ ptMem=ptDefault(); } return ptMem; }
   function ptSet(v){ ptMem=v; try{ localStorage.setItem(PTKEY,JSON.stringify(v)); }catch(e){} try{ idb.put({id:'__padtable',data:v,ts:now()}); }catch(e){} }
-  (async()=>{ try{ const all=await idb.all(); const r=(all||[]).find(x=>x.id==='__padtable'); if(r&&r.data&&!localStorage.getItem(PTKEY)){ ptMem=r.data; try{ localStorage.setItem(PTKEY,JSON.stringify(r.data)); }catch(e){} } }catch(e){} })();
+  (async()=>{ try{ const all=await idb.all(); const r=(all||[]).find(x=>x.id==='__padtable'); if(r&&r.data&&!localStorage.getItem(PTKEY)){ ptMem=ptStripChk(r.data); try{ localStorage.setItem(PTKEY,JSON.stringify(r.data)); }catch(e){} } }catch(e){} })();
   function ptIsEmpty(t){ return t.rows.every(r=>r.every(c=>c===''||c===false)); }
   function ptTrim(t){ const rows=t.rows.filter(r=>r.some(c=>c!==''&&c!==false)); return {cols:t.cols.slice(),rows}; }
   function renderPadTable(){
@@ -2223,7 +2224,7 @@
       const btns=[['Close','primary',done],['Text','',()=>{ M.area.onblur=null; M.extra.innerHTML=''; padCommit=null; openPad('text'); }],
         ['→ Project table','',()=>{ const k=padTableToProject(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],
         ['Clear','',()=>{ if(ptIsEmpty(ptGet())) return; confirmBox('Clear the table?','Send it to the project first if you want to keep it.',()=>{ ptSet(ptDefault()); renderPadTable(); toast('Table cleared'); },'Clear'); }]];
-      showModal('Pad · Table','A grid that stays. Type straight into it; a new row appears as you fill the last one; return moves down a row; tap ☐ to tick. "→ Project table" adds it under a new row of the table you are on, named by the first cell, and clears this grid for the next list.',false,btns);
+      showModal('Pad · Table','A grid that stays. Type straight into it; a new row appears as you fill the last one; return moves down a row. "→ Project table" adds it under a new row of the table you are on, named by the first cell, and clears this grid for the next list.',false,btns);
       M.text.prepend(padSwitcher('table',m=>{ M.extra.innerHTML=''; padCommit=null; openPad(m); }));
       renderPadTable(); setTimeout(()=>{ const ta=M.extra.querySelector('textarea'); if(ta) ta.focus(); },80); return; }
     M.area.value=padGet();
