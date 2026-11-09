@@ -286,6 +286,9 @@
   .pttools{display:flex;gap:8px;margin-top:8px}.pttools button{font-size:13px;padding:6px 10px}
   body.coarse .chk{width:40px;height:40px;top:4px;left:4px;font-size:24px;border-width:2px}
   body.coarse td.haschk .cell textarea{padding-left:52px}
+  .padseg{display:flex;gap:0;margin:0 0 10px;border:1px solid var(--accent);border-radius:999px;overflow:hidden;width:max-content}
+  .padseg button{border:0;background:var(--panel);color:var(--accent);font:600 15px Inter,system-ui,sans-serif;padding:10px 22px;min-height:44px;touch-action:manipulation}
+  .padseg button.on{background:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -388,7 +391,7 @@
 (function(){
   // SPACE: a build can set window.__space (e.g. 'personal') so that copy keeps its own storage, seed and Master file — a separate tool on the same site.
   const SPACE=(window.__space||'').replace(/[^a-z0-9-]/gi,''); const SPACE_LABEL=window.__spaceLabel||(SPACE?SPACE[0].toUpperCase()+SPACE.slice(1):'');
-  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8.1';
+  const KEY = 'nested-tables-v3'+(SPACE?'@'+SPACE:''); const DBNAME='nested-tables'+(SPACE?'@'+SPACE:''); const APP_VERSION='2.8.2';
   const MASTER_FILE='Nested Tables MASTER'+(SPACE_LABEL?' ('+SPACE_LABEL.toLowerCase()+')':'')+'.json';
   // Storage: IndexedDB (store "state") is the primary home of the data — no 5 MB cap; localStorage keeps a mirror when it fits (older builds read only localStorage).
   const store={idb:null, ls:null, lastErr:''}; // null = not yet tried, true/false = last write result
@@ -1901,7 +1904,7 @@
   function closeModal(){ M.el.classList.remove('open'); try{ renderSizebar(); }catch(e){} }
   function showModal(title,text,showArea,buttons){
     M.title.textContent=title; M.text.textContent=text; M.area.style.display=showArea?'block':'none'; M.area.style.height=showArea==='small'?'64px':''; M.search.style.display='none'; M.list.style.display='none'; M.extra.style.display='none'; M.extra.innerHTML=''; M.btns.innerHTML='';
-    buttons.forEach(([label,cls,fn])=>{ const b=document.createElement('button'); b.textContent=label; if(cls) b.className=cls; b.onclick=e=>{ try{ const r=fn(e); if(r&&r.catch) r.catch(err=>toast('Error: '+((err&&err.message)||err))); }catch(err){ toast('Error: '+((err&&err.message)||err)); console.error(err); } }; M.btns.appendChild(b); });
+    buttons.forEach(([label,cls,fn])=>{ const b=document.createElement('button'); b.textContent=label; if(cls) b.className=cls; b.onclick=e=>{ try{ if(window.__standalone&&coarse()) toast(label); const r=fn(e); if(r&&r.catch) r.catch(err=>toast('Error: '+((err&&err.message)||err))); }catch(err){ toast('Error: '+((err&&err.message)||err)); console.error(err); } }; M.btns.appendChild(b); });
     M.el.classList.add('open');
   }
   function confirmBox(title,text,onOk,okLabel){ showModal(title,text,false,[['Cancel','',closeModal],[okLabel||'Delete','primary',()=>{closeModal();onOk();}]]); }
@@ -2208,6 +2211,7 @@
     const cols=t.cols.map((c,i)=>i===chkCol?'Done':c||colLetter(i));
     const rows=t.rows.map(r=>r.map((v,i)=>{ const c=cell(i===chkCol?'':String(v===false?'':v)); if(i===chkCol) c.chk=!!v; return c; }));
     const {k,p}=placeTable({name:name.slice(0,60),cols,rows}); ptSet(ptDefault()); return k; }
+  function padSwitcher(cur,onSwitch){ const seg=document.createElement('div'); seg.className='padseg'; [['text','Text'],['table','Table']].forEach(([m,l])=>{ const b=document.createElement('button'); b.type='button'; b.textContent=l; b.className=m===cur?'on':''; let fired=0; const go=e=>{ if(e.cancelable) e.preventDefault(); const t=now(); if(t-fired<600) return; fired=t; if(m!==cur) onSwitch(m); }; b.addEventListener('touchend',go,{passive:false}); b.addEventListener('click',go); seg.appendChild(b); }); return seg; }
   let padMode='text'; try{ padMode=localStorage.getItem(KEY+'-padmode')||'text'; }catch(e){}
   $('btnTodo').onclick=()=>openPad();
   function openPad(mode){ if(mode){ padMode=mode; try{ localStorage.setItem(KEY+'-padmode',mode); }catch(e){} }
@@ -2218,6 +2222,7 @@
         ['→ Project table','',()=>{ const k=padTableToProject(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],
         ['Clear','',()=>{ if(ptIsEmpty(ptGet())) return; confirmBox('Clear the table?','Send it to the project first if you want to keep it.',()=>{ ptSet(ptDefault()); renderPadTable(); toast('Table cleared'); },'Clear'); }]];
       showModal('Pad · Table','A grid that stays. Type straight into it; a new row appears as you fill the last one; return moves down a row; tap ☐ to tick. "→ Project table" adds it under a new row of the table you are on, named by the first cell, and clears this grid for the next list.',false,btns);
+      M.text.prepend(padSwitcher('table',m=>{ M.extra.innerHTML=''; padCommit=null; openPad(m); }));
       renderPadTable(); setTimeout(()=>{ const ta=M.extra.querySelector('textarea'); if(ta) ta.focus(); },80); return; }
     M.area.value=padGet();
     M.area.oninput=()=>{ clearTimeout(saveT); saveT=setTimeout(commit,250); }; M.area.onblur=commit;
@@ -2225,7 +2230,7 @@
     const btns=[['Close','primary',done],['Table','',()=>{ commit(); M.area.oninput=null; M.area.onblur=null; M.area.onkeydown=null; padCommit=null; openPad('table'); }],['List → table','',()=>{ commit(); const k=padBlockToTable(); if(k){ done(); go(k.id); toast('Table "'+k.name+'" — '+k.rows.length+' row'+(k.rows.length===1?'':'s')+'. ▲ goes back to Home'); } }],['→ Project','',()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); done(); projectFromLines(txt); }],['Copy','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); if(await copyText(txt)) toast('Copied'); else { M.area.focus(); M.area.select(); toast('Select all and copy'); } }]];
     if(navigator.share) btns.push(['Share','',async()=>{ commit(); const txt=M.area.value; if(!txt.trim()) return toast('Pad is empty'); try{ await navigator.share({title:'Pad',text:txt}); }catch(e){} }]);
     btns.push(['Clear','',()=>{ if(!M.area.value.trim()) return; confirmBox('Clear the pad?','Copy it first if you want to keep it.',()=>{ padSet(''); M.area.value=''; toast('Pad cleared'); },'Clear'); }]);
-    showModal('Pad · Text','Free text that stays. "Table" switches to a grid you type straight into. "List → table": put the cursor in a list (first line = name, one item per line) and tap it — it becomes a table under a new row of the table you are on. "→ Project" turns the whole pad into a project (blank line = new layer).',true,btns); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); }
+    showModal('Pad · Text','Free text that stays. "Table" switches to a grid you type straight into. "List → table": put the cursor in a list (first line = name, one item per line) and tap it — it becomes a table under a new row of the table you are on. "→ Project" turns the whole pad into a project (blank line = new layer).',true,btns); M.text.prepend(padSwitcher('text',m=>{ commit(); M.area.oninput=null; M.area.onblur=null; M.area.onkeydown=null; padCommit=null; openPad(m); })); M.area.style.height='46vh'; setTimeout(()=>{ M.area.focus(); const n=M.area.value.length; try{ M.area.setSelectionRange(n,n); }catch(e){} },80); }
   $('btnCapture').onclick=()=>{ M.area.value=''; showModal('Capture','Paste anything: a Google Keep note (open it → select all → copy), or words from a photo (iPhone: long-press the photo → Live Text → Select All → Copy). Every line becomes a row in a new 📷 capture project; a blank line starts a new sub-table. Route lines later with .. or → link.',true,[['Cancel','',closeModal],['Make capture','primary',()=>{ const txt=M.area.value; if(!txt.trim()) return toast('Paste some text first'); closeModal(); importLinesAsCapture(txt); }]]); setTimeout(()=>M.area.focus(),80); };
   $('btnMore').onclick=()=>{ document.querySelector('header').classList.toggle('showmore'); };
   function syncTreeBtn(){ const on=$('layout').classList.contains('withtree'); $('btnTree').classList.toggle('on',on); $('btnTree').title=on?'Outline is open — tap to close':'Outline of this project'; }
