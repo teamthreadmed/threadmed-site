@@ -1,0 +1,20 @@
+<svg viewBox="0 0 380 640" role="img" aria-label="Control loop: goals are compared with the estimated state; the controller decides; actuators deliver interventions to the person; sensors measure; a Bayesian estimator updates the state and feeds it back. Forecasting feeds forward from goals to the controller, and life context acts on the person as a disturbance.">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1F2A44"/></marker>
+      <marker id="ahf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#A44A32"/></marker></defs>
+      <g>
+        <rect class="bx" x="90" y="20" width="200" height="54" rx="10"/><text class="lb" x="190" y="42" text-anchor="middle">REFERENCE</text><text class="nm" x="190" y="60" text-anchor="middle">What matters: goals</text>
+        <rect class="bx" x="90" y="112" width="200" height="54" rx="10"/><text class="lb" x="190" y="134" text-anchor="middle">COMPARATOR</text><text class="nm" x="190" y="152" text-anchor="middle">Gap between goal and state</text>
+        <rect class="bx" x="90" y="204" width="200" height="54" rx="10"/><text class="lb" x="190" y="226" text-anchor="middle">CONTROLLER</text><text class="nm" x="190" y="244" text-anchor="middle">Gates, evidence, values</text>
+        <rect class="bx" x="90" y="296" width="200" height="54" rx="10"/><text class="lb" x="190" y="318" text-anchor="middle">ACTUATORS</text><text class="nm" x="190" y="336" text-anchor="middle">Interventions and navigation</text>
+        <rect class="bx dark" x="90" y="388" width="200" height="54" rx="10"/><g class="dark-t"><text class="lb" x="190" y="410" text-anchor="middle">PLANT</text><text class="nm" x="190" y="428" text-anchor="middle">The person, in their life</text></g>
+        <rect class="bx" x="90" y="480" width="200" height="54" rx="10"/><text class="lb" x="190" y="502" text-anchor="middle">SENSORS</text><text class="nm" x="190" y="520" text-anchor="middle">Symptoms, labs, function</text>
+        <rect class="bx" x="90" y="572" width="200" height="54" rx="10"/><text class="lb" x="190" y="594" text-anchor="middle">ESTIMATOR</text><text class="nm" x="190" y="612" text-anchor="middle">Bayesian update of state</text>
+      </g>
+      <path class="ln" d="M190 74V110" marker-end="url(#ah)"/><path class="ln" d="M190 166V202" marker-end="url(#ah)"/><path class="ln" d="M190 258V294" marker-end="url(#ah)"/><path class="ln" d="M190 350V386" marker-end="url(#ah)"/><path class="ln" d="M190 442V478" marker-end="url(#ah)"/><path class="ln" d="M190 534V570" marker-end="url(#ah)"/>
+      <path class="ln fb" d="M290 599H340V139H292" marker-end="url(#ahf)"/>
+      <text class="sm" transform="translate(358 370) rotate(-90)" text-anchor="middle" style="fill:#A44A32">FEEDBACK: WHAT ACTUALLY HAPPENED</text>
+      <path class="ln" d="M90 47H46V231H88" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+      <text class="sm" transform="translate(34 139) rotate(-90)" text-anchor="middle">FEEDFORWARD: FORECAST</text>
+      <path class="ln" d="M14 415H88" marker-end="url(#ah)"/>
+      <text class="sm" x="12" y="394">Life context,</text><text class="sm" x="12" y="407">illness, drift</text>
+    </svg>
