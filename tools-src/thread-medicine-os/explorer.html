@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thread Medicine OS: a navigable map of whole-person care</title>
+<meta name="description" content="A drill-down map of a clinical operating system: layers, reasoning engines, medical models, modules and tools, cross-linked by threads.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F6F1E7;--sand:#EDE5D5;--card:#FFFDF8;--line:#DDD3C0;--navy:#1F2A44;--muted:#3A4460;--terra:#A44A32;--blush:#F3E1D8;--pale:#D9D3C5;--peach:#F0B9A4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--navy);font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:17px;line-height:1.5}
+main{max-width:860px;margin:0 auto;padding:28px 16px 72px}
+a{color:var(--terra)}
+.kicker{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--terra);margin:0 0 8px}
+header h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(34px,8vw,56px);line-height:1.05;margin:0 0 10px}
+header p{font-family:'Newsreader',Georgia,serif;font-size:19px;color:var(--muted);margin:0 0 14px;max-width:680px}
+.draft{display:inline-block;padding:7px 12px;border:1.5px dashed var(--terra);border-radius:10px;font-size:13.5px}
+.bar{position:sticky;top:0;z-index:5;background:var(--cream);padding:10px 0;margin-top:18px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.bar a.home{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:var(--navy);color:var(--cream);text-decoration:none;font-weight:600;font-size:15px}
+.bar input{flex:1;min-width:0;height:44px;border-radius:999px;border:1px solid #C9BDA6;background:var(--card);padding:0 16px;font:inherit;font-size:16px;color:var(--navy)}
+#results{list-style:none;margin:8px 0 0;padding:0}
+#results a,.kid,.thread{display:block;text-decoration:none;color:var(--navy)}
+#results a{padding:10px 14px;border-radius:10px;background:var(--card);border:1px solid var(--line);margin-bottom:6px}
+#results small,.kid small{display:block;color:var(--muted);font-size:14.5px;line-height:1.4}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px 6px;margin:18px 0 6px;font-size:14px}
+.crumbs a{color:var(--muted);text-decoration:none;padding:6px 0}
+.crumbs a::after{content:"›";margin-left:6px;color:#9A8F7A}
+.node .k{font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--terra)}
+.node h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(28px,6.4vw,40px);line-height:1.12;margin:4px 0 10px}
+.node .s{font-family:'Newsreader',Georgia,serif;font-size:20px;line-height:1.45;color:var(--muted);margin:0 0 18px}
+dl.body{margin:0 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+dl.body div{display:grid;grid-template-columns:170px minmax(0,1fr);gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
+dl.body div:first-child{border-top:0}
+dl.body dt{font-weight:700;font-size:15px}
+dl.body dd{margin:0;font-size:16px;color:var(--muted)}
+h3.sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--terra);margin:28px 0 10px}
+.map{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px}
+.map svg{display:block;width:100%;height:auto;max-width:640px;margin:0 auto}
+.map .c{fill:var(--navy)} .map .ct{fill:var(--cream);font:600 11px 'Hanken Grotesk',sans-serif}
+.map .p{fill:var(--cream);stroke:var(--navy);stroke-width:1.2} .map a:hover .p{fill:var(--blush)}
+.map .pt{fill:var(--navy);font:600 10.5px 'Hanken Grotesk',sans-serif}
+.map .e{stroke:#8E97AB;stroke-width:1.2;fill:none}
+.kids{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kid{padding:14px 16px;border-radius:12px;background:var(--card);border:1px solid var(--line);min-height:44px}
+.kid b{display:block;font-size:17px}
+.kid i{font-style:normal;float:right;margin-left:8px;font-size:12px;font-weight:700;color:var(--terra);border:1px solid var(--terra);border-radius:999px;padding:1px 8px}
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tools a{display:block;padding:14px 16px;border-radius:12px;background:var(--navy);color:var(--cream);text-decoration:none;min-height:44px}.tools b{display:block;font-size:17px}.tools small{display:block;color:var(--pale);font-size:14px;line-height:1.35;margin-top:2px}@media (max-width:640px){.tools{grid-template-columns:1fr}}
+.web{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+.web svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.web .te{stroke:#B9B2A2;stroke-width:.8;fill:none}
+.web .th{stroke:var(--terra);stroke-width:.7;fill:none;opacity:.16}
+.web.sel .th{opacity:.03}.web.sel .th.on{opacity:.95;stroke-width:1.6}
+.web text{font:500 9.5px 'Hanken Grotesk',sans-serif;fill:var(--navy);paint-order:stroke;stroke:#FFFDF8;stroke-width:2.5px;stroke-linejoin:round}
+.web text.in{font-weight:700}.web text.band{font:700 13px 'Hanken Grotesk',sans-serif;stroke-width:0}
+.web text.root{font:600 15px 'Fraunces',Georgia,serif;fill:var(--cream);stroke-width:0}
+.web.sel g.nd{opacity:.28}.web.sel g.nd.on{opacity:1}.web g.nd{cursor:pointer}
+.web g.nd.pick circle{stroke:var(--navy);stroke-width:2.5}
+.wctl{display:flex;gap:6px;justify-content:flex-end;padding:8px;border-top:1px solid var(--line)}
+.wctl button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--cream);font:600 20px 'Hanken Grotesk',sans-serif;color:var(--navy);cursor:pointer}
+.wcard{margin-top:10px;padding:16px;border-radius:12px;border:1px solid var(--line);background:var(--card)}
+.wcard b{font-size:19px}.wcard p{margin:4px 0 10px;color:var(--muted);font-size:16px}
+.wcard a.go{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:var(--navy);color:var(--cream);text-decoration:none;font-weight:600}
+.wcard .tl{margin-top:10px;font-size:14.5px;color:var(--muted)}
+.bar a.home.alt{background:var(--terra)}
+.threads{display:flex;flex-direction:column;gap:8px}
+.thread{padding:11px 14px;border-radius:12px;border:1.5px dashed var(--terra);background:transparent;min-height:44px}
+.thread b{font-size:16px} .thread span{color:var(--muted);font-size:14.5px}
+.thread.back{border-color:#9A8F7A}
+details.outline{margin-top:36px;border-top:1px solid var(--line);padding-top:14px}
+details.outline summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+.outline ul{list-style:none;margin:0;padding-left:16px;border-left:1px solid var(--line)}
+.outline>ul{padding-left:0;border:0}
+.outline li a{display:inline-block;padding:5px 0;color:var(--navy);text-decoration:none;font-size:15.5px}
+.foot{margin-top:36px;padding:18px 20px;border:2px solid var(--navy);border-radius:14px;font-size:15px;color:var(--muted)}
+.foot b{color:var(--navy)}
+/* grades */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin:0 0 10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.g{display:inline-flex;align-items:center;justify-content:center;flex:none;width:28px;height:28px;border-radius:50%;font-size:14px;font-weight:700;border:1.5px dashed var(--navy);color:var(--navy)}
+.g.ok{border-style:solid;background:var(--navy);color:var(--cream)}
+.gX,.gI{border-color:var(--terra);color:var(--terra)} .gX.ok,.gI.ok{background:var(--terra);color:#fff}
+ul.gr{list-style:none;margin:0 0 8px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+ul.gr li{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:2px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+ul.gr li:first-child{border-top:0}
+ul.gr .kk{grid-column:1/-1;font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+/* widgets */
+.ctl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:8px}
+.ctl svg{display:block;width:100%;max-width:400px;height:auto;margin:0 auto}
+.ctl .bx{fill:var(--card);stroke:var(--navy);stroke-width:1.5}.ctl .bx.dark{fill:var(--navy)}
+.ctl .lb{font:700 9.5px 'Hanken Grotesk',sans-serif;letter-spacing:.14em;fill:var(--terra)}
+.ctl .nm{font:600 13.5px 'Hanken Grotesk',sans-serif;fill:var(--navy)}
+.ctl .dark-t .lb{fill:var(--peach)}.ctl .dark-t .nm{fill:var(--cream)}
+.ctl .ln{stroke:var(--navy);stroke-width:1.5;fill:none}.ctl .ln.fb{stroke:var(--terra)}
+.ctl .sm{font:600 10.5px 'Hanken Grotesk',sans-serif;fill:var(--muted)}
+.calc{padding:20px;border-radius:14px;background:var(--navy);color:var(--cream);margin-bottom:8px}
+.calc label{display:block;margin-top:14px;font-size:14px;font-weight:600}
+.calc label output{float:right;color:var(--peach);font-variant-numeric:tabular-nums}
+.calc input[type=range]{width:100%;height:44px;margin:0;accent-color:#F0B9A4;background:transparent}
+.calc select{width:100%;height:44px;border-radius:10px;border:0;padding:0 12px;font:inherit;font-size:16px;margin-top:6px;background:#fff;color:var(--navy)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button{min-height:44px;border-radius:10px;border:1.5px solid #5A6684;background:transparent;color:var(--cream);font:600 14.5px 'Hanken Grotesk',sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--peach);border-color:var(--peach);color:var(--navy)}
+.res{margin-top:16px;padding:16px;border-radius:12px;background:#2C3A5C}
+.big{font-family:'Fraunces',Georgia,serif;font-size:34px;line-height:1.05;color:#fff;font-variant-numeric:tabular-nums}
+.cap{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--peach);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.verdict{margin-top:10px;font-size:15.5px}
+.pbar{position:relative;height:16px;border-radius:8px;background:#46557A;margin-top:14px}
+.pbar i{position:absolute;top:-4px;width:3px;height:24px;border-radius:2px}
+.pbar .pre{background:var(--pale)}.pbar .post{background:var(--peach);width:5px}.pbar .th{border-left:2px dashed #AEB6C9}
+.keyrow{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13.5px;color:var(--pale)}
+.keyrow span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:var(--c)}
+.dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin-top:14px}
+.dots i{aspect-ratio:1;border-radius:3px;background:#46557A}.dots i.ev{background:#fff}.dots i.av{background:var(--peach)}.dots i.hm{box-shadow:inset 0 0 0 2px #E6C65A}
+ol.chain{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+ol.chain li{padding:9px 12px;border-radius:10px;background:#2C3A5C;font-size:15px}
+ol.chain li b{color:var(--peach)}
+@media (max-width:640px){dl.body div{grid-template-columns:1fr;gap:2px}.kids{grid-template-columns:1fr}.dots{grid-template-columns:repeat(10,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="kicker"><a href="../index.html" style="color:inherit;text-decoration:none">Thread Medicine</a> · Architecture · v0.6 · <a href="../assets/thread-medicine-os-wheel.png" style="color:inherit">Wheel poster</a></p>
+  <h1>Thread Medicine OS</h1>
+  <p>A navigable map of whole-person care. Start at the top, open any node to see what is inside it, and follow the dashed threads to where ideas connect.</p>
+  <span class="draft">Draft for review. Dashed grades are not yet checked against a primary source.</span>
+</header>
+<div class="bar"><a class="home" href="#os">Home</a><a class="home alt" href="#web">Web</a><input id="q" type="search" placeholder="Search all nodes" aria-label="Search all nodes"></div>
+<ul id="results"></ul>
+<div id="view" class="node"></div>
+<details class="outline"><summary>Whole map as an outline</summary><div id="outline"></div></details>
+<div class="foot"><b>Boundary conditions.</b> A reasoning map, not validated decision support. A node organizes questions; it is not a diagnosis. Calculators do arithmetic on numbers you supply and on pooled trial effects; they do not replace validated risk tools or clinical judgment. Educational content, not individual medical advice. Thread Medicine, 22 November 2026.<br><br><b>Effect sizes used:</b> blood pressure, <a href="https://pubmed.ncbi.nlm.nih.gov/26724178/">Ettehad, Lancet 2016</a>; weight and blood pressure, <a href="https://researchinformation.umcutrecht.nl/en/publications/influence-of-weight-reduction-on-blood-pressure-a-meta-analysis-o/">Neter, Hypertension 2003</a>; LDL, <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2988224">CTT, Lancet 2010</a>; bisphosphonates, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6885847/">Shi 2019</a>; Steno-2, <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5506099">Gaede, Diabetologia 2016</a>; time to benefit, <a href="https://pubmed.ncbi.nlm.nih.gov/33196766/">Yourman 2021</a>.</div>
+</main>
+<template id="t-control"><div class="ctl"><!--CONTROLSVG--></div></template>
+<template id="t-bayes"><div class="calc">
+ <label for="pre">Pretest probability <output id="preO"></output></label><input id="pre" type="range" min="1" max="99" value="20">
+ <label for="lr">Likelihood ratio of the result <output id="lrO"></output></label><input id="lr" type="range" min="-23" max="23" value="14">
+ <label for="tt">Test threshold <output id="ttO"></output></label><input id="tt" type="range" min="1" max="50" value="5">
+ <label for="rx">Treatment threshold <output id="rxO"></output></label><input id="rx" type="range" min="10" max="95" value="50">
+ <div class="res" aria-live="polite"><div class="cap">Post-test probability</div><div class="big" id="post"></div>
+ <div class="pbar" aria-hidden="true"><i class="th" id="bTT"></i><i class="th" id="bRX"></i><i class="pre" id="bPre"></i><i class="post" id="bPost"></i></div>
+ <div class="keyrow"><span style="--c:#D9D3C5">Pretest</span><span style="--c:#F0B9A4">Post-test</span><span style="--c:#AEB6C9">Thresholds</span></div><div class="verdict" id="verdict"></div></div></div></template>
+<template id="t-nnt"><div class="calc">
+ <label for="br">Baseline risk over the horizon <output id="brO"></output></label><input id="br" type="range" min="1" max="60" value="10">
+ <label for="rrr">Relative risk reduction <output id="rrrO"></output></label><input id="rrr" type="range" min="5" max="70" value="25">
+ <label for="hr">Added risk of harm from treatment <output id="hrO"></output></label><input id="hr" type="range" min="0" max="20" value="2">
+ <div class="res" aria-live="polite"><div class="stats"><div><div class="cap">ARR</div><div class="big" id="arr"></div></div><div><div class="cap">NNT</div><div class="big" id="nnt"></div></div><div><div class="cap">NNH</div><div class="big" id="nnh"></div></div></div>
+ <div class="dots" id="dots" aria-hidden="true"></div>
+ <div class="keyrow"><span style="--c:#F0B9A4">Event avoided</span><span style="--c:#fff">Event anyway</span><span style="--c:#46557A">No event either way</span><span style="--c:#E6C65A">Harmed</span></div><div class="verdict" id="nntText"></div></div></div></template>
+<template id="t-impact"><div class="calc">
+ <div class="seg" role="group" aria-label="Risk tool"><button type="button" id="mCV" aria-pressed="true">Cardiovascular · PREVENT</button><button type="button" id="mFX" aria-pressed="false">Fracture · FRAX</button></div>
+ <div id="pCV">
+  <label for="oc">Outcome</label><select id="oc"><option value="mace">Major cardiovascular events</option><option value="stroke">Stroke</option><option value="hf">Heart failure</option></select>
+  <label for="ib">10-year risk from PREVENT, for that outcome <output id="ibO"></output></label><input id="ib" type="range" min="1" max="50" value="12">
+  <label for="kg">Weight loss sustained <output id="kgO"></output></label><input id="kg" type="range" min="0" max="30" value="8">
+  <label for="sb">Further systolic lowering from medication <output id="sbO"></output></label><input id="sb" type="range" min="0" max="30" value="5">
+  <label for="ld">LDL lowering <output id="ldO"></output></label><input id="ld" type="range" min="0" max="120" step="5" value="40">
+ </div>
+ <div id="pFX" hidden>
+  <label for="fh">10-year hip fracture probability from FRAX <output id="fhO"></output></label><input id="fh" type="range" min="0.5" max="30" step="0.5" value="4">
+  <label for="fa">Persistence with a bisphosphonate <output id="faO"></output></label><input id="fa" type="range" min="0" max="100" step="10" value="100">
+ </div>
+ <div class="res" aria-live="polite">
+  <div class="stats"><div><div class="cap">Risk now</div><div class="big" id="i0"></div></div><div><div class="cap">Predicted</div><div class="big" id="i1"></div></div><div><div class="cap">NNT</div><div class="big" id="iN"></div></div></div>
+  <ol class="chain" id="chain"></ol>
+  <div class="dots" id="idots" aria-hidden="true"></div>
+  <div class="keyrow"><span style="--c:#F0B9A4">Event avoided</span><span style="--c:#fff">Event anyway</span><span style="--c:#46557A">No event either way</span></div>
+  <div class="verdict" id="iText"></div>
+ </div></div></template>
+<script>
+var N=/*NODES*/;
+(function(){
+var parent={},back={};
+Object.keys(N).forEach(function(i){N[i].c.forEach(function(c){if(!parent[c])parent[c]=i});N[i].l.forEach(function(l){(back[l[0]]=back[l[0]]||[]).push(i)})});
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function pct(x){return (x<10?(Math.round(x*10)/10).toFixed(1):Math.round(x))+'%'}
+function wrap(t,m){var w=t.split(' '),L=[''];w.forEach(function(x){var c=L[L.length-1];if((c+' '+x).trim().length<=m||!c)L[L.length-1]=(c+' '+x).trim();else L.push(x)});if(L.length>2){L=[L[0],L.slice(1).join(' ')];if(L[1].length>m)L[1]=L[1].slice(0,m-1)+'…'}return L}
+function txt(L,x,y,cls){return L.length==1?'<text class="'+cls+'" x="'+x+'" y="'+(y+4)+'" text-anchor="middle">'+esc(L[0])+'</text>':'<text class="'+cls+'" text-anchor="middle"><tspan x="'+x+'" y="'+(y-2)+'">'+esc(L[0])+'</tspan><tspan x="'+x+'" y="'+(y+11)+'">'+esc(L[1])+'</tspan></text>'}
+function mapSVG(id){var k=N[id].c,n=k.length;if(!n)return'';var h=Math.ceil(n/2),R=46,H=Math.max(h*R+16,110),cy=H/2,s='';
+ k.forEach(function(c,i){var left=i<h,j=left?i:i-h,cnt=left?h:n-h,y=cy+(j-(cnt-1)/2)*R,x=left?2:246,ex=left?114:246,sx=left?128:232,mx=(sx+ex)/2;
+  s+='<path class="e" d="M'+sx+' '+cy+'C'+mx+' '+cy+' '+mx+' '+y+' '+ex+' '+y+'"/><a href="#'+c+'"><rect class="p" x="'+x+'" y="'+(y-19)+'" width="112" height="38" rx="10"/>'+txt(wrap(N[c].t,19),x+56,y,'pt')+'</a>'});
+ s+='<rect class="c" x="128" y="'+(cy-24)+'" width="104" height="48" rx="12"/>'+txt(wrap(N[id].t,16),180,cy,'ct');
+ return '<div class="map"><svg viewBox="0 0 360 '+H+'" role="img" aria-label="Map of '+esc(N[id].t)+' and the '+n+' nodes inside it">'+s+'</svg></div>'}
+function crumbs(id){var p=[],x=parent[id];while(x){p.unshift(x);x=parent[x]}return p.map(function(i){return'<a href="#'+i+'">'+esc(N[i].t)+'</a>'}).join('')}
+function grades(g){var nm={A:'strong',B:'moderate',C:'weak, individualize',I:'insufficient',X:'not supported'};
+ return '<h3 class="sec">Options, graded</h3><div class="legend"><span><span class="g ok">A</span>Strong</span><span><span class="g ok">B</span>Moderate</span><span><span class="g ok">C</span>Weak</span><span><span class="g gI ok">I</span>Insufficient</span><span><span class="g gX ok">X</span>Not supported</span><span><span class="g">A</span>Dashed: unverified</span></div><ul class="gr">'+g.map(function(r){return'<li><span class="kk">'+esc(r[0])+'</span><span>'+esc(r[1])+'</span>'+(r[2]?'<span class="g g'+r[2]+(r[3]?' ok':'')+'" role="img" aria-label="Grade '+r[2]+', '+nm[r[2]]+(r[3]?', checked':', verification pending')+'">'+r[2]+'</span>':'<span></span>')+'</li>'}).join('')+'</ul>'}
+function render(){var id=location.hash.slice(1);if(id=='web'){webView();return}if(!N[id])id='os';var d=N[id],h='';
+ h+='<nav class="crumbs" aria-label="Path">'+crumbs(id)+'</nav><div class="k">'+esc(d.k)+'</div><h2>'+esc(d.t)+'</h2><p class="s">'+esc(d.s)+'</p>';
+ if(d.w&&d.w!='grades')h+='<div id="widget"></div>';
+ if(id=='os')h+='<h3 class="sec">Tools</h3><div class="tools"><a href="#web" style="background:var(--terra)"><b>The whole web</b><small>Every node and thread on one page</small></a><a href="#absolute-effects"><b>NNT calculator</b><small>Icon array per 100 people</small></a><a href="#impact-chain"><b>Treatment impact chain</b><small>PREVENT and FRAX to predicted effect</small></a><a href="#likelihood-ratios"><b>Bayes calculator</b><small>Pretest to post-test, with thresholds</small></a></div>';
+ if(d.c.length)h+='<h3 class="sec">Inside this node</h3>'+mapSVG(id)+'<div class="kids" style="margin-top:10px">'+d.c.map(function(c){var n=N[c].c.length;return'<a class="kid" href="#'+c+'">'+(n?'<i>'+n+'</i>':'')+'<b>'+esc(N[c].t)+'</b><small>'+esc(N[c].s)+'</small></a>'}).join('')+'</div>';
+ if(d.b.length)h+='<h3 class="sec">Detail</h3><dl class="body">'+d.b.map(function(r){return'<div><dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+(r[2]?' <a href="'+esc(r[2])+'">Source</a>':'')+'</dd></div>'}).join('')+'</dl>';
+ if(d.g)h+=grades(d.g);
+ var seen={},th=d.l.map(function(l){seen[l[0]]=1;return'<a class="thread" href="#'+l[0]+'"><b>'+esc(N[l[0]].t)+'</b> <span>· '+esc(l[1])+'</span></a>'});
+ (back[id]||[]).forEach(function(b){if(!seen[b]&&b!=parent[id]){seen[b]=1;th.push('<a class="thread back" href="#'+b+'"><b>'+esc(N[b].t)+'</b> <span>· links here</span></a>')}});
+ if(th.length)h+='<h3 class="sec">Threads</h3><div class="threads">'+th.join('')+'</div>';
+ $('view').innerHTML=h;
+ if(d.w&&d.w!='grades'){$('widget').appendChild($('t-'+d.w).content.cloneNode(true));({bayes:bayesInit,nnt:nntInit,impact:impactInit,control:function(){}})[d.w]()}
+ document.title=d.t+' · Thread Medicine OS';
+ if(render.done)window.scrollTo(0,$('view').getBoundingClientRect().top+window.scrollY-70);render.done=1}
+
+function webView(){
+ var kids={},dep={os:0},wt={},pos={},top={},R=[0,170,330,460,545,600];
+ Object.keys(N).forEach(function(i){kids[i]=N[i].c.filter(function(c){return parent[c]==i})});
+ (function d(i){kids[i].forEach(function(c){dep[c]=dep[i]+1;top[c]=dep[c]==1?c:top[i];d(c)})})('os');
+ (function w(i){var s=0;kids[i].forEach(function(c){s+=w(c)});wt[i]=Math.max(s||1,dep[i]==1?6:1);return wt[i]})('os');
+ var per=360/wt.os,band=[];
+ (function lay(i,a0){var a=a0;kids[i].forEach(function(c){var span=wt[c]*per;pos[c]={a:a+span/2,r:R[dep[c]]};if(dep[c]==1)band.push([c,a,a+span]);lay(c,a+(span-kidsW(c)*per)/2);a+=span})})('os',-90);
+ function kidsW(i){var s=0;kids[i].forEach(function(c){s+=wt[c]});return s}
+ pos.os={a:0,r:0};
+ function xy(i,dr){var p=pos[i],t=p.a*Math.PI/180,r=p.r+(dr||0);return[(r*Math.cos(t)).toFixed(1),(r*Math.sin(t)).toFixed(1)]}
+ var tops=kids.os,col={};tops.forEach(function(t,k){col[t]='hsl('+Math.round(k*137.5%360)+',42%,40%)'});
+ var s='';
+ band.forEach(function(b){var c=col[b[0]],r=630,a1=(b[1]+.6)*Math.PI/180,a2=(b[2]-.6)*Math.PI/180,m=(b[1]+b[2])/2;
+  s+='<path d="M'+(r*Math.cos(a1)).toFixed(1)+' '+(r*Math.sin(a1)).toFixed(1)+'A'+r+' '+r+' 0 '+((b[2]-b[1])>180?1:0)+' 1 '+(r*Math.cos(a2)).toFixed(1)+' '+(r*Math.sin(a2)).toFixed(1)+'" fill="none" stroke="'+c+'" stroke-width="5" stroke-linecap="round"/>';
+  var up=Math.sin(m*Math.PI/180)<0,rr=up?644:656,x=rr*Math.cos(m*Math.PI/180),y=rr*Math.sin(m*Math.PI/180);
+  s+='<text class="band" text-anchor="middle" style="fill:'+c+'" transform="translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+(up?m+90:m-90).toFixed(1)+')">'+esc(N[b[0]].t)+'</text>'});
+ Object.keys(pos).forEach(function(i){if(i=='os')return;var p=xy(parent[i]),q=xy(i);s+='<path class="te" d="M'+p[0]+' '+p[1]+'L'+q[0]+' '+q[1]+'"/>'});
+ Object.keys(N).forEach(function(i){N[i].l.forEach(function(l){if(!pos[l[0]]||!pos[i])return;var p=xy(i),q=xy(l[0]);s+='<path class="th" data-a="'+i+'" data-b="'+l[0]+'" d="M'+p[0]+' '+p[1]+'Q'+((+p[0]+ +q[0])*.12).toFixed(1)+' '+((+p[1]+ +q[1])*.12).toFixed(1)+' '+q[0]+' '+q[1]+'"/>'})});
+ Object.keys(pos).forEach(function(i){if(i=='os')return;var p=pos[i],q=xy(i),inn=kids[i].length>0,c=col[top[i]],flip=Math.cos(p.a*Math.PI/180)<0,lab='';
+  if(dep[i]>1){var out=!inn,rot=flip?p.a+180:p.a,anch=(out!=flip)?'start':'end',dx=(out!=flip)?7:-7;lab='<text class="'+(inn?'in':'')+'" text-anchor="'+anch+'" transform="translate('+q[0]+' '+q[1]+') rotate('+rot.toFixed(1)+')" x="'+dx+'" y="3">'+esc(N[i].t)+'</text>'}
+  s+='<g class="nd" data-id="'+i+'"><circle cx="'+q[0]+'" cy="'+q[1]+'" r="'+(dep[i]==1?9:inn?5:3.4)+'" fill="'+c+'"/><circle cx="'+q[0]+'" cy="'+q[1]+'" r="12" fill="transparent"/>'+lab+'</g>'});
+ s+='<g class="nd" data-id="os"><circle r="46" fill="#1F2A44"/><text class="root" text-anchor="middle" y="-2">Thread</text><text class="root" text-anchor="middle" y="16">Medicine OS</text></g>';
+ var nT=0;Object.keys(N).forEach(function(i){nT+=N[i].l.length});
+ $('view').innerHTML='<nav class="crumbs"><a href="#os">Thread Medicine OS</a></nav><div class="k">One-page map</div><h2>The whole web</h2><p class="s">'+Object.keys(N).length+' nodes and '+nT+' threads. Grey lines show what sits inside what; terracotta lines are threads between ideas. Tap a node to light up its connections; pinch or use the buttons to zoom.</p><div class="web" id="webbox"><svg id="wsvg" viewBox="-690 -690 1380 1380" role="img" aria-label="Radial map of every node in Thread Medicine OS, with threads between related nodes">'+s+'</svg><div class="wctl"><button type="button" id="zi" aria-label="Zoom in">+</button><button type="button" id="zo" aria-label="Zoom out">−</button><button type="button" id="zr" aria-label="Reset view">⟲</button></div></div><div class="wcard" id="wcard"><p style="margin:0">Nothing selected. Tap any dot.</p></div>';
+ document.title='The whole web · Thread Medicine OS';
+ var svg=$('wsvg'),box=$("webbox"),v={x:-690,y:-690,w:1380},pts={},moved=0,last=null,pd=0;
+ function setV(){v.w=Math.max(160,Math.min(1380,v.w));svg.setAttribute('viewBox',v.x+' '+v.y+' '+v.w+' '+v.w)}
+ function zoom(f,cx,cy){var r=svg.getBoundingClientRect(),px=cx==null?.5:(cx-r.left)/r.width,py=cy==null?.5:(cy-r.top)/r.height,nw=Math.max(160,Math.min(1380,v.w*f));v.x+=(v.w-nw)*px;v.y+=(v.w-nw)*py;v.w=nw;setV()}
+ $('zi').onclick=function(){zoom(.6)};$('zo').onclick=function(){zoom(1.6)};$('zr').onclick=function(){v={x:-690,y:-690,w:1380};setV()};
+ svg.addEventListener('wheel',function(e){e.preventDefault();zoom(e.deltaY>0?1.15:.87,e.clientX,e.clientY)},{passive:false});
+ svg.addEventListener('pointerdown',function(e){pts[e.pointerId]=[e.clientX,e.clientY];moved=0;last=[e.clientX,e.clientY];pd=0});
+ svg.addEventListener('pointermove',function(e){if(!pts[e.pointerId])return;pts[e.pointerId]=[e.clientX,e.clientY];var k=Object.keys(pts),r=svg.getBoundingClientRect(),sc=v.w/r.width;
+  if(k.length==1){v.x-=(e.clientX-last[0])*sc;v.y-=(e.clientY-last[1])*sc;moved+=Math.abs(e.clientX-last[0])+Math.abs(e.clientY-last[1]);last=[e.clientX,e.clientY];setV()}
+  else if(k.length==2){var a=pts[k[0]],b=pts[k[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pd)zoom(pd/d,(a[0]+b[0])/2,(a[1]+b[1])/2);pd=d;moved=99}});
+ function up(e){var was=pts[e.pointerId];delete pts[e.pointerId];pd=0;if(was&&moved<8){var g=e.target.closest?e.target.closest('g.nd'):null;if(g)pick(g.getAttribute('data-id'))}}
+ svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',function(e){delete pts[e.pointerId];pd=0});
+ function pick(id){var on={};on[id]=1;box.classList.add('sel');
+  [].forEach.call(svg.querySelectorAll('.th'),function(p){var a=p.getAttribute('data-a'),b=p.getAttribute('data-b'),hit=a==id||b==id;p.classList.toggle('on',hit);if(hit){on[a]=1;on[b]=1}});
+  [].forEach.call(svg.querySelectorAll('g.nd'),function(g){var i=g.getAttribute('data-id');g.classList.toggle('on',!!on[i]);g.classList.toggle('pick',i==id)});
+  var d=N[id],nb=Object.keys(on).filter(function(i){return i!=id});
+  $('wcard').innerHTML='<div class="k" style="font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#A44A32">'+esc(d.k)+'</div><b>'+esc(d.t)+'</b><p>'+esc(d.s)+'</p><a class="go" href="#'+id+'">Open this node</a>'+(nb.length?'<div class="tl">Threads to: '+nb.map(function(i){return'<a href="#'+i+'">'+esc(N[i].t)+'</a>'}).join(' · ')+'</div>':'')}
+ if(render.done)window.scrollTo(0,0);render.done=1}
+function dots(el,av,ev,hm){el.textContent='';for(var i=0;i<100;i++){var e=document.createElement('i');if(i<av)e.className='av';else if(i<av+ev)e.className='ev';if(hm&&i>=100-hm)e.className+=' hm';el.appendChild(e)}}
+function on(ids,f){ids.forEach(function(i){$(i).addEventListener('input',f)});f()}
+function bayesInit(){on(['pre','lr','tt','rx'],function(){var p=+$('pre').value/100,lr=Math.pow(10,(+$('lr').value)/23*1.301),tt=+$('tt').value,rx=+$('rx').value;if(tt>=rx){tt=rx-1;$('tt').value=tt}
+ var o=p/(1-p)*lr,post=o/(1+o)*100;$('preO').textContent=Math.round(p*100)+'%';$('lrO').textContent=lr<1?lr.toFixed(2):lr.toFixed(1);$('ttO').textContent=tt+'%';$('rxO').textContent=rx+'%';$('post').textContent=pct(post);
+ $('bPre').style.left=(p*100)+'%';$('bPost').style.left='calc('+post+'% - 2px)';$('bTT').style.left=tt+'%';$('bRX').style.left=rx+'%';
+ $('verdict').textContent=post>=rx?'Above the treatment threshold. Further testing is unlikely to change the decision.':post<=tt?'Below the test threshold. Stop pursuing this diagnosis and look elsewhere.':'Between thresholds. Another informative test is still worth doing.'})}
+function nntInit(){on(['br','rrr','hr'],function(){var br=+$('br').value,rrr=+$('rrr').value,hr=+$('hr').value,arr=br*rrr/100;
+ $('brO').textContent=br+'%';$('rrrO').textContent=rrr+'%';$('hrO').textContent=hr+'%';$('arr').textContent=pct(arr);$('nnt').textContent=Math.ceil(100/arr-1e-9);$('nnh').textContent=hr?Math.ceil(100/hr-1e-9):'none';
+ var av=Math.round(arr),ev=Math.round(br)-av;dots($('dots'),av,ev,Math.round(hr));
+ $('nntText').textContent='Of 100 people like this, about '+av+' avoid the event because of treatment, '+ev+' have it anyway, and '+(100-av-ev)+' were never going to have it. About '+Math.round(hr)+' are harmed.'})}
+function impactInit(){var mode='cv';
+ function calc(){var base,rr,steps=[];
+  if(mode=='cv'){var oc=$('oc').value,r={mace:.20,stroke:.27,hf:.28}[oc],nm={mace:'major cardiovascular events',stroke:'stroke',hf:'heart failure'}[oc];
+   base=+$('ib').value;var kg=+$('kg').value,sb=+$('sb').value,ld=+$('ld').value,dw=1.05*kg,tot=dw+sb,rb=Math.pow(1-r,tot/10),rl=oc=='mace'?Math.pow(.78,ld/38.7):1;rr=rb*rl;
+   $('ibO').textContent=base+'%';$('kgO').textContent=kg+' kg';$('sbO').textContent=sb+' mm Hg';$('ldO').textContent=oc=='mace'?ld+' mg/dL':'not applied';$('ld').disabled=oc!='mace';
+   if(kg)steps.push('<b>'+kg+' kg</b> lighter → systolic about <b>'+dw.toFixed(1)+' mm Hg</b> lower');
+   if(tot)steps.push('Systolic <b>'+tot.toFixed(1)+' mm Hg</b> lower → <b>'+Math.round((1-rb)*100)+'%</b> fewer '+nm);
+   if(oc=='mace'&&ld)steps.push('LDL <b>'+ld+' mg/dL</b> lower → <b>'+Math.round((1-rl)*100)+'%</b> fewer major vascular events');
+   steps.push('Combined relative risk <b>'+rr.toFixed(2)+'</b>, assuming the effects multiply');
+  }else{base=+$('fh').value;var a=+$('fa').value/100;rr=1-.31*a;$('fhO').textContent=base+'%';$('faO').textContent=Math.round(a*100)+'%';
+   steps.push('Bisphosphonate, taken as prescribed → about <b>31%</b> fewer hip fractures');if(a<1)steps.push('At <b>'+Math.round(a*100)+'%</b> persistence → about <b>'+Math.round(31*a)+'%</b> fewer');
+   steps.push('Benefit begins at roughly <b>12 months</b>; falls are not in FRAX')}
+  var after=base*rr,arr=base-after;$('i0').textContent=pct(base);$('i1').textContent=pct(after);$('iN').textContent=arr>0.05?Math.ceil(100/arr-1e-9):'–';
+  $('chain').innerHTML=steps.map(function(s){return'<li>'+s+'</li>'}).join('');
+  var av=Math.round(arr),ev=Math.max(Math.round(base)-av,0);dots($('idots'),av,ev,0);
+  $('iText').textContent='Of 100 people at this risk over 10 years, about '+av+' avoid the event, '+ev+' still have it, and '+(100-av-ev)+' were never going to. Absolute reduction '+pct(arr)+'.'}
+ function set(m){mode=m;$('mCV').setAttribute('aria-pressed',m=='cv');$('mFX').setAttribute('aria-pressed',m=='fx');$('pCV').hidden=m!='cv';$('pFX').hidden=m!='fx';calc()}
+ $('mCV').onclick=function(){set('cv')};$('mFX').onclick=function(){set('fx')};
+ ['oc','ib','kg','sb','ld','fh','fa'].forEach(function(i){$(i).addEventListener('input',calc)});calc()}
+function outline(id,seen){if(seen[id])return'';seen[id]=1;var k=N[id].c;return'<li><a href="#'+id+'">'+esc(N[id].t)+'</a>'+(k.length?'<ul>'+k.map(function(c){return outline(c,seen)}).join('')+'</ul>':'')+'</li>'}
+$('outline').innerHTML='<ul>'+outline('os',{})+'</ul>';
+$('q').addEventListener('input',function(){var q=this.value.trim().toLowerCase(),r=$('results');if(q.length<2){r.innerHTML='';return}
+ var hits=Object.keys(N).filter(function(i){var d=N[i];return (d.t+' '+d.s+' '+d.k+' '+d.b.map(function(x){return x.join(' ')}).join(' ')).toLowerCase().indexOf(q)>=0}).slice(0,12);
+ r.innerHTML=hits.length?hits.map(function(i){return'<li><a href="#'+i+'"><b>'+esc(N[i].t)+'</b><small>'+esc(N[i].s)+'</small></a></li>'}).join(''):'<li><a>No node matches.</a></li>'});
+window.addEventListener('hashchange',function(){$('results').innerHTML='';$('q').value='';render()});
+render();
+})();
+</script>
+<noscript><p style="padding:16px">This map needs JavaScript to open its nodes.</p></noscript>
+</body>
+</html>
